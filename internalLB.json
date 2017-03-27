@@ -29,8 +29,12 @@
         "pipName": {
             "defaultValue": "myPublicIp",
             "type": "string"
-        }
-	},
+        },
+        "probePort": {
+            "defaultValue": 22,
+            "type": "int",
+            "metadata": { "description": "Port that will configured in the TCP-based probe" }
+        }	},
 
     "variables": {
 		"vip": "[concat(parameters('ipPrefix'), '.', parameters('vipSuffix'))]",
@@ -91,7 +95,7 @@
                         "name": "[variables('probeName')]",
                         "properties": {
                             "protocol": "Tcp",
-                            "port": 22,
+                            "port": "[parameters('probePort')]",
                             "intervalInSeconds": 15,
                             "numberOfProbes": 2
                         }

@@ -121,6 +121,9 @@
                 },
                 "vipSuffix": {
                     "value": "[variables('vipSuffix')]"
+                },
+                "probePort": {
+                    "value": 1138
                 }
             },
             "no": {
@@ -146,6 +149,9 @@
                 },
                 "pipName": {
                     "value": "[concat(variables('slbPipName'), '-ext')]"
+                },
+                "probePort": {
+                    "value": 1138
                 }
             },
             "no": {
