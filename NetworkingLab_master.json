@@ -158,30 +158,6 @@
                 "vnets", "vnet4Gw"
             ]
 		},
-		{
-			"comments": "Create custom routing tables for spoke vnets (but it does not associate it to the subnets)",
-            "name": "[concat('vnet', copyIndex(1),'-udr')]",
-			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2016-06-01",
-			"properties": {
-				"mode": "Incremental",
-				"templateLink": {
-					"uri": "[variables('udrTemplateUri')]",
-					"contentVersion": "1.0.0.0"
-				},
-				"parameters": {
-                    "vnetPrefix": { "value": "[concat('10.', copyIndex(1))]" },
-                    "udrName": { "value": "[concat('vnet', copyIndex(1))]" },
-                    "nextHop": { "value": "10.4.2.100" }
-                }
-			},
-            "dependsOn": [
-            ],
-            "copy": {
-                "name": "udrTables",
-                "count": 3
-            }
-		},
         {
             "comments": "Create public IP address for Vnet Gateway in Vnet4",
             "apiVersion": "2015-05-01-preview",

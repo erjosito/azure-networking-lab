@@ -1,3 +1,5 @@
+# These actions will be run at provisioning time
+# Most of these commands are ephemeral, so you will probably have to rerun them if you reboot the VM
 
 # Enable IP forwarding
 sudo -i sysctl -w net.ipv4.ip_forward=1
@@ -23,11 +25,12 @@ sudo ifmetric eth1 10
 sudo route add -net 10.0.0.0/13 gw 10.4.2.1 dev eth0
 # and the Internet default to eth1 (just to be sure)
 sudo route add -net 0.0.0.0/0 gw 10.4.3.1 dev eth1
-# and just to be sure...
-#sudo route add -host 168.63.129.16 gw 10.4.2.1 dev eth0
+# route for internal LB to work properly (will break ext LB)
+sudo route add -host 168.63.129.16 gw 10.4.2.1 dev eth0
 
 # Create a custom routing table for internal LB probes
-sudo echo 200 slb >> /etc/iproute2/rt_tables   # permission denied!!!! (selinux??)
+#sudo echo 200 slb >> /etc/iproute2/rt_tables   # permission denied!!!! (selinux??)
+sudo sed -i '$a200 slb' /etc/iproute2/rt_tables # Is this denied by selinux too???
 sudo ip rule add from 10.4.2.101 to 168.63.129.16 lookup slb
 sudo ip route add 168.63.129.16 via 10.4.2.1 dev eth0 table slb
 
@@ -44,3 +47,12 @@ sudo iptables -A FORWARD -o eth1 -j ACCEPT
 sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
 # SNAT for traffic going to the Internet
 sudo iptables -t nat -A POSTROUTING -o eth1 -j MASQUERADE
+
+# Install Apache and PHP
+sudo apt-get install apache2 -y
+sudo apt-get install php libapache2-mod-php php-mcrypt php-mysql
+
+# Delete default web site and download a new one
+sudo rm /var/www/html/index.html
+sudo apt-get install wget -you
+sudo wget https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/index.php -P /var/www/html/

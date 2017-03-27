@@ -88,7 +88,6 @@
         },
         "settings": "[variables('settingsTable')[parameters('vmType')]]",
         "avSetName": "[concat(parameters('vmName'),'AvSet')]",
-        "slbType": "internal",
         "slbName": "[concat(parameters('vmName'), '-slb')]",
         "slbBackendName": "[concat(parameters('vmName'), '-slbBackend')]",
         "slbPipName": "[concat(parameters('vmName'), '-slbPip')]",
@@ -100,10 +99,10 @@
 			"no": "[concat(variables('baseRepoURL'), 'nothing.json')]"
 		},
 		"LBTemplateURI": "[variables('deployLBTemplate')[parameters('deployLBYesNo')]]",
-        "deployLBParametersHash": {
+        "deployLBintParametersHash": {
             "yes": {
                 "externalInternal": {
-                    "value": "[variables('slbType')]"
+                    "value": "internal"
                 },
                 "vnetName": {
                     "value": "[parameters('vnetName')]"
@@ -112,13 +111,10 @@
                     "value": "[variables('slbSubnet')]"
                 },
                 "slbName": {
-                    "value": "[variables('slbName')]"
+                    "value": "[concat(variables('slbName'), '-int')]"
                 },
                 "backendConfigName": {
-                    "value": "[variables('slbBackendName')]"
-                },
-                "pipName": {
-                    "value": "[variables('slbPipName')]"
+                    "value": "[concat(variables('slbBackendName'), '-int')]"
                 },
                 "ipPrefix": {
                     "value": "[variables('ipPrefix')]"
@@ -130,7 +126,32 @@
             "no": {
             }
         },
-        "deployLBParameters": "[variables('deployLBParametersHash')[parameters('deployLBYesNo')]]"
+        "deployLBintParameters": "[variables('deployLBintParametersHash')[parameters('deployLBYesNo')]]",
+        "deployLBextParametersHash": {
+            "yes": {
+                "externalInternal": {
+                    "value": "external"
+                },
+                "vnetName": {
+                    "value": "[parameters('vnetName')]"
+                },
+                "subnetName": {
+                    "value": "[variables('slbSubnet')]"
+                },
+                "slbName": {
+                    "value": "[concat(variables('slbName'), '-ext')]"
+                },
+                "backendConfigName": {
+                    "value": "[concat(variables('slbBackendName'), '-ext')]"
+                },
+                "pipName": {
+                    "value": "[concat(variables('slbPipName'), '-ext')]"
+                }
+            },
+            "no": {
+            }
+        },
+        "deployLBextParameters": "[variables('deployLBextParametersHash')[parameters('deployLBYesNo')]]"
     },
     "resources": [
 		{
@@ -141,8 +162,8 @@
 			"location": "[resourceGroup().location]"
 		},
 		{
-			"comments": "Optionally, create a load balancer",
-            "name": "slb",
+			"comments": "Optionally, create an internal load balancer",
+            "name": "slb-int",
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2016-06-01",
 			"properties": {
@@ -151,7 +172,21 @@
 					"uri": "[variables('LBTemplateUri')]",
 					"contentVersion": "1.0.0.0"
 				},
-				"parameters":  "[variables('deployLBParameters')]"
+				"parameters":  "[variables('deployLBintParameters')]"
+			}
+		},
+		{
+			"comments": "Optionally, create an external load balancer",
+            "name": "slb-ext",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2016-06-01",
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[variables('LBTemplateUri')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters":  "[variables('deployLBextParameters')]"
 			}
 		},
         {
