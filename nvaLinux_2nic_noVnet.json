@@ -151,7 +151,7 @@
                     "value": "[concat(variables('slbPipName'), '-ext')]"
                 },
                 "probePort": {
-                    "value": 1138
+                    "value": 1139
                 }
             },
             "no": {
@@ -269,15 +269,14 @@
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
-					"uri": "[concat(variables('baseRepoURL'),'nic_noNSG_noSLB_PIP_static.json')]",
+					"uri": "[concat(variables('baseRepoURL'),'nic_noNSG_noSLB_noPIP_static.json')]",
 					"contentVersion": "1.0.0.0"
 				},
 				"parameters":  {
                     "nicName": {"value": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic0')]"},
                     "ipAddress": { "value": "[concat(parameters('ip0'), copyIndex(1))]" },                    
                     "vnetName": { "value": "[parameters('vnetName')]" },
-                    "subnetName": { "value": "[parameters('subnet0Name')]"},
-                    "pipName": { "value": "[concat(parameters('pipName'), '-', copyIndex(1))]" }
+                    "subnetName": { "value": "[parameters('subnet0Name')]"}
                 }
             },
             "dependsOn": [  
@@ -294,14 +293,15 @@
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
-					"uri": "[concat(variables('baseRepoURL'),'nic_noNSG_noSLB_noPIP_static.json')]",
+					"uri": "[concat(variables('baseRepoURL'),'nic_noNSG_noSLB_PIP_static.json')]",
 					"contentVersion": "1.0.0.0"
 				},
 				"parameters":  {
                     "nicName": {"value": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic1')]"},
                     "ipAddress": { "value": "[concat(parameters('ip1'), copyIndex(1))]" },                    
                     "vnetName": { "value": "[parameters('vnetName')]" },
-                    "subnetName": { "value": "[parameters('subnet1Name')]"}
+                    "subnetName": { "value": "[parameters('subnet1Name')]"},
+                    "pipName": { "value": "[concat(parameters('pipName'), '-', copyIndex(1))]" }
                 }
             },
             "dependsOn": [

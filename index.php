@@ -8,7 +8,7 @@
      </h1>
      <br>
      <?php
-       $hosts = array ("bing.com", "1.2.3.4", "10.4.2.101");
+       $hosts = array ("bing.com", "10.1.1.4");
        $allReachable = true;
        foreach ($hosts as $host) {
          $result = exec ("ping -c 1 -W 1 " . $host . " 2>&1 | grep received");
@@ -25,7 +25,7 @@
        } else {
          // Ping did work
          http_response_code (201);
-         print ("All target hosts seem to be reachable");
+         print ("All target hosts seem to be reachable\n");
        }
      ?>
    </body>
