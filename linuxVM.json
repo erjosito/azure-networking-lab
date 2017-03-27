@@ -36,7 +36,7 @@
     },
  
     "variables": {
-        "baseRepoURL": "https://raw.githubusercontent.com/erjosito/azure-network-lab/master/",
+        "baseRepoURL": "https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/",
         "nicName": "[concat(parameters('vmName'),'nic')]",
         "pipName": "[concat(parameters('vmName'),'pip')]",
 		"diskName": "[concat(parameters('vmName'),'disk')]",
