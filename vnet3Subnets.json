@@ -1,0 +1,201 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vnetName": {
+            "defaultValue": "myVnet",
+            "type": "string"
+        },
+        "vnetOctets12": {
+            "defaultValue": "10.0.",
+            "type": "string"
+        },
+        "subnetNamePrefix": {
+            "defaultValue": "Subnet",
+            "type": "string"
+        },
+        "gwName": {
+            "defaultValue": "myGw",
+            "type": "string",
+            "metadata": { "description": "Name for the VPN gateway"}
+        },
+        "enableBgp": {
+            "type": "string",
+            "metadata": { "description": "Enable or disable BGP" },
+            "defaultValue": "false",
+            "allowedValues": ["true", "false"]    
+        },
+        "gwPIPName": {
+            "defaultValue": "myGwPIP",
+            "type": "string",
+            "metadata": { "description": "Public IP address for the VPN gateway"}
+        },
+        "createGw": {
+            "defaultValue": "no",
+            "type": "string",
+            "allowedValues": ["yes", "no"]
+        },
+        "createVm": {
+            "defaultValue": "no",
+            "type": "string",
+            "allowedValues": ["yes", "no"]
+        },
+        "adminUsername": {
+            "defaultValue": null,
+            "type": "string"
+        },
+        "adminPassword": {
+            "defaultValue": null,
+            "type": "securestring"
+        }
+    },
+    "variables": {
+        "baseRepoURL": "https://raw.githubusercontent.com/erjosito/azure-network-lab/master/",
+        "apiVersion": "2016-03-30",
+        "vnetSpace": "[concat(parameters('vnetOctets12'), '0.0/16')]",
+        "gwTemplateUriTable": {
+            "yes": "[concat(variables('baseRepoURL'), 'vpnGw.json')]",
+            "no": "[concat(variables('baseRepoURL'), 'nothing.json')]"
+        },
+        "gwTemplateUri": "[variables('gwTemplateUriTable')[parameters('createGw')]]",
+        "gwTemplateParamTable": {
+            "yes": {
+                "vnetName": { "value": "[parameters('vnetName')]" },
+                "gwName": { "value": "[parameters('gwName')]" },
+                "PIPName": { "value": "[parameters('gwPIPName')]" },
+                "enableBgp": { "value": "[parameters('enableBgp')]" }                
+            },
+            "no": {
+            }
+        },
+        "gwTemplateParam": "[variables('gwTemplateParamTable')[parameters('createGw')]]",
+        "gwPipUriTable": {
+            "yes": "[concat(variables('baseRepoURL'), 'pipDynamic.json')]",
+            "no": "[concat(variables('baseRepoURL'), 'nothing.json')]"
+        },
+        "gwPipUri": "[variables('gwPipUriTable')[parameters('createGw')]]",
+        "gwPipParamTable": {
+            "yes": {
+                "pipName": { "value": "[parameters('gwPIPName')]" }
+            },
+            "no": {
+            }
+        },
+        "gwPipParam": "[variables('gwPipParamTable')[parameters('createGw')]]",
+        "vmTemplateUriTable": {
+            "yes": "[concat(variables('baseRepoURL'), 'linuxVM.json')]",
+            "no": "[concat(variables('baseRepoURL'), 'nothing.json')]"
+        },
+        "vmName": "[concat(parameters('vnetName'), 'vm')]",
+        "vmTemplateUri": "[variables('vmTemplateUriTable')[parameters('createVm')]]",
+        "vmTemplateParamTable": {
+            "yes": {
+                "vmName": { "value": "[variables('vmName')]" },
+                "vnetName": { "value": "[parameters('vnetName')]" },
+                "subnetName": { "value": "[concat(parameters('subnetNamePrefix'), '1')]" },
+                "vmType": { "value": "ubuntu" },
+                "adminUsername": { "value": "[parameters('adminUsername')]" },
+                "adminPassword": { "value": "[parameters('adminPassword')]" }
+            },
+            "no": {
+            }
+        },
+        "vmTemplateParam": "[variables('vmTemplateParamTable')[parameters('createVm')]]"
+    },
+    "resources": [
+        {
+            "comments": "Create Vnet with three subnets and one gateway subnet",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[parameters('vnetName')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('vnetSpace')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "GatewaySubnet",
+                        "properties": {
+                            "addressPrefix": "[concat(parameters('vnetOctets12'), '0.0/24')]"
+                        }
+                    },
+                    {
+                        "name": "[concat(parameters('subnetNamePrefix'), '1')]",
+                        "properties": {
+                            "addressPrefix": "[concat(parameters('vnetOctets12'), '1.0/24')]"
+                        }
+                    },
+                    {
+                        "name": "[concat(parameters('subnetNamePrefix'), '2')]",
+                        "properties": {
+                            "addressPrefix": "[concat(parameters('vnetOctets12'), '2.0/24')]"
+                        }
+                    },
+                    {
+                        "name": "[concat(parameters('subnetNamePrefix'), '3')]",
+                        "properties": {
+                            "addressPrefix": "[concat(parameters('vnetOctets12'), '3.0/24')]"
+                        }
+                    }
+                ]
+            },
+            "resources": [],
+            "dependsOn": []
+        },
+		{
+			"comments": "Optionally create a public IP address, if createGw equals 'yes'",
+			"name": "[parameters('gwPIPName')]",
+            "type": "Microsoft.Resources/deployments",
+			"apiVersion": "2016-09-01",
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[variables('gwPipUri')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": "[variables('gwPipParam')]"
+            },
+            "dependsOn": [
+                "[parameters('vnetName')]"                
+            ]
+        },
+		{
+			"comments": "Optionally create VPN gateway, if createGw equals 'yes'",
+			"name": "[concat(parameters('vnetName'), 'VpnGw')]",
+            "type": "Microsoft.Resources/deployments",
+			"apiVersion": "2016-09-01",
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[variables('gwTemplateUri')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": "[variables('gwTemplateParam')]"
+            },
+            "dependsOn": [
+                "[parameters('gwPIPName')]",
+                "[parameters('vnetName')]"                
+            ]
+        },
+		{
+			"comments": "Optionally create a VM in first subnet, if createVm equals 'yes'",
+			"name": "[variables('vmName')]",
+            "type": "Microsoft.Resources/deployments",
+			"apiVersion": "2016-09-01",
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[variables('vmTemplateUri')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": "[variables('vmTemplateParam')]"
+            },
+            "dependsOn": [
+                "[parameters('vnetName')]"                
+            ]
+        }
+    ]
+}

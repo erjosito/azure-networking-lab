@@ -1,0 +1,252 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "adminUsername": {
+            "defaultValue": null,
+            "type": "string",
+            "metadata": { "description": "Default username for VMs and NVAs" }
+		},
+        "adminPassword": {
+            "defaultValue": null,
+            "type": "securestring",
+            "metadata": { "description": "Default password for VMs and NVAs" }
+		},
+        "createNVA": {
+            "defaultValue": "yes",
+            "type": "string",
+            "metadata": { "description": "Whether NVAs should be deployed at all or not" }
+        }
+    },
+    "variables": {
+        "baseRepoURL": "https://raw.githubusercontent.com/erjosito/azure-network-lab/master/",
+        "storageAccountName": "[concat('storage', uniqueString(resourceGroup().id))]",
+        "multiVnetParams": {
+            "storageAccountName": { "value": "[variables('storageAccountName')]" },            
+            "vnetCount": { "value": 5 },
+            "createGw": { "value": "no" },
+            "enableBgp": { "value": "true" },
+            "createVm": { "value": "yes" },            
+            "vmType": { "value": "ubuntu" },            
+            "adminUsername": { "value": "[parameters('adminUsername')]" },            
+            "adminPassword": { "value": "[parameters('adminPassword')]" }
+        },
+        "multiVnetTemplateUri": "[concat(variables('baseRepoURL'), 'multiVnetLab.json')]",
+        "csr1Params": {
+            "vmType": { "value": "ubuntu" },
+            "vmCount": { "value": 2 },
+            "vmName": { "value": "nva" },
+            "vnetName": { "value": "myVnet4" },
+            "storageAccountName": { "value": "[variables('storageAccountName')]" },
+            "subnet0Name": { "value": "myVnet4subnet2" },
+            "subnet1Name": { "value": "myVnet4subnet3" },
+            "pipName": { "value": "nvaPip" },
+            "vmUsr": { "value": "[parameters('adminUsername')]" },
+            "vmPwd": { "value": "[parameters('adminPassword')]" },
+            "ip0": { "value": "10.4.2.10" },
+            "ip1": { "value": "10.4.3.10" },
+            "deployLBYesNo": { "value": "yes" },
+            "scriptUri": { "value": "[concat(variables('baseRepoURL'), 'linuxNVAconfig.sh')]" },
+            "scriptCmd": { "value": "sh linuxNVAconfig.sh" }
+        },
+        "csr1ParamsYesNo": {
+            "yes": "[variables('csr1Params')]",
+            "no": {}
+        },
+        "vpnGwTemplateUri": "[concat(variables('baseRepoURL'), 'vpnGw.json')]",
+        "NVATemplateUri": {
+            "csr": "[concat(variables('baseRepoURL'), 'nva_2nic_noVnet.json')]",
+            "asa": "[concat(variables('baseRepoURL'), 'nva_2nic_noVnet.json')]",
+            "ubuntu": "[concat(variables('baseRepoURL'), 'nvaLinux_2nic_noVnet.json')]"
+        },
+        "nvaType": "[variables('csr1Params')['vmType']['value']]",
+        "NVATemplateUriYesNo": {
+            "yes": "[variables('NVATemplateUri')[variables('nvaType')]]",
+            "no": "[concat(variables('baseRepoURL'), 'nothing.json')]"
+        },
+        "udrTemplateUri": "[concat(variables('baseRepoURL'), 'UDR_3subnets.json')]"
+    },
+    "resources": [
+		{
+			"comments": "Create vnets, each with a gateway subnet, 3 standard subnets, and a Linux VM in subnet 1",
+            "name": "vnets",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2016-06-01",
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[variables('multiVnetTemplateUri')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters":  "[variables('multiVnetParams')]"
+			}
+		},
+		{
+			"comments": "Create NVA in vnet4, subnets 1 and 2, if createNVA=yes",
+            "name": "csr1",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2016-06-01",
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[variables('NVATemplateUriYesNo')[parameters('createNVA')]]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters":  "[variables('csr1ParamsYesNo')[parameters('createNVA')]]"
+			},
+            "dependsOn": [
+                "vnets"
+            ]
+		},
+		{
+			"comments": "create vnet peering between hub (vnet4) and vnet1",
+            "name": "hub2spoke1",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2016-06-01",
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[concat(variables('baseRepoURL'), 'vnetPeeringHubNSpoke.json')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+                    "hubVnetName": { "value": "myVnet4" },    
+                    "spokeVnetName": { "value": "myVnet1" }    
+                }
+			},
+            "dependsOn": [
+                "vnets", "vnet4Gw"
+            ]
+		},
+		{
+			"comments": "create vnet peering between hub (vnet4) and vnet2",
+            "name": "hub2spoke2",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2016-06-01",
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[concat(variables('baseRepoURL'), 'vnetPeeringHubNSpoke.json')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+                    "hubVnetName": { "value": "myVnet4" },    
+                    "spokeVnetName": { "value": "myVnet2" }    
+                }
+			},
+            "dependsOn": [
+                "vnets", "vnet4Gw"
+            ]
+		},
+		{
+			"comments": "create vnet peering between hub (vnet4) and vnet3",
+            "name": "hub2spoke3",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2016-06-01",
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[concat(variables('baseRepoURL'), 'vnetPeeringHubNSpoke.json')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+                    "hubVnetName": { "value": "myVnet4" },    
+                    "spokeVnetName": { "value": "myVnet3" }    
+                }
+			},
+            "dependsOn": [
+                "vnets", "vnet4Gw"
+            ]
+		},
+		{
+			"comments": "Create custom routing tables for spoke vnets (but it does not associate it to the subnets)",
+            "name": "[concat('vnet', copyIndex(1),'-udr')]",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2016-06-01",
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[variables('udrTemplateUri')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+                    "vnetPrefix": { "value": "[concat('10.', copyIndex(1))]" },
+                    "udrName": { "value": "[concat('vnet', copyIndex(1))]" },
+                    "nextHop": { "value": "10.4.2.100" }
+                }
+			},
+            "dependsOn": [
+            ],
+            "copy": {
+                "name": "udrTables",
+                "count": 3
+            }
+		},
+        {
+            "comments": "Create public IP address for Vnet Gateway in Vnet4",
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "vnet4gwPip",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic"
+            }
+        },
+        {
+            "comments": "Create public IP address for Vnet Gateway in Vnet5",
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "vnet5gwPip",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic"
+            }
+        },
+		{
+			"comments": "Create VPN gateway in vnet4. I havent found how to create a standard SKU, it needs to be manually resized afterwards. The BGP ASN number must be changed so that it is different than the ASN of the GW in vnet5",
+			"name": "vnet4Gw",
+            "type": "Microsoft.Resources/deployments",
+			"apiVersion": "2016-09-01",
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[variables('vpnGwTemplateUri')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+                    "vnetName": { "value": "myVnet4" },
+                    "gwName": { "value": "vnet4gw" },
+                    "enableBgp": { "value": "true" },
+                    "PIPName": { "value": "vnet4gwPip" }
+                }
+            },
+            "dependsOn": [
+                "vnet4gwPip",
+                "vnets"                
+            ]
+        },
+		{
+			"comments": "Create VPN gateway in vnet5. I havent found how to create a standard SKU, it needs to be manually resized afterwards. The BGP ASN number must be changed so that it is different than the ASN of the GW in vnet4",
+			"name": "vnet5Gw",
+            "type": "Microsoft.Resources/deployments",
+			"apiVersion": "2016-09-01",
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[variables('vpnGwTemplateUri')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+                    "vnetName": { "value": "myVnet5" },
+                    "gwName": { "value": "vnet5gw" },
+                    "enableBgp": { "value": "true" },
+                    "PIPName": { "value": "vnet5gwPip" }
+                }
+            },
+            "dependsOn": [
+                "vnet5gwPip",
+                "vnets"                
+            ]
+        }
+    ]
+}

@@ -1,0 +1,72 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "externalInternal": {
+            "defaultValue": "internal",
+            "type": "string"
+        },
+		"vnetName": {
+            "defaultValue": "myVnet",
+            "type": "String"
+		},
+		"subnetName": {
+            "defaultValue": "serverSubnet",
+            "type": "String"
+		},
+        "slbName": {
+            "defaultValue": "mySLB",
+            "type": "String"
+        },
+        "backendConfigName": {
+            "defaultValue": "myBackendConfig",
+            "type": "String"
+        },
+        "ipPrefix": {
+            "defaultValue": "10.0.1",
+            "type": "String"
+        },
+        "vipSuffix": {
+            "defaultValue": "100",
+            "type": "String"
+        },
+        "pipName": {
+            "defaultValue": "myPublicIp",
+            "type": "String"
+        }
+	},
+
+    "variables": {
+        "baseRepoURL": "https://raw.githubusercontent.com/erjosito/azure-network-lab/master/",
+		"deployLBTemplate": {
+			"internal": "[concat(variables('baseRepoURL'), 'internalLB.json')]",
+			"external": "[concat(variables('baseRepoURL'), 'externalLB.json')]"
+		},
+		"LBTemplateURI": "[variables('deployLBTemplate')[parameters('externalInternal')]]"
+    },
+
+
+    "resources": [
+		{
+			"name": "AzureLB",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2016-06-01",
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[variables('LBTemplateUri')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters":  {
+                    "vnetName": { "value": "[parameters('vnetName')]" },
+                    "subnetName": { "value": "[parameters('subnetName')]"},
+                    "slbName": { "value": "[parameters('slbName')]" },
+                    "backendConfigName": { "value": "[parameters('backendConfigName')]"},
+                    "ipPrefix": { "value": "[parameters('ipPrefix')]"},
+                    "vipSuffix": { "value": "[parameters('vipSuffix')]"},
+                    "pipName": { "value": "[parameters('pipName')]"}
+                }
+			}
+        }
+    ]
+}

@@ -1,0 +1,233 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "apiVersion": {
+            "defaultValue": "2015-06-15",
+            "type": "string"
+        },
+        "vnetName": {
+            "defaultValue": "myVnet",
+            "type": "string"
+        },
+        "storageAccountName": {
+            "defaultValue": "asatestjoselito",
+            "type": "string"
+        },
+        "vmType": {
+            "defaultValue": "csr",
+            "type": "string",
+            "allowedValues": ["csr", "ubuntu"]
+        },
+        "vmCount": {
+            "defaultValue": 1,
+            "type": "int"
+        },
+        "vmName": {
+            "defaultValue": "myCsr",
+            "type": "string"
+        },
+        "vmUsr": {
+            "defaultValue": "myadmin",
+            "type": "string"
+        },
+        "vmPwd": {
+            "defaultValue": null,
+            "type": "securestring"
+        },
+        "pipName": {
+            "defaultValue": "csr-publicIP",
+            "type": "string"
+        },
+        "subnet0Name": {
+            "defaultValue": "subnet1",
+            "type": "string"
+        },
+        "subnet1Name": {
+            "defaultValue": "subnet2",
+            "type": "string"
+        },
+        "ip0": {
+            "defaultValue": "10.0.0.10",
+            "type": "string",
+            "metadata": { "description": "This string will be completed with the copyIndex: .101, .102, etc" }
+        },
+        "ip1": {
+            "defaultValue": "10.0.1.10",
+            "type": "string",
+            "metadata": { "description": "This string will be completed with the copyIndex: .101, .102, etc" }
+        },
+        "scriptUri": {
+            "defaultValue": "",
+            "type": "string",
+            "metadata": { "description": "Not used, included for parameter-compatibility with nvaLinux_2nic_noVnet.json" }            
+        },
+        "scriptCmd": {
+            "defaultValue": "",
+            "type": "string",
+            "metadata": { "description": "Not used, included for parameter-compatibility with nvaLinux_2nic_noVnet.json" }            
+        }
+    },
+    "variables": {
+        "baseRepoURL": "https://raw.githubusercontent.com/erjosito/azure-network-lab/master/",
+        "defaultGw": {
+            "nic0": "[concat(parameters('ip0'), '1')]",
+            "nic1": "[concat(parameters('ip1'), '1')]"
+        },
+        "settingsTable": {
+            "asa": {
+                "planName": "asav-azure-byol",
+                "product": "cisco-asav",
+                "publisher": "cisco",
+                "sku": "asav-azure-byol",
+                "vmSize": "Standard_D3_v2"
+            },
+            "csr": {
+                "planName": "csr-azure-byol",
+                "product": "cisco-csr-1000v",
+                "publisher": "cisco",
+                "sku": "csr-azure-byol",
+                "vmSize": "Standard_D3_v2"
+            },
+            "ubuntu": {
+                "planName": "Ubuntu Server 16.04 LTS",
+                "product": "UbuntuServer",
+                "publisher": "Canonical",
+                "sku": "16.04.0-LTS",
+                "vmSize": "Standard_D2_v2"
+            }
+        },
+        "settings": "[variables('settingsTable')[parameters('vmType')]]",
+        "avSetName": "[concat(parameters('vmName'),'AvSet')]"
+    },
+    "resources": [
+		{
+			"comments": "Availability set for eventual NVA HA",
+			"type": "Microsoft.Compute/availabilitySets",
+			"name": "[variables('avSetName')]",
+			"apiVersion": "2016-03-30",
+			"location": "[resourceGroup().location]"
+		},
+        {
+            "comments": "Deploy Virtual Network Appliance",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[concat(parameters('vmName'), '-', copyIndex(1))]",
+            "apiVersion": "2015-06-15",
+            "location": "[resourceGroup().location]",
+            "plan": {
+                "name": "[variables('settings')['planName']]",
+                "product": "[variables('settings')['product']]",
+                "publisher": "[variables('settings')['publisher']]"
+            },
+            "properties": {
+				"availabilitySet": {
+					"id": "[resourceId('Microsoft.Compute/availabilitySets', variables('avSetName'))]"
+				},
+                "hardwareProfile": {
+                    "vmSize": "[variables('settings')['vmSize']]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('settings')['publisher']]",
+                        "offer": "[variables('settings')['product']]",
+                        "sku": "[variables('settings')['sku']]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "[concat(parameters('vmName'),'-disk')]",
+                        "createOption": "FromImage",
+                        "vhd": {
+                            "uri": "[concat('http', '://', parameters('storageAccountName'), '.blob.core.windows.net', concat('/vhds/', parameters('vmName'),'-disk.vhd'))]"
+                        },
+                        "caching": "ReadWrite"
+                    },
+                    "dataDisks": []
+                },
+                "osProfile": {
+                    "computerName": "[parameters('vmName')]",
+                    "adminUsername": "[parameters('vmUsr')]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": false
+                    },
+                    "secrets": [],
+                    "adminPassword": "[parameters('vmPwd')]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vmName'), '-', copyIndex(1), '-nic0'))]",
+                            "properties": {
+                                "primary": true
+                            }
+                        },
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vmName'), '-', copyIndex(1), '-nic1'))]",
+                            "properties": {
+                                "primary": false
+                            }
+                        }
+                    ]
+                }
+            },
+            "resources": [],
+            "copy": {
+                "name": "[parameters('vmName')]",
+                "count": "[parameters('vmCount')]"
+            },
+            "dependsOn": [
+                "[concat(parameters('vmName'), '-nic0')]",
+                "[concat(parameters('vmName'), '-nic1')]"
+            ]
+        },
+		{
+			"comments": "Deploy the virtual interfaces",
+            "name": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic0')]",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2016-06-01",
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[concat(variables('baseRepoURL'), 'nic_noNSG_noSLB_PIP_static.json')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters":  {
+                    "nicName": {"value": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic0')]"},
+                    "ipAddress": { "value": "[concat(parameters('ip0'), copyIndex(1))]" },                    
+                    "vnetName": { "value": "[parameters('vnetName')]" },
+                    "subnetName": { "value": "[parameters('subnet0Name')]"},
+                    "pipName": { "value": "[parameters('pipName')]" }
+                }
+            },
+            "dependsOn": [  
+            ],
+            "copy": {
+                "name": "[concat(parameters('vmName'), '-nic0')]",
+                "count": "[parameters('vmCount')]"
+            }
+        },
+		{
+			"name": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic1')]",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2016-06-01",
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[concat(variables('baseRepoURL'), 'nic_noNSG_noSLB_noPIP_static.json')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters":  {
+                    "nicName": {"value": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic1')]"},
+                    "ipAddress": { "value": "[concat(parameters('ip1'), copyIndex(1))]" },                    
+                    "vnetName": { "value": "[parameters('vnetName')]" },
+                    "subnetName": { "value": "[parameters('subnet1Name')]"}
+                }
+            },
+            "dependsOn": [
+            ],
+            "copy": {
+                "name": "[concat(parameters('vmName'), '-nic1')]",
+                "count": "[parameters('vmCount')]"
+            }
+        }
+    ]
+}

@@ -1,0 +1,62 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vnetName": {
+            "defaultValue": "myVnet",
+            "type": "string"
+        },
+        "gwName": {
+            "defaultValue": "myGw",
+            "type": "string",
+            "metadata": { "description": "Name for the VPN gateway"}
+        },
+        "enableBgp": {
+            "type": "string",
+            "metadata": { "description": "Enable or disable BGP" },
+            "defaultValue": "false",
+            "allowedValues": ["true", "false"]    
+        },
+        "PIPName": {
+            "defaultValue": "myGwPIP",
+            "type": "string",
+            "metadata": { "description": "Public IP address for the VPN gateway"}
+        }
+    },
+    "variables": {
+        "apiVersion": "2016-03-30",
+        "string2bool": {
+            "true": true,
+            "false": false
+        }
+    },
+    "resources": [
+        {
+            "comments": "Create VPN gateway",
+            "apiVersion": "2016-09-01",
+            "type": "Microsoft.Network/virtualNetworkGateways",
+            "name": "[parameters('gwName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')), '/subnets/', 'GatewaySubnet')]"
+                            },
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('PIPName'))]"
+                            }
+                        },
+                        "name": "[concat(parameters('vnetName'), 'vnetGwConfig')]"
+                    }
+                ],
+                "gatewayType": "Vpn",
+                "gatewaySize": "Default",
+                "vpnType": "RouteBased",
+                "enableBgp": "[variables('string2bool')[parameters('enableBgp')]]"
+            }
+        }
+    ]
+}

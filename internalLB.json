@@ -1,0 +1,109 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+		"vnetName": {
+            "defaultValue": "myVnet",
+            "type": "string"
+		},
+		"subnetName": {
+            "defaultValue": "serverSubnet",
+            "type": "string"
+		},
+        "slbName": {
+            "defaultValue": "mySLB",
+            "type": "string"
+        },
+        "backendConfigName": {
+            "defaultValue": "myBackendConfig",
+            "type": "string"
+        },
+        "ipPrefix": {
+            "defaultValue": "10.0.1",
+            "type": "string"
+        },
+        "vipSuffix": {
+            "defaultValue": "100",
+            "type": "string"
+        },
+        "pipName": {
+            "defaultValue": "myPublicIp",
+            "type": "string"
+        }
+	},
+
+    "variables": {
+		"vip": "[concat(parameters('ipPrefix'), '.', parameters('vipSuffix'))]",
+		"frontendConfigName": "myFrontendConfig",
+		"probeName": "myProbe",
+		"slbConfigName": "mySLBConfig"
+    },
+
+    "resources": [
+        {
+            "comments": "Internal Load Balancer",
+            "type": "Microsoft.Network/loadBalancers",
+            "name": "[parameters('slbName')]",
+            "apiVersion": "2016-03-30",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "frontendIPConfigurations": [
+                    {
+                        "name": "[variables('frontendConfigName')]",
+                        "properties": {
+                            "privateIPAddress": "[variables('vip')]",
+                            "privateIPAllocationMethod": "Static",
+                            "subnet": {
+                                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')), '/subnets/', parameters('subnetName'))]"
+                            }
+                        }
+                    }
+                ],
+                "backendAddressPools": [
+                    {
+                        "name": "[parameters('backendConfigName')]"
+                    }
+                ],
+                "loadBalancingRules": [
+                    {
+                        "name": "[variables('slbConfigName')]",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[concat( resourceId('Microsoft.Network/loadBalancers', parameters('slbName')), '/frontendIPConfigurations/', variables('frontendConfigName'))]"
+                            },
+                            "frontendPort": 1022,
+                            "backendPort": 22,
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 4,
+                            "protocol": "Tcp",
+                            "loadDistribution": "Default",
+                            "backendAddressPool": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('slbName')), '/backendAddressPools/', parameters('backendConfigName'))]"
+                            },
+                            "probe": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('slbName')), '/probes/', variables('probeName'))]"
+                            }
+                        }
+                    }
+                ],
+                "probes": [
+                    {
+                        "name": "[variables('probeName')]",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "port": 22,
+                            "intervalInSeconds": 15,
+                            "numberOfProbes": 2
+                        }
+                    }
+                ],
+                "inboundNatRules": [],
+                "outboundNatRules": [],
+                "inboundNatPools": []
+            },
+            "resources": [],
+            "dependsOn": [
+            ]
+        }
+    ]
+}

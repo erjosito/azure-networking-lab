@@ -1,0 +1,124 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vnetName": {
+            "defaultValue": "myVnet",
+            "type": "string"
+        },
+        "subnetName": {
+            "defaultValue": "serverSubnet",
+            "type": "string"
+		},
+        "storageAccountName": {
+            "defaultValue": "[concat('storage',uniqueString(resourceGroup().id))]",
+            "type": "string"
+        },
+        "adminUsername": {
+            "defaultValue": null,
+            "type": "string"
+        },
+        "adminPassword": {
+            "defaultValue": null,
+            "type": "securestring"
+        },
+        "vmName": {
+            "defaultValue": "myvm",
+            "type": "string"
+        },
+        "vmType": {
+            "defaultValue": "ubuntu",
+            "type": "string",
+            "allowedValues": [
+                "ubuntu"
+            ]
+        }
+    },
+ 
+    "variables": {
+        "baseRepoURL": "https://raw.githubusercontent.com/erjosito/azure-network-lab/master/",
+        "nicName": "[concat(parameters('vmName'),'nic')]",
+        "pipName": "[concat(parameters('vmName'),'pip')]",
+		"diskName": "[concat(parameters('vmName'),'disk')]",
+		"apiVersion": "2016-03-30",
+		"nicTemplateURI": "[concat(variables('baseRepoURL'), 'nic_noNSG_noSLB_PIP_dynamic.json')]",
+        "skuDataTable": {
+            "ubuntu": {
+                "sku": "16.04.0-LTS",
+                "publisher": "canonical",
+                "offer": "UbuntuServer",
+                "size": "Standard_A0"
+            }
+        },
+        "skuData": "[variables('skuDataTable')[parameters('vmType')]]"
+	},
+
+    "resources": [
+		{	
+			"comments": "VMs created and linked to NICs and storage account",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[parameters('vmName')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+				"hardwareProfile": {
+                    "vmSize": "[variables('skuData')['size']]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('skuData')['publisher']]",
+                        "offer": "[variables('skuData')['offer']]",
+                        "sku": "[variables('skuData')['sku']]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "[parameters('vmName')]",
+                        "createOption": "FromImage",
+                        "vhd": {
+                            "uri": "[concat('https', '://', parameters('storageAccountName'), '.blob.core.windows.net', '/vhds/', variables('diskName'), uniqueString(resourceGroup().id),'.vhd')]"
+                        },
+                        "caching": "ReadWrite"
+                    },
+                    "dataDisks": []
+                },
+                "osProfile": {
+                    "computerName": "[parameters('vmName')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "secrets": [],
+                    "adminPassword": "[parameters('adminPassword')]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+                        }
+                    ]
+                }
+            },
+            "resources": [],
+            "dependsOn": [
+                "[variables('nicName')]"
+            ]
+        },
+		{
+            "comments": "Create NIC for the VM with public IP",
+			"name": "[variables('nicName')]",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2016-06-01",
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[variables('nicTemplateUri')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters":  {
+                    "pipName": { "value": "[variables('pipName')]" },
+                    "nicName": { "value": "[variables('nicName')]" },
+                    "vnetName": { "value": "[parameters('vnetName')]" },
+                    "subnetName": { "value": "[parameters('subnetName')]"}
+                }
+			},
+            "dependsOn": []
+        }
+    ]
+}

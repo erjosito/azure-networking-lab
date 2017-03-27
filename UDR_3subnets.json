@@ -1,0 +1,166 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vnetPrefix": {
+            "defaultValue": "10.1",
+            "type": "string",
+            "metadata": { "description": "first two octets of vnet prefix, assumes a /16" }
+        },
+        "udrName": {
+            "defaultValue": "vnet1",
+            "type": "string",
+            "metadata": { "description": "Prefix for the Custom Route Table name" }
+        },
+        "nextHop": {
+            "defaultValue": "10.4.1.101",
+            "type": "string",
+            "metadata": { "description": "Next hop for ALL routes" }            
+        } 
+    },
+    "variables": {
+        "subnetPrefix": {
+            "0": "[concat(parameters('vnetPrefix'), '.0.0/24')]",
+            "1": "[concat(parameters('vnetPrefix'), '.1.0/24')]",
+            "2": "[concat(parameters('vnetPrefix'), '.2.0/24')]",
+            "3": "[concat(parameters('vnetPrefix'), '.3.0/24')]"
+        }
+    },
+    "resources": [
+        {
+            "comments": "Routing for subnet 0",
+            "type": "Microsoft.Network/routeTables",
+            "name": "[concat (parameters('udrName'), '-subnet0')]",
+            "apiVersion": "2016-03-30",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "routes": [
+                    {
+                        "name": "subnet1",
+                        "properties": {
+                            "addressPrefix": "[variables('subnetPrefix')['1']]",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[parameters('nextHop')]"
+                        }
+                    },
+                    {
+                        "name": "subnet2",
+                        "properties": {
+                            "addressPrefix": "[variables('subnetPrefix')['2']]",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[parameters('nextHop')]"
+                        }
+                    },
+                    {
+                        "name": "subnet3",
+                        "properties": {
+                            "addressPrefix": "[variables('subnetPrefix')['3']]",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[parameters('nextHop')]"
+                        }
+                    },
+                    {
+                        "name": "Default-Route-To-NVA",
+                        "properties": {
+                            "addressPrefix": "0.0.0.0/0",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[parameters('nextHop')]"
+                        }
+                    }
+                ]
+            },
+            "resources": [],
+            "dependsOn": []
+        },
+        {
+            "comments": "Routing for subnet 1",
+            "type": "Microsoft.Network/routeTables",
+            "name": "[concat (parameters('udrName'), '-subnet1')]",
+            "apiVersion": "2016-03-30",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "routes": [
+                    {
+                        "name": "subnet0",
+                        "properties": {
+                            "addressPrefix": "[variables('subnetPrefix')['0']]",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[parameters('nextHop')]"
+                        }
+                    },
+                    {
+                        "name": "subnet2",
+                        "properties": {
+                            "addressPrefix": "[variables('subnetPrefix')['2']]",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[parameters('nextHop')]"
+                        }
+                    },
+                    {
+                        "name": "subnet3",
+                        "properties": {
+                            "addressPrefix": "[variables('subnetPrefix')['3']]",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[parameters('nextHop')]"
+                        }
+                    },
+                    {
+                        "name": "Default-Route-To-NVA",
+                        "properties": {
+                            "addressPrefix": "0.0.0.0/0",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[parameters('nextHop')]"
+                        }
+                    }
+                ]
+            },
+            "resources": [],
+            "dependsOn": []
+        },
+        {
+            "comments": "Routing for subnet 2",
+            "type": "Microsoft.Network/routeTables",
+            "name": "[concat (parameters('udrName'), '-subnet2')]",
+            "apiVersion": "2016-03-30",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "routes": [
+                    {
+                        "name": "subnet0",
+                        "properties": {
+                            "addressPrefix": "[variables('subnetPrefix')['0']]",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[parameters('nextHop')]"
+                        }
+                    },
+                    {
+                        "name": "subnet2",
+                        "properties": {
+                            "addressPrefix": "[variables('subnetPrefix')['1']]",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[parameters('nextHop')]"
+                        }
+                    },
+                    {
+                        "name": "subnet3",
+                        "properties": {
+                            "addressPrefix": "[variables('subnetPrefix')['3']]",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[parameters('nextHop')]"
+                        }
+                    },
+                    {
+                        "name": "Other_vnets",
+                        "properties": {
+                            "addressPrefix": "10.0.0.0/8",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[parameters('nextHop')]"
+                        }
+                    }
+                ]
+            },
+            "resources": [],
+            "dependsOn": []
+        }
+    ]
+}
