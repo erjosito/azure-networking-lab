@@ -50,7 +50,7 @@
         }
     },
     "variables": {
-        "baseRepoURL": "https://raw.githubusercontent.com/erjosito/azure-network-lab/master/",
+        "baseRepoURL": "https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/",
         "apiVersion": "2016-03-30",
         "vnetSpace": "[concat(parameters('vnetOctets12'), '0.0/16')]",
         "gwTemplateUriTable": {

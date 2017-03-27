@@ -37,7 +37,7 @@
 	},
 
     "variables": {
-        "baseRepoURL": "https://raw.githubusercontent.com/erjosito/azure-network-lab/master/",
+        "baseRepoURL": "https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/",
 		"deployLBTemplate": {
 			"internal": "[concat(variables('baseRepoURL'), 'internalLB.json')]",
 			"external": "[concat(variables('baseRepoURL'), 'externalLB.json')]"

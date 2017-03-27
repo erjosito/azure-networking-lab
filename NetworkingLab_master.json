@@ -19,7 +19,8 @@
         }
     },
     "variables": {
-        "baseRepoURL": "https://raw.githubusercontent.com/erjosito/azure-network-lab/master/",
+        "baseRepoURL": "https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/",
+        "linuxVmTemplateURI": "[concat(variables('baseRepoURL'), 'linuxVM.json')]",
         "storageAccountName": "[concat('storage', uniqueString(resourceGroup().id))]",
         "multiVnetParams": {
             "storageAccountName": { "value": "[variables('storageAccountName')]" },            
@@ -80,6 +81,25 @@
 				},
 				"parameters":  "[variables('multiVnetParams')]"
 			}
+		},
+		{
+			"comments": "Create additional VM in Vnet1-Subnet1",
+            "name": "vnet1subnet1vm2",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2016-06-01",
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[variables('linuxVmTemplateURI')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters":  {
+                    
+                }
+			},
+            "dependsOn": [
+                "vnets"
+            ]
 		},
 		{
 			"comments": "Create NVA in vnet4, subnets 1 and 2, if createNVA=yes",

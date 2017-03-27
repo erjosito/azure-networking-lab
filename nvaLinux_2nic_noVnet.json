@@ -73,7 +73,7 @@
 		}
     },
     "variables": {
-        "baseRepoURL": "https://raw.githubusercontent.com/erjosito/azure-network-lab/master/",
+        "baseRepoURL": "https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/",
         "defaultGw": {
             "nic0": "[concat(parameters('ip0'), '1')]",
             "nic1": "[concat(parameters('ip1'), '1')]"
