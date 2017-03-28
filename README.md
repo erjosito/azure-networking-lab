@@ -1,23 +1,40 @@
 # Azure Networking Open Source Lab
-** WORK IN PROGRESS!!! **
+
+**================**
+**WORK IN PROGRESS**
+**================**
 
 
 # Table of Contents
 
 [Objectives and initial setup] (#objectives)
+
 [Introduction to Azure Networking] (#intro)
+
 [Lab 0: Initialize Environment] (#lab0)
+
 [Lab 1: Explore Lab environment] (#lab1)
+
 [Lab 2: Spoke-to-Spoke communication over vnet gateway] (#lab2)
+
 [Lab 3: spoke-to-spoke communication over NVA] (#lab3)
+
 [Lab 4: Microsegmentation with NVA] (#lab4)
+
 [Lab 5: VPN connection to the Hub Vnet] (#lab5)
+
 [Lab 6: NVA scalability] (#lab6)
+
 [Lab 7: Outgoing Internet Traffic Protected by NVA] (#lab7)
+
 [Lab 8: Incoming Internet Traffic Protected by NVA] (#lab8)
+
 [Lab 9: Advanced HTTP-based probes] (#lab9)
+
 [End the lab] (#end)
+
 [Conclusion] (#conclusion)
+
 [References] (#ref)
 
 
@@ -86,11 +103,11 @@ az configure --defaults group=vnetTest
 **Step 2.** Deploy the master template that will deploy our initial network configuration:
 
 ```
-az group deployment create --name netLabDeployment --template-uri https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/NetworkingLab\_master.json --resource-group vnetTest --parameters '{"adminUsername":{&quot;value":"lab-user"}, "adminPassword":{"value":"Microsoft123!"}}&#39;
+az group deployment create --name netLabDeployment --template-uri https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/NetworkingLab\_master.json --resource-group vnetTest --parameters '{"adminUsername":{"value":"lab-user"}, "adminPassword":{"value":"Microsoft123!"}}&#39;
 ```
 
 
-1. Step 3.As preparation for one of the labs later in this guide, upgrade the deployed Vnet Gateways vnet4gw and vnet5gw from basic to standard. The following commands will kick off a conversion job that will run in the background for some minutes, but after running them, you can safely continue with the next lab in this guide:
+**Step 3.** As preparation for one of the labs later in this guide, upgrade the deployed Vnet Gateways vnet4gw and vnet5gw from basic to standard. The following commands will kick off a conversion job that will run in the background for some minutes, but after running them, you can safely continue with the next lab in this guide:
 
 ```
 az network vnet-gateway update --sku Standard -n vnet4gw
@@ -108,7 +125,7 @@ You can see some diagrams about the deployed environment here, so that you can i
 ![Architecture Image](https://github.com/erjosito/azure-networking-lab/blob/master/figure01.png "Overall vnet diagram")
 **Figure**: Overall vnet diagram
 
-![Architecture Image](https://github.com/erjosito/azure-networking-lab/blob/master/figure01.png "Subnet design")
+![Architecture Image](https://github.com/erjosito/azure-networking-lab/blob/master/figure02.png "Subnet design")
 **Figure**: Subnet design of every vnet
 
 ```
@@ -194,168 +211,159 @@ True         Vpn            westeurope  vnet5gw  RouteBased
 
 _Note: Some columns of the ouput above have been removed for clarity purposes._
 
-# Lab 2: Spoke-to-Spoke communication over vnet gateway <a name='lab2'></>
+# Lab 2: Spoke-to-Spoke communication over vnet gateway <a name='lab2'></a>
 
 Spokes can speak to other spokes by redirecting traffic to a vnet gateway or an NVA in the hub vnet by means of UDRs. The following diagram illustrates what we are trying to achieve in this lab:
 
 ![Architecture Image](https://github.com/erjosito/azure-networking-lab/blob/master/figure03.png "Spoke to spoke communication")
 **Figure**: Spoke-to-spoke communication over vnet gateway
 
-1. Step 1.After verifying the public IP address assigned to the first VM in vnet1 (called &quot;myVnet1vm&quot;), connect to it using the credentials that you specified when deploying the template, and verify that you don&#39;t have connectivity to the VM in vnet2:
+**Step 1.** After verifying the public IP address assigned to the first VM in vnet1 (called &quot;myVnet1vm&quot;), connect to it using the credentials that you specified when deploying the template, and verify that you don&#39;t have connectivity to the VM in vnet2:
 
-**$ ssh 52.174.33.80**
 
+```
+$ ssh 52.174.33.80
 The authenticity of host &#39;52.174.33.80 (52.174.33.80)&#39; can&#39;t be established.
-
 ECDSA key fingerprint is b5:24:f3:aa:1e:f2:1d:fa:09:0e:b4:91:fa:49:b5:2f.
-
 Are you sure you want to continue connecting (yes/no)? yes
-
 Warning: Permanently added &#39;52.174.33.80&#39; (ECDSA) to the list of known hosts.
-
 lab-user@52.174.33.80&#39;s password:
 
 lab-user@myVnet1vm:~$ ping 10.2.1.4
-
 PING 10.2.1.4 (10.2.1.4) 56(84) bytes of data.
-
 ^C
-
 --- 10.2.1.4 ping statistics ---
 
 10 packets transmitted, 0 received, **100% packet loss** , time 8999ms
+```
 
 _Note: please note your IP address will be different to the one used in this example._
 
-1. Step 2.Verify that the involved subnets (myVnet1-Subnet1 and myVnet2-Subnet1) do not have any routing table attached:
+**Step 2.** Verify that the involved subnets (myVnet1-Subnet1 and myVnet2-Subnet1) do not have any routing table attached:
 
-**$ az network vnet subnet show --vnet-name myVnet1 -n myVnet1Subnet1 | grep routeTable**
 
-** **&quot;routeTable&quot;: null
+```
+$ az network vnet subnet show --vnet-name myVnet1 -n myVnet1Subnet1 | grep routeTable
+ "routeTable": null
+```
 
-1. Step 3.Create a custom route table named &quot;vnet1-subnet1&quot;, and another one called &quot;vnet2-subnet1&quot;:
+**Step 3.** Create a custom route table named &quot;vnet1-subnet1&quot;, and another one called &quot;vnet2-subnet1&quot;:
 
-**$ az network route-table create --name vnet1-subnet1**
+```
+$ az network route-table create --name vnet1-subnet1
+```
 
-**$ az network route-table create --name vnet1-subnet1**
+```
+$ az network route-table create --name vnet1-subnet1
+```
 
-1. Step 4.Now attach the custom route tables to both subnets involved in this example (Vnet1Subnet1, Vnet2Subnet2):
+**Step 4.** Now attach the custom route tables to both subnets involved in this example (Vnet1Subnet1, Vnet2Subnet2):
 
-**$ az network vnet subnet update -n myVnet1Subnet1 --vnet-name myVnet1 --route-table vnet1-subnet1**
 
-**$ az network vnet subnet update -n myVnet2Subnet1 --vnet-name myVnet2 --route-table vnet2-subnet1**
+```
+$ az network vnet subnet update -n myVnet1Subnet1 --vnet-name myVnet1 --route-table vnet1-subnet1
+```
 
-1. Step 5.And now you can check that the subnets are associated with the right routing tables:
+```
+$ az network vnet subnet update -n myVnet2Subnet1 --vnet-name myVnet2 --route-table vnet2-subnet1
+```
 
-**$ az network vnet subnet show --vnet-name myVnet1 -n myVnet1Subnet1 | grep routeTable**
+**Step 5.** And now you can check that the subnets are associated with the right routing tables:
 
-** **&quot;routeTable&quot;: {
+```
+$ az network vnet subnet show --vnet-name myVnet1 -n myVnet1Subnet1 | grep routeTable
+ "routeTable": {
 
-    &quot;id&quot;: &quot;/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/routeTables/vnet1-subnet1&quot;,
+    "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/routeTables/vnet1-subnet1",
+```
 
-**$ az network vnet subnet show --vnet-name myVnet2 -n myVnet2Subnet1 | grep routeTable**
+```
+$ az network vnet subnet show --vnet-name myVnet2 -n myVnet2Subnet1 | grep routeTable
 
-** **&quot;routeTable&quot;: {
+ "routeTable": {
 
-    &quot;id&quot;: &quot;/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/routeTables/vnet2-subnet1&quot;,
+    "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/routeTables/vnet2-subnet1",
+```
 
-1. Step 6.Now we can try to tell Azure to send traffic from subnet 1 to subnet 2 over the hub vnet. Normally you would do this by sending traffic to the vnet router. Let&#39;s see what happens if we try this with vnet1. In order to do so, we need to add a new route to our custom routing table:
+**Step 6.** Now we can try to tell Azure to send traffic from subnet 1 to subnet 2 over the hub vnet. Normally you would do this by sending traffic to the vnet router. Let&#39;s see what happens if we try this with vnet1. In order to do so, we need to add a new route to our custom routing table:
 
-**$ az network route-table route create --address-prefix 10.2.0.0/16 --next-hop-type vnetLocal --route-table-name vnet1-subnet1 -n vnet2**
+```
+$ az network route-table route create --address-prefix 10.2.0.0/16 --next-hop-type vnetLocal --route-table-name vnet1-subnet1 -n vnet2
+```
 
-1. Step 7.You can verify that the route has been added to the routing table correctly:
+**Step 7.** You can verify that the route has been added to the routing table correctly:
 
-**$ az network route-table route list --route-table-name vnet1-subnet1 -o table**
-
+```
+$ az network route-table route list --route-table-name vnet1-subnet1 -o table
 AddressPrefix    Name                  NextHopIpAddress    NextHopType    Provisioning
-
 ---------------  --------------------  ------------------  ----------------  ---------
-
 10.2.0.0/16      vnet2                                     VnetLocal         Succeeded
+```
 
 However, if we verify the routing table that has been programmed in the interface of VMs in the subnet, you can see that the next hop is actually &quot;None&quot;! (in other words, drop the packets):
 
-** **** $ az network nic show-effective-route-table -n myVnet1vmnic**
-
+```
+$ az network nic show-effective-route-table -n myVnet1vmnic
 ...
-
     {
-
-      &quot;addressPrefix&quot;: [
-
-        &quot; **10.2.0.0/16**&quot;
-
+      "addressPrefix": [
+        "10.2.0.0/16"
       ],
-
-      &quot;name&quot;: &quot; **vnet2**&quot;,
-
-      &quot;nextHopIpAddress&quot;: [],
-
-      &quot;nextHopType&quot;: &quot; **None**&quot;,
-
-      &quot;source&quot;: &quot;User&quot;,
-
-      &quot;state&quot;: &quot;Active&quot;
-
+      "name": " vnet2",
+      "nextHopIpAddress": [],
+      "nextHopType": " None",
+      "source": "User",
+      "state": "Active"
     },
+```
 
-1. Step 8.Now we will install in each route table routes for the other side, pointing to the private IP address of the vnet gateway in vnet 4. This private address is usually the fourth one in the subnet. In our case, 10.4.0.4. You can confirm that this address exists by trying to ping it from any VM.
+**Step 8.** Now we will install in each route table routes for the other side, pointing to the private IP address of the vnet gateway in vnet 4. This private address is usually the fourth one in the subnet. In our case, 10.4.0.4. You can confirm that this address exists by trying to ping it from any VM.
 
-**$ az network route-table route update --address-prefix 10.2.0.0/16 --next-hop-ip-address**  **10.4.0.4**  **--next-hop-type**  **VirtualAppliance**  **--route-table-name vnet1-subnet1 -n vnet2**
+```
+$ az network route-table route update --address-prefix 10.2.0.0/16 --next-hop-ip-address 10.4.0.4  --next-hop-type VirtualAppliance --route-table-name vnet1-subnet1 -n vnet2
+```
 
-** **** $ az network route-table route create --address-prefix 10.1.0.0/16 --next-hop-ip-address **** 10.4.0.4 **** --next-hop-type **** VirtualAppliance **** --route-table-name vnet2-subnet1 -n vnet1**
+```
+$ az network route-table route create --address-prefix 10.1.0.0/16 --next-hop-ip-address 10.4.0.4 --next-hop-type VirtualAppliance --route-table-name vnet2-subnet1 -n vnet1
+```
 
-1. Step 9.We can verify what the route tables look like now, and how it has been programmed in one of the NICs associated to the subnet:
+**Step 9.** We can verify what the route tables look like now, and how it has been programmed in one of the NICs associated to the subnet:
 
-** $ az network route-table route list --route-table-name vnet1-subnet1 -o table**
-
+```
+$ az network route-table route list --route-table-name vnet1-subnet1 -o table
 AddressPrefix    Name     NextHopIpAddress    NextHopType       ProvisioningState
-
 ---------------  -------  ------------------  ----------------  -------------------
-
 10.2.0.0/16      vnet2    10.4.0.4            VirtualAppliance  Succeeded
+```
 
-** **** $ az network nic show-effective-route-table -n myVnet1vmnic**
-
+```
+$ az network nic show-effective-route-table -n myVnet1vmnic
 ...
-
     {
-
-      &quot;addressPrefix&quot;: [
-
-        &quot;10.2.0.0/16&quot;
-
+      "addressPrefix": [
+        "10.2.0.0/16"
       ],
-
-      &quot;name&quot;: &quot;vnet2&quot;,
-
-      &quot;nextHopIpAddress&quot;: [
-
-        &quot;10.4.0.4&quot;
-
+      "name": "vnet2",
+      "nextHopIpAddress": [
+        "10.4.0.4"
       ],
-
-      &quot;nextHopType&quot;: &quot;VirtualAppliance&quot;,
-
-      &quot;source&quot;: &quot;User&quot;,
-
-      &quot;state&quot;: &quot;Active&quot;
-
+      "nextHopType": "VirtualAppliance",
+      "source": "User",
+      "state": "Active"
     }
+```
 
-1. Step 10.And now VM1 should be able to reach VM2:
+**Step 10.** And now VM1 should be able to reach VM2:
 
-** lab-user@myVnet1vm:~$ ping 10.2.1.4**
-
+```
+lab-user@myVnet1vm:~$ ping 10.2.1.4
 PING 10.2.1.4 (10.2.1.4) 56(84) bytes of data.
-
 64 bytes from 10.2.1.4: icmp\_seq=4 ttl=63 time=7.59 ms
-
 64 bytes from 10.2.1.4: icmp\_seq=5 ttl=63 time=5.79 ms
-
 64 bytes from 10.2.1.4: icmp\_seq=6 ttl=63 time=4.90 ms
+```
 
-# Lab 3: spoke-to-spoke communication over NVA
+# Lab 3: spoke-to-spoke communication over NVA <a name="lab3"></a>
 
 In some situations you would want some kind of security between the different Vnets. Although this security can be partially provided by Network Security Groups, certain organizations might require some more advanced filtering functionality such as the one that firewalls provide.
 
