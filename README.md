@@ -1,17 +1,12 @@
 # Azure Networking Open Source Lab
 
-**================**
-**WORK IN PROGRESS**
-**================**
-
-
 # Table of Contents
 
-[Objectives and initial setup] (#objectives)
+[Objectives and initial setup](#objectives)
 
-[Introduction to Azure Networking] (#intro)
+[Introduction to Azure Networking](#intro)
 
-[Lab 0: Initialize Environment] (#lab0)
+[Lab 0: Initialize Environment](#lab0)
 
 [Lab 1: Explore Lab environment] (#lab1)
 
@@ -366,9 +361,9 @@ $ az network nic show-effective-route-table -n myVnet1vmnic
 ```
 lab-user@myVnet1vm:~$ ping 10.2.1.4
 PING 10.2.1.4 (10.2.1.4) 56(84) bytes of data.
-64 bytes from 10.2.1.4: icmp\_seq=4 ttl=63 time=7.59 ms
-64 bytes from 10.2.1.4: icmp\_seq=5 ttl=63 time=5.79 ms
-64 bytes from 10.2.1.4: icmp\_seq=6 ttl=63 time=4.90 ms
+64 bytes from 10.2.1.4: icmp_seq=4 ttl=63 time=7.59 ms
+64 bytes from 10.2.1.4: icmp_seq=5 ttl=63 time=5.79 ms
+64 bytes from 10.2.1.4: icmp_seq=6 ttl=63 time=4.90 ms
 ```
 
 # Lab 3: spoke-to-spoke communication over NVA <a name="lab3"></a>
@@ -409,7 +404,7 @@ Are you sure you want to continue connecting (yes/no)? yes
 Warning: Permanently added &#39;13.81.116.28&#39; (ECDSA) to the list of known hosts.
 lab-user@13.81.116.28&#39;s password:
 
-Welcome to Ubuntu 16.04.1 LTS (GNU/Linux 4.4.0-47-generic x86\_64)
+Welcome to Ubuntu 16.04.1 LTS (GNU/Linux 4.4.0-47-generic x86_64)
 ```
 
 ```
@@ -442,7 +437,7 @@ ECDSA key fingerprint is SHA256:o+kldZQA9cY9bOXQOUUMd3keFXN2TofSGXcJ1VxKuXM.
 Are you sure you want to continue connecting (yes/no)? yes
 Warning: Permanently added '10.2.1.4' (ECDSA) to the list of known hosts.
 lab-user@10.2.1.4's password:
-Welcome to Ubuntu 16.04.1 LTS (GNU/Linux 4.4.0-47-generic x86\_64)
+Welcome to Ubuntu 16.04.1 LTS (GNU/Linux 4.4.0-47-generic x86_64)
 lab-user@myVnet2vm:~$
 ```
 
@@ -514,8 +509,8 @@ $ az network vpn-connection list -o table
 ```
 lab-user@myVnet1vm:~$ ping 10.5.1.4
 PING 10.5.1.4 (10.5.1.4) 56(84) bytes of data.
-64 bytes from 10.5.1.4: icmp\_seq=1 ttl=62 time=10.9 ms
-64 bytes from 10.5.1.4: icmp\_seq=2 ttl=62 time=9.92 ms
+64 bytes from 10.5.1.4: icmp_seq=1 ttl=62 time=10.9 ms
+64 bytes from 10.5.1.4: icmp_seq=2 ttl=62 time=9.92 ms
 ```
 
 ![Architecture Image](https://github.com/erjosito/azure-networking-lab/blob/master/figureVpn.png "VPN and Vnet Peering")
@@ -630,7 +625,7 @@ Please type 'yes' or 'no': yes
 Warning: Permanently added '10.5.1.4' (ECDSA) to the list of known hosts.
 lab-user@10.5.1.4's password:
 
-Welcome to Ubuntu 16.04.1 LTS (GNU/Linux 4.4.0-47-generic x86\_64)
+Welcome to Ubuntu 16.04.1 LTS (GNU/Linux 4.4.0-47-generic x86_64)
 ```
 
 
@@ -715,7 +710,7 @@ PING 10.1.1.5 (10.1.1.5) 56(84) bytes of data.
 lab-user@myVnet1vm:~$ ssh 10.1.1.5
 lab-user@10.1.1.5's password:
 
-Welcome to Ubuntu 16.04.1 LTS (GNU/Linux 4.4.0-47-generic x86\_64)
+Welcome to Ubuntu 16.04.1 LTS (GNU/Linux 4.4.0-47-generic x86_64)
 ```
 
 **Step 6.** Observe the source IP address that the destination machine sees:
@@ -824,7 +819,7 @@ Are you sure you want to continue connecting (yes/no)? yes
 Warning: Permanently added '10.3.1.4' (ECDSA) to the list of known hosts.
 lab-user@10.3.1.4's password:
 
-Welcome to Ubuntu 16.04.1 LTS (GNU/Linux 4.4.0-47-generic x86\_64)
+Welcome to Ubuntu 16.04.1 LTS (GNU/Linux 4.4.0-47-generic x86_64)
 ...
 lab-user@ myVnet3vm :~$
 ```
@@ -1078,7 +1073,7 @@ ECDSA key fingerprint is 74:1f:d0:f9:fc:6a:0c:bc:d7:ee:d7:96:90:fd:79:b0.
 Are you sure you want to continue connecting (yes/no)? yes
 Warning: Permanently added '[52.174.188.207]:1022' (ECDSA) to the list of known hosts.
 lab-user@52.174.188.207's password:
-Welcome to Ubuntu 16.04.1 LTS (GNU/Linux 4.4.0-47-generic x86\_64)
+Welcome to Ubuntu 16.04.1 LTS (GNU/Linux 4.4.0-47-generic x86_64)
 ...
 
 lab-user@myVnet3vm:~$
