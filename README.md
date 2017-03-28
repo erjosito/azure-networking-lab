@@ -122,10 +122,15 @@ az network vnet-gateway update --sku Standard -n vnet5gw
 **Step 1.** Explore the objects created by the ARM template: vnets, subnets, VMs, interfaces, public IP addresses, etc. Save the output of these commands.
 
 You can see some diagrams about the deployed environment here, so that you can interpret better the command outputs
+
 ![Architecture Image](https://github.com/erjosito/azure-networking-lab/blob/master/figure01.png "Overall vnet diagram")
+
 **Figure**: Overall vnet diagram
 
+
+
 ![Architecture Image](https://github.com/erjosito/azure-networking-lab/blob/master/figure02.png "Subnet design")
+
 **Figure**: Subnet design of every vnet
 
 ```
@@ -215,8 +220,11 @@ _Note: Some columns of the ouput above have been removed for clarity purposes._
 
 Spokes can speak to other spokes by redirecting traffic to a vnet gateway or an NVA in the hub vnet by means of UDRs. The following diagram illustrates what we are trying to achieve in this lab:
 
+
 ![Architecture Image](https://github.com/erjosito/azure-networking-lab/blob/master/figure03.png "Spoke to spoke communication")
+
 **Figure**: Spoke-to-spoke communication over vnet gateway
+
 
 **Step 1.** After verifying the public IP address assigned to the first VM in vnet1 (called &quot;myVnet1vm&quot;), connect to it using the credentials that you specified when deploying the template, and verify that you don't have connectivity to the VM in vnet2:
 
@@ -369,8 +377,11 @@ In some situations you would want some kind of security between the different Vn
 
 In this lab we will insert a Network Virtual Appliance in the communication flow. Typically these Network Virtual Appliance might be a next-generation firewall of vendors such as Barracuda, Checkpoint, Cisco or Palo Alto, to name a few, but in this lab we will use a Linux machine with 2 interfaces and traffic forwarding enabled. For this exercise, the firewall will be inserted as a &quot;firewall on a stick&quot;, that is one single interface will suffice.
 
+
 ![Architecture Image](https://github.com/erjosito/azure-networking-lab/blob/master/figure04.png "Spoke-to-spoke and NVAs")
+
 **Figure** Spoke-to-spoke traffic going through an NVA
+
 
 **Step 1.** In the Ubuntu VM acting as firewall iptables have been configured by means of a Custom Script Extension. This extension downloads a script from a public repository (the Github repository for this lab) and runs it on the VM on provisioning time. Verify that the NVAs have successfully registered the extensions with this command:
 
