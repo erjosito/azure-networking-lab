@@ -8,29 +8,29 @@
 
 [Lab 0: Initialize Environment](#lab0)
 
-[Lab 1: Explore Lab environment] (#lab1)
+[Lab 1: Explore Lab environment](#lab1)
 
-[Lab 2: Spoke-to-Spoke communication over vnet gateway] (#lab2)
+[Lab 2: Spoke-to-Spoke communication over vnet gateway](#lab2)
 
-[Lab 3: spoke-to-spoke communication over NVA] (#lab3)
+[Lab 3: spoke-to-spoke communication over NVA](#lab3)
 
-[Lab 4: Microsegmentation with NVA] (#lab4)
+[Lab 4: Microsegmentation with NVA](#lab4)
 
-[Lab 5: VPN connection to the Hub Vnet] (#lab5)
+[Lab 5: VPN connection to the Hub Vnet](#lab5)
 
-[Lab 6: NVA scalability] (#lab6)
+[Lab 6: NVA scalability](#lab6)
 
-[Lab 7: Outgoing Internet Traffic Protected by NVA] (#lab7)
+[Lab 7: Outgoing Internet Traffic Protected by NVA](#lab7)
 
-[Lab 8: Incoming Internet Traffic Protected by NVA] (#lab8)
+[Lab 8: Incoming Internet Traffic Protected by NVA](#lab8)
 
-[Lab 9: Advanced HTTP-based probes] (#lab9)
+[Lab 9: Advanced HTTP-based probes](#lab9)
 
-[End the lab] (#end)
+[End the lab](#end)
 
-[Conclusion] (#conclusion)
+[Conclusion](#conclusion)
 
-[References] (#ref)
+[References](#ref)
 
 
 # Objectives and initial setup <a name="objectives"></a>
@@ -39,9 +39,9 @@ This document contains a lab guide that helps to deploy a basic environment in A
 
 Before starting with this account, make sure to fulfill all the requisites:
 
-- --A valid Azure subscription account. If you don&#39;t have one, you can create your [free azure account](https://azure.microsoft.com/en-us/free/) (https://azure.microsoft.com/en-us/free/) today.
-- --If you are using Windows 10, you can [install Bash shell on Ubuntu on Windows](http://www.windowscentral.com/how-install-bash-shell-command-line-windows-10) ( [http://www.windowscentral.com/how-install-bash-shell-command-line-windows-10](http://www.windowscentral.com/how-install-bash-shell-command-line-windows-10)).
-- --Azure CLI 2.0, follow these instructions to install: [https://docs.microsoft.com/en-us/cli/azure/install-azure-cli](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
+- A valid Azure subscription account. If you don&#39;t have one, you can create your [free azure account](https://azure.microsoft.com/en-us/free/) (https://azure.microsoft.com/en-us/free/) today.
+- If you are using Windows 10, you can [install Bash shell on Ubuntu on Windows](http://www.windowscentral.com/how-install-bash-shell-command-line-windows-10) ( [http://www.windowscentral.com/how-install-bash-shell-command-line-windows-10](http://www.windowscentral.com/how-install-bash-shell-command-line-windows-10)).
+- Azure CLI 2.0, follow these instructions to install: [https://docs.microsoft.com/en-us/cli/azure/install-azure-cli](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
 
 The labs cover:
 
@@ -52,6 +52,7 @@ The labs cover:
 - Scaling out NVAs with load balancing and SNAT
 - Advanced probes for Azure Load Balancers
 - Linux custom routing
+- Azure CLI 2.0
 
 Along this lab some variables will be used, that might (and probably should) look different in your environment. This is the variables you need to decide on before starting with the lab. Notice that the VM names are prefixed by a (not so) random number, since these names will be used to create DNS entries as well, and DNS names need to be unique.
 
