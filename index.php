@@ -20,11 +20,11 @@
        }
        if ($allReachable === false) {
          // Ping did not work
-         http_response_code (202);
+         http_response_code (299);
          print ("The target hosts do not seem to be all reachable (" . $host . ")\n");
        } else {
          // Ping did work
-         http_response_code (201);
+         http_response_code (200);
          print ("All target hosts seem to be reachable\n");
        }
      ?>
