@@ -271,7 +271,7 @@
                                             "name": "ipconfig",
                                             "properties": {
                                                 "subnet": {
-                                                    "id": "[variables('subnet0Id')]"
+                                                    "id": "[variables('subnet1Id')]"
                                                 },
                                                 "loadBalancerBackendAddressPools": [
                                                     {
