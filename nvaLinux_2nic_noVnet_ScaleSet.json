@@ -214,7 +214,7 @@
                 "slb-ext"
             ],
             "sku": {
-                "name": "[variables('settings')['sku']]",
+                "name": "[variables('settings')['vmSize']]",
                 "capacity": "[parameters('vmCount')]"
             },
             "properties": {
