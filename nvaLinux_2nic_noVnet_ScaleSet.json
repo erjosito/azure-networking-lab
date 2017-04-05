@@ -248,6 +248,7 @@
                                     "ipConfigurations": [
                                         {
                                             "name": "ipconfig",
+                                            "enableIPForwarding": true,
                                             "properties": {
                                                 "subnet": {
                                                     "id": "[variables('subnet0Id')]"
@@ -266,6 +267,7 @@
                                 "name": "nic1",
                                 "properties": {
                                     "primary": "false",
+                                    "enableIPForwarding": true,
                                     "ipConfigurations": [
                                         {
                                             "name": "ipconfig",
