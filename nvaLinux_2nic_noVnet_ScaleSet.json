@@ -1,0 +1,313 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "apiVersion": {
+            "defaultValue": "2015-06-15",
+            "type": "string"
+        },
+        "vnetName": {
+            "defaultValue": "myVnet",
+            "type": "string"
+        },
+        "storageAccountName": {
+            "defaultValue": "[concat('storage',uniqueString(resourceGroup().id))]",
+            "type": "string"
+        },
+        "vmType": {
+            "defaultValue": "ubuntu",
+            "type": "string",
+            "allowedValues": ["ubuntu"]
+        },
+        "vmCount": {
+            "defaultValue": 1,
+            "type": "int"
+        },
+        "vmName": {
+            "defaultValue": "[concat('nva',uniqueString(resourceGroup().id))]",
+            "type": "string"
+        },
+        "vmSSName": {
+            "defaultValue": "[concat('nvaSS',uniqueString(resourceGroup().id))]",
+            "type": "string"
+        },
+        "vmUsr": {
+            "defaultValue": "myadmin",
+            "type": "string"
+        },
+        "vmPwd": {
+            "defaultValue": null,
+            "type": "securestring"
+        },
+        "pipName": {
+            "defaultValue": "nva-publicIP",
+            "type": "string"
+        },
+        "subnet0Name": {
+            "defaultValue": "subnet1",
+            "type": "string"
+        },
+        "subnet1Name": {
+            "defaultValue": "subnet2",
+            "type": "string"
+        },
+        "ip0": {
+            "defaultValue": "10.0.0.10",
+            "type": "string",
+            "metadata": { "description": "This string will be completed with the copyIndex: .101, .102, etc" }
+        },
+        "ip1": {
+            "defaultValue": "10.0.1.10",
+            "type": "string",
+            "metadata": { "description": "This string will be completed with the copyIndex: .101, .102, etc" }
+        },
+        "scriptUri": {
+            "defaultValue": "https://raw.githubusercontent.com/erjosito/azure-network-lab/master/linuxNVAconfig.sh",
+            "type": "string",
+            "metadata": { "description": "Script that will be executed" }            
+        },
+        "scriptCmd": {
+            "defaultValue": "sh linuxNVAconfig.sh",
+            "type": "string",
+            "metadata": { "description": "Command to run the script" }            
+        },
+		"deployLBYesNo": {
+			"defaultValue": "no",
+			"type": "string"
+		}
+    },
+    "variables": {
+        "baseRepoURL": "https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/",
+        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
+        "subnet0Id": "[concat(variables('vnetID'), '/subnets/', parameters('subnet0Name'))]",
+        "subnet1Id": "[concat(variables('vnetID'), '/subnets/', parameters('subnet0Name'))]",
+        "defaultGw": {
+            "nic0": "[concat(parameters('ip0'), '1')]",
+            "nic1": "[concat(parameters('ip1'), '1')]"
+        },
+        "settingsTable": {
+            "ubuntu": {
+                "product": "UbuntuServer",
+                "publisher": "Canonical",
+                "sku": "16.04.0-LTS",
+                "vmSize": "Standard_D2_v2"
+            }
+        },
+        "settings": "[variables('settingsTable')[parameters('vmType')]]",
+        "avSetName": "[concat(parameters('vmName'),'AvSet')]",
+        "slbName": "[concat(parameters('vmName'), '-slb')]",
+        "slbBackendName": "[concat(parameters('vmName'), '-slbBackend')]",
+        "slbPipName": "[concat(parameters('vmName'), '-slbPip')]",
+        "ipPrefix": "10.4.2",
+        "vipSuffix": "100",
+        "slbSubnet": "[parameters('subnet0Name')]",
+		"deployLBTemplate": {
+			"yes": "[concat(variables('baseRepoURL'), 'slb.json')]",
+			"no": "[concat(variables('baseRepoURL'), 'nothing.json')]"
+		},
+		"LBTemplateURI": "[variables('deployLBTemplate')[parameters('deployLBYesNo')]]",
+        "deployLBintParametersHash": {
+            "yes": {
+                "externalInternal": {
+                    "value": "internal"
+                },
+                "vnetName": {
+                    "value": "[parameters('vnetName')]"
+                },
+                "subnetName": {
+                    "value": "[variables('slbSubnet')]"
+                },
+                "slbName": {
+                    "value": "[concat(variables('slbName'), '-int')]"
+                },
+                "backendConfigName": {
+                    "value": "[concat(variables('slbBackendName'), '-int')]"
+                },
+                "ipPrefix": {
+                    "value": "[variables('ipPrefix')]"
+                },
+                "vipSuffix": {
+                    "value": "[variables('vipSuffix')]"
+                },
+                "probePort": {
+                    "value": 1138
+                }
+            },
+            "no": {
+            }
+        },
+        "deployLBintParameters": "[variables('deployLBintParametersHash')[parameters('deployLBYesNo')]]",
+        "deployLBextParametersHash": {
+            "yes": {
+                "externalInternal": {
+                    "value": "external"
+                },
+                "vnetName": {
+                    "value": "[parameters('vnetName')]"
+                },
+                "subnetName": {
+                    "value": "[variables('slbSubnet')]"
+                },
+                "slbName": {
+                    "value": "[concat(variables('slbName'), '-ext')]"
+                },
+                "backendConfigName": {
+                    "value": "[concat(variables('slbBackendName'), '-ext')]"
+                },
+                "pipName": {
+                    "value": "[concat(variables('slbPipName'), '-ext')]"
+                },
+                "probePort": {
+                    "value": 1139
+                }
+            },
+            "no": {
+            }
+        },
+        "deployLBextParameters": "[variables('deployLBextParametersHash')[parameters('deployLBYesNo')]]"
+    },
+    "resources": [
+		{
+			"comments": "Availability set for eventual NVA HA",
+			"type": "Microsoft.Compute/availabilitySets",
+			"name": "[variables('avSetName')]",
+			"apiVersion": "2016-03-30",
+			"location": "[resourceGroup().location]"
+		},
+		{
+			"comments": "Optionally, create an internal load balancer",
+            "name": "slb-int",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2016-06-01",
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[variables('LBTemplateUri')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters":  "[variables('deployLBintParameters')]"
+			}
+		},
+		{
+			"comments": "Optionally, create an external load balancer",
+            "name": "slb-ext",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2016-06-01",
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[variables('LBTemplateUri')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters":  "[variables('deployLBextParameters')]"
+			}
+		},
+        {
+            "comments": "Create Scale Set for NVAs",
+            "type": "Microsoft.Compute/virtualMachineScaleSets",
+            "name": "[parameters('vmSSName')]",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2016-04-30-preview",
+            "dependsOn": [
+                "[variables('avSetName')]",
+                "slb-int",
+                "slb-ext"
+            ],
+            "sku": {
+                "name": "[variables('settings')['sku']]",
+                "capacity": "[parameters('vmCount')]"
+            },
+            "properties": {
+                "overprovision": "true",
+                "upgradePolicy": {
+                    "mode": "Manual"
+                },
+                "virtualMachineProfile": {
+                    "storageProfile": {
+                        "osDisk": {
+                            "createOption": "FromImage"
+                        },
+                        "imageReference": {
+                            "publisher": "[variables('settings')['publisher']]",
+                            "offer": "[variables('settings')['product']]",
+                            "sku": "[variables('settings')['sku']]",
+                            "version": "latest"
+                        }
+                    },
+                    "osProfile": {
+                        "computerNamePrefix": "[parameters('vmName')]",
+                        "adminUsername": "[parameters('vmUsr')]",
+                        "adminPassword": "[parameters('vmPwd')]"
+                    },
+                    "networkProfile": {
+                        "networkInterfaceConfigurations": [
+                            {
+                                "name": "nic0",
+                                "properties": {
+                                    "primary": "true",
+                                    "ipConfigurations": [
+                                        {
+                                            "name": "ipconfig",
+                                            "properties": {
+                                                "subnet": {
+                                                    "id": "[variables('subnet0Id')]"
+                                                },
+                                                "loadBalancerBackendAddressPools": [
+                                                    {
+                                                        "id": "[concat(resourceId('Microsoft.Network/loadBalancers', concat(variables('slbName'), '-int')), '/backendAddressPools/', concat(variables('slbBackendName'), '-int'))]"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "name": "nic1",
+                                "properties": {
+                                    "primary": "true",
+                                    "ipConfigurations": [
+                                        {
+                                            "name": "ipconfig",
+                                            "properties": {
+                                                "subnet": {
+                                                    "id": "[variables('subnet0Id')]"
+                                                },
+                                                "loadBalancerBackendAddressPools": [
+                                                    {
+                                                        "id": "[concat(resourceId('Microsoft.Network/loadBalancers', concat(variables('slbName'), '-ext')), '/backendAddressPools/', concat(variables('slbBackendName'), '-ext'))]"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    },
+                    "extensionProfile": {
+                        "extensions": [
+                            {
+                                "name": "customScript",
+                                "properties": {
+                                    "publisher": "Microsoft.Compute",
+                                    "settings": {
+                                        "fileUris": [
+                                            "[parameters('scriptUri')]"
+                                        ]
+                                    },
+                                    "typeHandlerVersion": "2.0",
+                                    "autoUpgradeMinorVersion": true,
+                                    "protectedSettings": {
+                                        "commandToExecute": "[parameters('scriptCmd')]"
+                                    },
+                                    "type": "CustomScriptExtension"
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ]
+}
