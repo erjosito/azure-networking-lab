@@ -80,7 +80,7 @@
         "baseRepoURL": "https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/",
         "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
         "subnet0Id": "[concat(variables('vnetID'), '/subnets/', parameters('subnet0Name'))]",
-        "subnet1Id": "[concat(variables('vnetID'), '/subnets/', parameters('subnet0Name'))]",
+        "subnet1Id": "[concat(variables('vnetID'), '/subnets/', parameters('subnet1Name'))]",
         "defaultGw": {
             "nic0": "[concat(parameters('ip0'), '1')]",
             "nic1": "[concat(parameters('ip1'), '1')]"
