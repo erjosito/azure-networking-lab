@@ -168,13 +168,6 @@
     },
     "resources": [
 		{
-			"comments": "Availability set for eventual NVA HA",
-			"type": "Microsoft.Compute/availabilitySets",
-			"name": "[variables('avSetName')]",
-			"apiVersion": "2016-03-30",
-			"location": "[resourceGroup().location]"
-		},
-		{
 			"comments": "Optionally, create an internal load balancer",
             "name": "slb-int",
 			"type": "Microsoft.Resources/deployments",
@@ -209,7 +202,6 @@
             "location": "[resourceGroup().location]",
             "apiVersion": "2016-04-30-preview",
             "dependsOn": [
-                "[variables('avSetName')]",
                 "slb-int",
                 "slb-ext"
             ],
