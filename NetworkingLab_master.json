@@ -43,7 +43,7 @@
         "nvaParams": {
             "vmType": { "value": "ubuntu" },
             "vmCount": { "value": 2 },
-            "vmName": { "value": "nva" },
+            "vmName": { "value": "linuxnva" },
             "vnetName": { "value": "myVnet4" },
             "storageAccountName": { "value": "[variables('storageAccountName')]" },
             "subnet0Name": { "value": "myVnet4subnet2" },
@@ -115,8 +115,8 @@
             ]
 		},
 		{
-			"comments": "Create NVA in vnet4, subnets 1 and 2, if createNVA=yes",
-            "name": "csr1",
+			"comments": "Create NVAs in vnet4, subnets 1 and 2, if createNVA=yes",
+            "name": "nva",
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2016-06-01",
 			"properties": {
