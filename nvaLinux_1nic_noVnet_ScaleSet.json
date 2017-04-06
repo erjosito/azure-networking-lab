@@ -249,16 +249,7 @@
                                                     }
                                                 ]
                                             }
-                                        }
-                                    ]
-                                }
-                            },
-                            {
-                                "name": "nic1",
-                                "properties": {
-                                    "primary": "false",
-                                    "enableIPForwarding": true,
-                                    "ipConfigurations": [
+                                        },
                                         {
                                             "name": "ipconfig1",
                                             "properties": {
