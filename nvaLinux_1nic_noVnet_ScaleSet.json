@@ -246,17 +246,7 @@
                                                 "loadBalancerBackendAddressPools": [
                                                     {
                                                         "id": "[concat(resourceId('Microsoft.Network/loadBalancers', concat(variables('slbName'), '-int')), '/backendAddressPools/', concat(variables('slbBackendName'), '-int'))]"
-                                                    }
-                                                ]
-                                            }
-                                        },
-                                        {
-                                            "name": "ipconfig1",
-                                            "properties": {
-                                                "subnet": {
-                                                    "id": "[variables('subnet1Id')]"
-                                                },
-                                                "loadBalancerBackendAddressPools": [
+                                                    },
                                                     {
                                                         "id": "[concat(resourceId('Microsoft.Network/loadBalancers', concat(variables('slbName'), '-ext')), '/backendAddressPools/', concat(variables('slbBackendName'), '-ext'))]"
                                                     }
