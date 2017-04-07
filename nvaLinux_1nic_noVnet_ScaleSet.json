@@ -28,7 +28,7 @@
             "type": "string"
         },
         "vmSSName": {
-            "defaultValue": "[concat('nvaSS',uniqueString(resourceGroup().id))]",
+            "defaultValue": "[concat('nvaVMSS',uniqueString(resourceGroup().id))]",
             "type": "string"
         },
         "scaleSettingsName": {
@@ -321,7 +321,7 @@
                     {
                         "name": "Profile1",
                         "capacity": {
-                            "minimum": "1",
+                            "minimum": "2",
                             "maximum": "10",
                             "default": "2"
                         },
