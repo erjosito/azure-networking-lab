@@ -46,7 +46,7 @@
         },
         "customScript": "[variables('customScriptHash')[parameters('nvaType')]]",
         "customScriptUri": "[concat(variables('baseRepoURL'), variables('customScript'))]",
-        "customScriptCmd": "[concat('chmod 666 ', variables('customScript'), ' && sh ', variables('customScript'))]",
+        "customScriptCmd": "[concat('chmod 666 ', variables('customScript'), ' && /bin/sh ./', variables('customScript'))]",
         "nvaParams": {
             "vmType": { "value": "ubuntu" },
             "vmCount": { "value": 2 },
