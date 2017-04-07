@@ -322,10 +322,10 @@
                 "typeHandlerVersion": "2.0",
                 "autoUpgradeMinorVersion": true,
                 "settings": {
-                "fileUris": [
-                    "[parameters('scriptUri')]"
-                ],
-                "commandToExecute": "[parameters('scriptCmd')]"
+                    "fileUris": [
+                        "[parameters('scriptUri')]"
+                    ],
+                    "commandToExecute": "[parameters('scriptCmd')]"
                 }
             },
             "dependsOn": [
