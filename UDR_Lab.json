@@ -76,7 +76,7 @@
                     {
                         "name": "vnet1",
                         "properties": {
-                            "addressPrefix": "10.1.0.0/16]",
+                            "addressPrefix": "10.1.0.0/16",
                             "nextHopType": "VirtualAppliance",
                             "nextHopIpAddress": "[parameters('nextHop')]"
                         }
@@ -84,7 +84,7 @@
                     {
                         "name": "vnet3",
                         "properties": {
-                            "addressPrefix": "10.3.0.0/16]",
+                            "addressPrefix": "10.3.0.0/16",
                             "nextHopType": "VirtualAppliance",
                             "nextHopIpAddress": "[parameters('nextHop')]"
                         }
@@ -92,7 +92,7 @@
                     {
                         "name": "vnet5",
                         "properties": {
-                            "addressPrefix": "10.5.0.0/16]",
+                            "addressPrefix": "10.5.0.0/16",
                             "nextHopType": "VirtualAppliance",
                             "nextHopIpAddress": "[parameters('nextHop')]"
                         }
