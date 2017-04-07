@@ -34,10 +34,24 @@
             "defaultValue": "myPublicIp",
             "type": "string"
         },
+        "frontendPort": {
+            "defaultValue": 1022,
+            "type": "int",
+            "metadata": { "description": "Frontend TCP port" }
+        },
+        "backendPort": {
+            "defaultValue": 22,
+            "type": "int",
+            "metadata": { "description": "Backend TCP port" }
+        },
         "probePort": {
             "defaultValue": 22,
             "type": "int",
-            "metadata": { "description": "Port that will configured in the TCP-based probe" }
+            "metadata": { "description": "TCP port that will configured in the TCP-based probe" }
+        },
+        "ruleName": {
+            "defaultValue": "ssh",
+            "type": "string"
         }
 	},
 
@@ -66,7 +80,10 @@
                     "vnetName": { "value": "[parameters('vnetName')]" },
                     "subnetName": { "value": "[parameters('subnetName')]"},
                     "slbName": { "value": "[parameters('slbName')]" },
+                    "backendPort": { "value": "[parameters('backendPort')]"},
+                    "frontendPort": { "value": "[parameters('frontendPort')]"},
                     "probePort": { "value": "[parameters('probePort')]"},
+                    "ruleName": { "value": "[parameters('ruleName')]"},
                     "backendConfigName": { "value": "[parameters('backendConfigName')]"},
                     "ipPrefix": { "value": "[parameters('ipPrefix')]"},
                     "vipSuffix": { "value": "[parameters('vipSuffix')]"},

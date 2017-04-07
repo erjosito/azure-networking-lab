@@ -30,16 +30,30 @@
             "defaultValue": "myPublicIp",
             "type": "string"
         },
+        "frontendPort": {
+            "defaultValue": 1022,
+            "type": "int",
+            "metadata": { "description": "Port that will configured in the TCP-based probe" }
+        },
+        "backendPort": {
+            "defaultValue": 22,
+            "type": "int",
+            "metadata": { "description": "Backend TCP port" }
+        },
         "probePort": {
             "defaultValue": 22,
             "type": "int",
-            "metadata": { "description": "Port that will configured in the TCP-based probe" }
-        }	},
+            "metadata": { "description": "TCP port that will configured in the TCP-based probe" }
+        },
+        "ruleName": {
+            "defaultValue": "ssh",
+            "type": "string"
+        }
+    },
     "variables": {
 		"frontendConfigName": "myFrontendConfig",
-		"probeName": "myProbe",
-		"slbConfigName": "mySLBConfig"
-},
+		"probeName": "[concat(parameters('ruleName'), '-probe')]"
+    },
     "resources": [
         {
             "comments": "Public IP address",
@@ -79,13 +93,13 @@
                 ],
                 "loadBalancingRules": [
                     {
-                        "name": "[variables('slbConfigName')]",
+                        "name": "[parameters('ruleName')]",
                         "properties": {
                             "frontendIPConfiguration": {
                                 "id": "[concat( resourceId('Microsoft.Network/loadBalancers', parameters('slbName')), '/frontendIPConfigurations/', variables('frontendConfigName'))]"
                             },
-                            "frontendPort": 1022,
-                            "backendPort": 22,
+                            "frontendPort": "[parameters('frontendport')]",
+                            "backendPort": "[parameters('backendport')]",
                             "enableFloatingIP": false,
                             "idleTimeoutInMinutes": 4,
                             "protocol": "Tcp",

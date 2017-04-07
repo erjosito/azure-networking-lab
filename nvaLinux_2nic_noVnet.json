@@ -124,6 +124,15 @@
                 },
                 "probePort": {
                     "value": 1138
+                },
+                "frontendPort": {
+                    "value": 22
+                },
+                "backendPort": {
+                    "value": 22
+                },
+                "ruleName": {
+                    "value": "ssh"
                 }
             },
             "no": {
@@ -152,6 +161,15 @@
                 },
                 "probePort": {
                     "value": 1139
+                },
+                "frontendPort": {
+                    "value": 1022
+                },
+                "backendPort": {
+                    "value": 22
+                },
+                "ruleName": {
+                    "value": "ssh"
                 }
             },
             "no": {
