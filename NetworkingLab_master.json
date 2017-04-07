@@ -23,6 +23,12 @@
             "type": "string",
             "allowedValues": [ "ubuntu","ubuntuScaleSet" ],
             "metadata": { "description": "Choose ubuntuScaleSet to deploy NVA in a scale set" }
+        },
+        "createUDR": {
+            "defaultValue": "no",
+            "type": "string",
+            "allowedValues": [ "yes","no" ],
+            "metadata": { "description": "Whether UDRs should be configured (lab solution)" }
         }
     },
     "variables": {
@@ -79,7 +85,11 @@
             "yes": "[variables('NVATemplateUri')[parameters('nvaType')]]",
             "no": "[concat(variables('baseRepoURL'), 'nothing.json')]"
         },
-        "udrTemplateUri": "[concat(variables('baseRepoURL'), 'UDR_3subnets.json')]"
+        "UDRTemplateUriYesNo": {
+            "yes": "[concat(variables('baseRepoURL'), 'UDR_Lab')]",
+            "no": "[concat(variables('baseRepoURL'), 'nothing.json')]"
+        },
+        "UDRTemplateUri": "[variables('UDRTemplateUriYesNo')[parameters('createUDR')]]"
     },
     "resources": [
 		{
@@ -261,6 +271,24 @@
             },
             "dependsOn": [
                 "vnet5gwPip",
+                "vnets"                
+            ]
+        },
+		{
+			"comments": "Deploy optionally UDRs",
+			"name": "UDRs",
+            "type": "Microsoft.Resources/deployments",
+			"apiVersion": "2016-09-01",
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[variables('UDRTemplateUri')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+                }
+            },
+            "dependsOn": [
                 "vnets"                
             ]
         }

@@ -1,0 +1,296 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "nextHop": {
+            "defaultValue": "10.4.1.100",
+            "type": "string",
+            "metadata": { "description": "Next hop for ALL routes" }            
+        } 
+    },
+    "variables": {
+        "vnetApiVersion": "2016-03-30"
+    },
+    "resources": [
+        {
+            "comments": "Routing for vnet1-subnet1",
+            "type": "Microsoft.Network/routeTables",
+            "name": "vnet1-subnet1",
+            "apiVersion": "[variables('vnetApiVersion')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "routes": [
+                    {
+                        "name": "vnet2",
+                        "properties": {
+                            "addressPrefix": "10.2.0.0/16]",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[parameters('nextHop')]"
+                        }
+                    },
+                    {
+                        "name": "vnet3",
+                        "properties": {
+                            "addressPrefix": "10.3.0.0/16]",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[parameters('nextHop')]"
+                        }
+                    },
+                    {
+                        "name": "vnet5",
+                        "properties": {
+                            "addressPrefix": "10.5.0.0/16]",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[parameters('nextHop')]"
+                        }
+                    },
+                    {
+                        "name": "vnet1subnet1",
+                        "properties": {
+                            "addressPrefix": "10.1.1.0/24]",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[parameters('nextHop')]"
+                        }
+                    },
+                    {
+                        "name": "ifconfig",
+                        "properties": {
+                            "addressPrefix": "188.113.88.193/32",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[parameters('nextHop')]"
+                        }
+                    }
+                ]
+            },
+            "resources": [],
+            "dependsOn": []
+        },
+        {
+            "comments": "Routing for vnet2-subnet1",
+            "type": "Microsoft.Network/routeTables",
+            "name": "vnet2-subnet1",
+            "apiVersion": "[variables('vnetApiVersion')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "routes": [
+                    {
+                        "name": "vnet1",
+                        "properties": {
+                            "addressPrefix": "10.1.0.0/16]",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[parameters('nextHop')]"
+                        }
+                    },
+                    {
+                        "name": "vnet3",
+                        "properties": {
+                            "addressPrefix": "10.3.0.0/16]",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[parameters('nextHop')]"
+                        }
+                    },
+                    {
+                        "name": "vnet5",
+                        "properties": {
+                            "addressPrefix": "10.5.0.0/16]",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[parameters('nextHop')]"
+                        }
+                    },
+                    {
+                        "name": "ifconfig",
+                        "properties": {
+                            "addressPrefix": "188.113.88.193/32",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[parameters('nextHop')]"
+                        }
+                    }
+                ]
+            },
+            "resources": [],
+            "dependsOn": []
+        },
+        {
+            "comments": "Routing for vnet3-subnet1",
+            "type": "Microsoft.Network/routeTables",
+            "name": "vnet3-subnet1",
+            "apiVersion": "[variables('vnetApiVersion')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "routes": [
+                    {
+                        "name": "vnet1",
+                        "properties": {
+                            "addressPrefix": "10.1.0.0/16]",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[parameters('nextHop')]"
+                        }
+                    },
+                    {
+                        "name": "vnet2",
+                        "properties": {
+                            "addressPrefix": "10.2.0.0/16]",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[parameters('nextHop')]"
+                        }
+                    },
+                    {
+                        "name": "vnet5",
+                        "properties": {
+                            "addressPrefix": "10.5.0.0/16]",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[parameters('nextHop')]"
+                        }
+                    },
+                    {
+                        "name": "ifconfig",
+                        "properties": {
+                            "addressPrefix": "188.113.88.193/32",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[parameters('nextHop')]"
+                        }
+                    }
+                ]
+            },
+            "resources": [],
+            "dependsOn": []
+        },
+        {
+            "comments": "Routing for vnet4-GatewaySubnet",
+            "type": "Microsoft.Network/routeTables",
+            "name": "vnet4-GatewaySubnet",
+            "apiVersion": "[variables('vnetApiVersion')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "routes": [
+                    {
+                        "name": "vnet1",
+                        "properties": {
+                            "addressPrefix": "10.1.0.0/16]",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[parameters('nextHop')]"
+                        }
+                    },
+                    {
+                        "name": "vnet2",
+                        "properties": {
+                            "addressPrefix": "10.2.0.0/16]",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[parameters('nextHop')]"
+                        }
+                    },
+                    {
+                        "name": "vnet3",
+                        "properties": {
+                            "addressPrefix": "10.3.0.0/16]",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[parameters('nextHop')]"
+                        }
+                    }
+                ]
+            },
+            "resources": [],
+            "dependsOn": []
+        },
+        {
+            "comments": "Redeploy myVnet4 with UDR",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "myVnet4",
+            "apiVersion": "[variables('vnetApiVersion')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "10.4.0.0/16"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "GatewaySubnet",
+                        "properties": {
+                            "addressPrefix": "10.4.0.0/24",
+                            "routeTable": {
+                                "id": "[resourceId('Microsoft.Network/routeTables', 'vnet4-GatewaySubnet')]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "myVnet4Subnet1",
+                        "properties": {
+                            "addressPrefix": "10.4.1.0/24"
+                        }
+                    },
+                    {
+                        "name": "myVnet4Subnet1",
+                        "properties": {
+                            "addressPrefix": "10.4.3.0/24"
+                        }
+                    },
+                    {
+                        "name": "myVnet4Subnet3",
+                        "properties": {
+                            "addressPrefix": "10.4.3.0/24"
+                        }
+                    }
+                ]
+            },
+            "resources": [],
+            "dependsOn": [
+                "vnet4-GatewaySubnet"
+            ]
+        },
+        {
+            "comments": "Redeploy myVnet1, myVnet2 and myVnet3 with UDR",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[concat('myVnet', copyIndex(1))]",
+            "apiVersion": "[variables('vnetApiVersion')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[concat('10.', copyIndex(1), '.0.0/16')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "GatewaySubnet",
+                        "properties": {
+                            "addressPrefix": "[concat('10.', copyIndex(1), '.0.0/24')]"
+                        }
+                    },
+                    {
+                        "name": "[concat('myVnet', copyIndex(1), 'Subnet1')]",
+                        "properties": {
+                            "addressPrefix": "[concat('10.', copyIndex(1), '.1.0/24')]",
+                            "routeTable": {
+                                "id": "[resourceId('Microsoft.Network/routeTables', concat('vnet',copyIndex(1), '-subnet1'))]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "[concat('myVnet', copyIndex(1), 'Subnet2')]",
+                        "properties": {
+                            "addressPrefix": "[concat('10.', copyIndex(1), '.2.0/24')]"
+                        }
+                    },
+                    {
+                        "name": "[concat('myVnet', copyIndex(1), 'Subnet3')]",
+                        "properties": {
+                            "addressPrefix": "[concat('10.', copyIndex(1), '.3.0/24')]"
+                        }
+                    }
+                ]
+            },
+            "resources": [],
+            "dependsOn": [
+                "vnet1-subnet1",
+                "vnet2-subnet1",
+                "vnet3-subnet1"
+            ],
+            "copy": {
+                "count": 3,
+                "name": "vnets123"
+            }
+        }
+    ]
+}
