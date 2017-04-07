@@ -42,11 +42,11 @@
         "multiVnetTemplateUri": "[concat(variables('baseRepoURL'), 'multiVnetLab.json')]",
         "customScriptHash": {
             "ubuntu": "linuxNVAconfig.sh",
-            "ubuntuScaleSet": "linuxNVAconfig.sh"
+            "ubuntuScaleSet": "linuxNVAconfig-1nic.sh"
         },
         "customScript": "[variables('customScriptHash')[parameters('nvaType')]]",
         "customScriptUri": "[concat(variables('baseRepoURL'), variables('customScript'))]",
-        "customScriptCmd": "[concat('sh ', variables('customScript'))]",
+        "customScriptCmd": "[concat('chmod 666 ', variables('customScript'), ' && sh ', variables('customScript'))]",
         "nvaParams": {
             "vmType": { "value": "ubuntu" },
             "vmCount": { "value": 2 },
