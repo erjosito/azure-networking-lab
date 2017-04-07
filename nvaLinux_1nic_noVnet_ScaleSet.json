@@ -139,6 +139,9 @@
                 },
                 "ruleName": {
                     "value": "ssh"
+                },
+                "dsr": {
+                    "value": "true"
                 }
             },
             "no": {
@@ -176,6 +179,9 @@
                 },
                 "ruleName": {
                     "value": "ssh"
+                },
+                "dsr": {
+                    "value": "true"
                 }
             },
             "no": {

@@ -48,11 +48,21 @@
         "ruleName": {
             "defaultValue": "ssh",
             "type": "string"
+        },
+        "dsr": {
+            "defaultValue": "false",
+            "type": "string",
+            "metadata": { "description": "whether Direct Server Return, aka Floating IP, is enabled or not" }
         }
     },
     "variables": {
 		"frontendConfigName": "myFrontendConfig",
-		"probeName": "myProbe"
+		"probeName": "myProbe",
+        "dsrBoolHash": {
+            "true": true,
+            "false": false
+        },
+        "dsrBool": "[variables('dsrBoolHash')[parameters('dsr')]]"
     },
     "resources": [
         {
@@ -100,7 +110,7 @@
                             },
                             "frontendPort": "[parameters('frontendport')]",
                             "backendPort": "[parameters('backendport')]",
-                            "enableFloatingIP": false,
+                            "enableFloatingIP": "[variables('dsrBool')]",
                             "idleTimeoutInMinutes": 4,
                             "protocol": "Tcp",
                             "loadDistribution": "Default",

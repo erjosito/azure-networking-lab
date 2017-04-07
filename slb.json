@@ -52,6 +52,11 @@
         "ruleName": {
             "defaultValue": "ssh",
             "type": "string"
+        },
+        "dsr": {
+            "defaultValue": "false",
+            "type": "string",
+            "metadata": { "description": "whether Direct Server Return, aka Floating IP, is enabled or not" }
         }
 	},
 
@@ -84,6 +89,7 @@
                     "frontendPort": { "value": "[parameters('frontendPort')]"},
                     "probePort": { "value": "[parameters('probePort')]"},
                     "ruleName": { "value": "[parameters('ruleName')]"},
+                    "dsr": { "value": "[parameters('dsr')]"},
                     "backendConfigName": { "value": "[parameters('backendConfigName')]"},
                     "ipPrefix": { "value": "[parameters('ipPrefix')]"},
                     "vipSuffix": { "value": "[parameters('vipSuffix')]"},
