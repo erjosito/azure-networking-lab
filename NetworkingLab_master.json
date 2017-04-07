@@ -40,6 +40,13 @@
             "adminPassword": { "value": "[parameters('adminPassword')]" }
         },
         "multiVnetTemplateUri": "[concat(variables('baseRepoURL'), 'multiVnetLab.json')]",
+        "customScriptHash": {
+            "ubuntu": "linuxNVAconfig.sh",
+            "ubuntuScaleSet": "linuxNVAconfig.sh"
+        },
+        "customScript": "[variables('customScriptHash')[parameters('nvaType')]]",
+        "customScriptUri": "[concat(variables('baseRepoURL'), variables('customScript'))]",
+        "customScriptCmd": "[concat('sh ', variables('customScript'))]",
         "nvaParams": {
             "vmType": { "value": "ubuntu" },
             "vmCount": { "value": 2 },
@@ -54,8 +61,8 @@
             "ip0": { "value": "10.4.2.10" },
             "ip1": { "value": "10.4.3.10" },
             "deployLBYesNo": { "value": "yes" },
-            "scriptUri": { "value": "[concat(variables('baseRepoURL'), 'linuxNVAconfig.sh')]" },
-            "scriptCmd": { "value": "sh linuxNVAconfig.sh" }
+            "scriptUri": { "value": "[variables('customScriptUri')]" },
+            "scriptCmd": { "value": "[variables('customScriptCmd')]" }
         },
         "nvaParamsYesNo": {
             "yes": "[variables('nvaParams')]",

@@ -52,7 +52,7 @@
     },
     "variables": {
 		"frontendConfigName": "myFrontendConfig",
-		"probeName": "[concat(parameters('ruleName'), '-probe')]"
+		"probeName": "myProbe"
     },
     "resources": [
         {
