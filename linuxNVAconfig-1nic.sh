@@ -27,10 +27,12 @@ sudo wget https://raw.githubusercontent.com/erjosito/azure-networking-lab/master
 #  Firewall config rules  #
 ###########################
 
+# Allow incoming and outgoing traffic (TCP)
+sudo iptables -A INPUT -p tcp -j ACCEPT
+sudo iptables -A OUTPUT -p tcp -j ACCEPT
 # Deny forwarded ICMP
 sudo iptables -A FORWARD -p icmp -j DROP
 # Allow forwarded traffic
-sudo iptables -A FORWARD -i eth0 -j ACCEPT
-sudo iptables -A FORWARD -o eth0 -j ACCEPT
+sudo iptables -A FORWARD -j ACCEPT
 # SNAT for all traffic
 sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
