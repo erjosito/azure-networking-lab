@@ -213,24 +213,6 @@
                                 "id": "[resourceId('Microsoft.Network/routeTables', 'vnet4-GatewaySubnet')]"
                             }
                         }
-                    },
-                    {
-                        "name": "myVnet4Subnet1",
-                        "properties": {
-                            "addressPrefix": "10.4.1.0/24"
-                        }
-                    },
-                    {
-                        "name": "myVnet4Subnet1",
-                        "properties": {
-                            "addressPrefix": "10.4.3.0/24"
-                        }
-                    },
-                    {
-                        "name": "myVnet4Subnet3",
-                        "properties": {
-                            "addressPrefix": "10.4.3.0/24"
-                        }
                     }
                 ]
             },
