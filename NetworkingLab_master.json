@@ -86,7 +86,7 @@
             "no": "[concat(variables('baseRepoURL'), 'nothing.json')]"
         },
         "UDRTemplateUriYesNo": {
-            "yes": "[concat(variables('baseRepoURL'), 'UDR_Lab')]",
+            "yes": "[concat(variables('baseRepoURL'), 'UDR_Lab.json')]",
             "no": "[concat(variables('baseRepoURL'), 'nothing.json')]"
         },
         "UDRTemplateUri": "[variables('UDRTemplateUriYesNo')[parameters('createUDR')]]"
