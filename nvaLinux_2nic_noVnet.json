@@ -280,7 +280,7 @@
             ]
         },
 		{
-			"comments": "Deploy the virtual interfaces",
+			"comments": "Create eth0",
             "name": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic0')]",
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2016-06-01",
@@ -305,6 +305,7 @@
             }
         },
 		{
+            "comments": "Create eth1",
 			"name": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic1')]",
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2016-06-01",
