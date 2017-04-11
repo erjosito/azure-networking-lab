@@ -1,7 +1,7 @@
 # Variables
 inetIp=188.113.88.193
 defGw=10.4.2.100
-rg=vnetTest
+rg=vnetTest2
 
 # Set default resource group
 az configure --defaults group=$rg
