@@ -120,7 +120,7 @@
 				"parameters":  {
                     "adminUsername": {"value": "[parameters('adminUsername')]"},
                     "adminPassword": {"value": "[parameters('adminPassword')]"},
-                    "vmName": { "value": "vnet1-vm2" },
+                    "vmName": { "value": "myVnet1-vm2" },
                     "vmType": {"value": "ubuntu"},
                     "vnetName": { "value": "myVnet1" },
                     "subnetName": { "value": "myVnet1Subnet1" },

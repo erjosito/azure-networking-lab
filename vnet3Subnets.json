@@ -40,6 +40,11 @@
             "type": "string",
             "allowedValues": ["yes", "no"]
         },
+        "vmCount": {
+            "defaultValue": 1,
+            "type": "int",
+            "metadata": { "description": "Number of VMs to create in the Vnet in subnet 1 (if createVm=yes)" }
+        },
         "adminUsername": {
             "defaultValue": null,
             "type": "string"
@@ -86,7 +91,7 @@
             "yes": "[concat(variables('baseRepoURL'), 'linuxVM.json')]",
             "no": "[concat(variables('baseRepoURL'), 'nothing.json')]"
         },
-        "vmName": "[concat(parameters('vnetName'), 'vm')]",
+        "vmName": "[concat(parameters('vnetName'), '-vm')]",
         "vmTemplateUri": "[variables('vmTemplateUriTable')[parameters('createVm')]]",
         "vmTemplateParamTable": {
             "yes": {
@@ -182,7 +187,7 @@
         },
 		{
 			"comments": "Optionally create a VM in first subnet, if createVm equals 'yes'",
-			"name": "[variables('vmName')]",
+			"name": "[concat(variables('vmName'), copyIndex(1))]",
             "type": "Microsoft.Resources/deployments",
 			"apiVersion": "2016-09-01",
 			"properties": {
@@ -195,7 +200,11 @@
             },
             "dependsOn": [
                 "[parameters('vnetName')]"                
-            ]
+            ],
+            "copy": {
+                "count": "[parameters('vmCount')]",
+                "name": "vmCopy"
+            }
         }
     ]
 }
