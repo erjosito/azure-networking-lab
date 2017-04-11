@@ -103,6 +103,34 @@
                 }
             },
             "resources": [
+                {
+                    "comments": "Deploy VM with Azure Monitor extension",
+                    "name": "Microsoft.Insights.VMDiagnosticsSettings",
+                    "type": "extensions",
+                    "location": "[resourceGroup().location]",
+                    "apiVersion": "2015-06-15",
+                    "dependsOn": [
+                        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+                    ],
+                    "tags": {
+                        "displayName": "AzureDiagnostics"
+                    },
+                    "properties": {
+                        "publisher": "Microsoft.Azure.Diagnostics",
+                        "type": "IaaSDiagnostics",
+                        "typeHandlerVersion": "1.5",
+                        "autoUpgradeMinorVersion": true,
+                        "settings": {
+                            "xmlCfg": "[base64(concat(variables('wadcfgxstart'), variables('wadmetricsresourceid'), parameters('vmName'), variables('wadcfgxend')))]",
+                            "storageAccount": "[variables('diagStorageAccountName')]"
+                        },
+                        "protectedSettings": {
+                            "storageAccountName": "[variables('diagStorageAccountName')]",
+                            "storageAccountKey": "[listkeys(variables('diagStorageAccountId'), '2015-05-01-preview').key1]",
+                            "storageAccountEndPoint": "https://core.windows.net"
+                        }
+                    }
+                }
             ],
             "dependsOn": [
                 "[variables('nicName')]"

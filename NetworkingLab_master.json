@@ -79,7 +79,7 @@
             "csr": "[concat(variables('baseRepoURL'), 'nva_2nic_noVnet.json')]",
             "asa": "[concat(variables('baseRepoURL'), 'nva_2nic_noVnet.json')]",
             "ubuntu": "[concat(variables('baseRepoURL'), 'nvaLinux_2nic_noVnet.json')]",
-            "ubuntuScaleSet": "[concat(variables('baseRepoURL'), 'nvaLinux_1nic_noVnet_ScaleSet.json')]"
+            "ubuntuScaleSet": "[concat(variables('baseRepoURL'), 'nvaLinux_1nic_noVnet_ScaleSet_ILBonly.json')]"
         },
         "NVATemplateUriYesNo": {
             "yes": "[variables('NVATemplateUri')[parameters('nvaType')]]",
