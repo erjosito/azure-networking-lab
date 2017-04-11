@@ -59,7 +59,7 @@
     },
  
     "variables": {
-        "baseRepoURL": "https://raw.githubusercontent.com/erjosito/AzureTemplates/master/",
+        "baseRepoURL": "https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/",
 		"apiVersion": "2016-03-30"
 	},
 
