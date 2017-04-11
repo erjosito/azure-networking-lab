@@ -95,7 +95,7 @@
         "vmTemplateUri": "[variables('vmTemplateUriTable')[parameters('createVm')]]",
         "vmTemplateParamTable": {
             "yes": {
-                "vmName": { "value": "[variables('vmName')]" },
+                "vmName": { "value": "[concat(variables('vmName'), copyIndex(1))]" },
                 "vnetName": { "value": "[parameters('vnetName')]" },
                 "subnetName": { "value": "[concat(parameters('subnetNamePrefix'), '1')]" },
                 "vmType": { "value": "ubuntu" },
