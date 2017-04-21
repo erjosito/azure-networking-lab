@@ -271,7 +271,7 @@
             },
             "dependsOn": [
                 "vnet5gwPip",
-                "vnets"                
+                "vnets"
             ]
         },
 		{
@@ -289,7 +289,7 @@
                 }
             },
             "dependsOn": [
-                "vnets"                
+                "vnets"
             ]
         }
     ]

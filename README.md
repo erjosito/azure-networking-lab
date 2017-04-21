@@ -99,7 +99,12 @@ az configure --defaults group=vnetTest
 **Step 2.** Deploy the master template that will deploy our initial network configuration:
 
 ```
-az group deployment create --name netLabDeployment --template-uri https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/NetworkingLab\_master.json --resource-group vnetTest --parameters '{"adminUsername":{"value":"lab-user"}, "adminPassword":{"value":"Microsoft123!"}}'
+az group deployment create --name netLabDeployment --template-uri https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/NetworkingLab_master.json --resource-group vnetTest --parameters '{"adminUsername":{"value":"lab-user"}, "adminPassword":{"value":"Microsoft123!"}}'
+```
+
+Please note that the above syntax will only work in Linux. In Windows you would need to escape the quote signs:
+```
+az group deployment create --name netLabDeployment --template-uri https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/NetworkingLab_master.json --resource-group vnetTest --parameters "{\"adminUsername\":{\"value\":\"lab-user\"}, \"adminPassword\":{\"value\":\"Microsoft123!\"}}"
 ```
 
 
