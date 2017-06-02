@@ -105,6 +105,11 @@
             "no": {}
         },
         "vpnGwTemplateParams2": "[variables('vpnGwTemplateParamsHash2')[parameters('createVPNgw')]]",
+        "PeeringUseRemoteGatewaysHash": {
+            "yes": true,
+            "no": false
+        },
+        "PeeringUseRemoteGateways": "[variables('PeeringUseRemoteGatewaysHash')[parameters('createVPNgw')]]",
         "NVATemplateUri": {
             "csr": "[concat(variables('baseRepoURL'), 'nva_2nic_noVnet.json')]",
             "asa": "[concat(variables('baseRepoURL'), 'nva_2nic_noVnet.json')]",
@@ -191,7 +196,8 @@
 				},
 				"parameters": {
                     "hubVnetName": { "value": "myVnet4" },    
-                    "spokeVnetName": { "value": "myVnet1" }    
+                    "spokeVnetName": { "value": "myVnet1" },
+                    "useRemoteGateways": { "value": "[variables('PeeringUseRemoteGateways')]" } 
                 }
 			},
             "dependsOn": [
@@ -211,7 +217,8 @@
 				},
 				"parameters": {
                     "hubVnetName": { "value": "myVnet4" },    
-                    "spokeVnetName": { "value": "myVnet2" }    
+                    "spokeVnetName": { "value": "myVnet2" },
+                    "useRemoteGateways": { "value": "[variables('PeeringUseRemoteGateways')]" } 
                 }
 			},
             "dependsOn": [
@@ -231,7 +238,8 @@
 				},
 				"parameters": {
                     "hubVnetName": { "value": "myVnet4" },    
-                    "spokeVnetName": { "value": "myVnet3" }    
+                    "spokeVnetName": { "value": "myVnet3" },
+                    "useRemoteGateways": { "value": "[variables('PeeringUseRemoteGateways')]" }    
                 }
 			},
             "dependsOn": [

@@ -11,6 +11,14 @@
             "defaultValue": "hubVnet",
             "type": "string",
             "metadata": { "description": "Name of the hub Vnet" }
+         },
+         "useRemoteGateways": {
+             "defaultValue": true,
+             "type":"bool",
+             "allowedValues": [
+                 true, false
+             ],
+             "metadata": { "description": "Required to cope for peerings without VPN gateway" }
          }
      },
      "variables": {
@@ -25,7 +33,7 @@
                 "allowVirtualNetworkAccess": true,
                 "allowForwardedTraffic": false,
                 "allowGatewayTransit": true,
-                "useRemoteGateways": false,
+                "useRemoteGateways": "[parameters('useRemoteGateways')]",
                     "remoteVirtualNetwork": {
                     "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('spokeVnetName'))]"       
                 }
@@ -40,7 +48,7 @@
             "allowVirtualNetworkAccess": true,
             "allowForwardedTraffic": true,
             "allowGatewayTransit": false,
-            "useRemoteGateways": true,
+            "useRemoteGateways": "[parameters('useRemoteGateways')]",
                 "remoteVirtualNetwork": {
                 "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('hubVnetName'))]"       
                 }
