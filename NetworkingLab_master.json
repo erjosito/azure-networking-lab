@@ -29,6 +29,12 @@
             "type": "string",
             "allowedValues": [ "yes","no" ],
             "metadata": { "description": "Whether UDRs should be configured (lab solution)" }
+        },
+        "createVPNgw": {
+            "defaultValue": "yes",
+            "type": "string",
+            "allowedValues": [ "yes","no" ],
+            "metadata": { "description": "Whether VPN gateways should be deployed at all or not" }
         }
     },
     "variables": {
@@ -74,7 +80,31 @@
             "yes": "[variables('nvaParams')]",
             "no": {}
         },
-        "vpnGwTemplateUri": "[concat(variables('baseRepoURL'), 'vpnGw.json')]",
+        "vpnGwTemplateUriHash": {
+            "yes": "[concat(variables('baseRepoURL'), 'vpnGw.json')]",
+            "no": "[concat(variables('baseRepoURL'), 'nothing.json')]"
+        },
+        "vpnGwTemplateUri": "[variables('vpnGwTemplateUriHash')[parameters('createVPNgw')]]",
+        "vpnGwTemplateParamsHash1": {
+            "yes": {
+                "vnetName": { "value": "myVnet4" },
+                "gwName": { "value": "vnet4gw" },
+                "enableBgp": { "value": "true" },
+                "PIPName": { "value": "vnet4gwPip" }
+            },
+            "no": {}
+        },
+        "vpnGwTemplateParams1": "[variables('vpnGwTemplateParamsHash1')[parameters('createVPNgw')]]",
+        "vpnGwTemplateParamsHash2": {
+            "yes": {
+                "vnetName": { "value": "myVnet5" },
+                "gwName": { "value": "vnet5gw" },
+                "enableBgp": { "value": "true" },
+                "PIPName": { "value": "vnet5gwPip" }
+            },
+            "no": {}
+        },
+        "vpnGwTemplateParams2": "[variables('vpnGwTemplateParamsHash2')[parameters('createVPNgw')]]",
         "NVATemplateUri": {
             "csr": "[concat(variables('baseRepoURL'), 'nva_2nic_noVnet.json')]",
             "asa": "[concat(variables('baseRepoURL'), 'nva_2nic_noVnet.json')]",
@@ -239,12 +269,7 @@
 					"uri": "[variables('vpnGwTemplateUri')]",
 					"contentVersion": "1.0.0.0"
 				},
-				"parameters": {
-                    "vnetName": { "value": "myVnet4" },
-                    "gwName": { "value": "vnet4gw" },
-                    "enableBgp": { "value": "true" },
-                    "PIPName": { "value": "vnet4gwPip" }
-                }
+				"parameters": "[variables('vpnGwTemplateParams1')]" 
             },
             "dependsOn": [
                 "vnet4gwPip",
@@ -262,12 +287,7 @@
 					"uri": "[variables('vpnGwTemplateUri')]",
 					"contentVersion": "1.0.0.0"
 				},
-				"parameters": {
-                    "vnetName": { "value": "myVnet5" },
-                    "gwName": { "value": "vnet5gw" },
-                    "enableBgp": { "value": "true" },
-                    "PIPName": { "value": "vnet5gwPip" }
-                }
+				"parameters": "[variables('vpnGwTemplateParams2')]" 
             },
             "dependsOn": [
                 "vnet5gwPip",
