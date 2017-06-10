@@ -167,7 +167,7 @@
             ]
 		},
 		{
-			"comments": "Create NVAs in vnet4, subnets 1 and 2, if createNVA=yes",
+			"comments": "Create NVAs in vnet4, if createNVA=yes",
             "name": "nva",
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2016-06-01",
