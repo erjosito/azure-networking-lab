@@ -261,12 +261,12 @@
                         "networkInterfaceConfigurations": [
                             {
                                 "name": "nic0",
+                                "enableIPForwarding": true,
                                 "properties": {
                                     "primary": true,
                                     "ipConfigurations": [
                                         {
                                             "name": "ipconfig0",
-                                            "enableIPForwarding": true,
                                             "properties": {
                                                 "subnet": {
                                                     "id": "[variables('subnet0Id')]"
