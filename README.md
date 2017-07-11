@@ -1930,8 +1930,428 @@ Vnet peerings allow for sharing VPN gateways in the hub to provide connectivity 
 
 You can use NVAs to secure the traffic going between the local Vnets and the remote site (at the other side of the Site-To-Site tunnel), manipulating the routing in the subnet gateway with UDRs. This configuration works as well in Hub-And-Spoke Vnet configurations.
 
+# PART 4: NVA scalability with Azure VM Scale Sets <a name="part4"></a>
 
- 
+## Lab 10: Initialize the lab with NVAs in a VMSS <a name="lab10"></a>
+
+You might be wondering how to scale the NVA cluster beyond 2 appliances. Or even better, how to scale out (and back in) the NVA cluster automatically, whenever the load requires it. In this lab we are going to explore placing the NVAs in Virtual Machine Scale Sets (VMSS), so that autoscaling can be accomplished.
+
+Note that you can jump straight into this lab without doing the previous ones. In order to make it possible starting from here, we are going to delete the whole lab and recreate it, but with the NVAs configured in a VM Scale Set.
+
+**Step 1.** The first thing we are going to do is to delete our existing lab. If you are jumping straight into this lab, you probably do not have a resource group named vnetTest, so you can skip to Step 2:
+
+<pre lang="...">
+<b>az group delete --name vnetTest</b>
+Are you sure you want to perform this operation? (y/n): <b>y</b>
+</pre>
+
+**Step 2.** Now we can create a new, empty resource group with the same name:
+
+<pre lang="...">
+<b>az group create --name vnetTest --location westeurope</b>
+{
+  "id": "/subscriptions/e7da9914-9b05-4891-893c-546cb7b0422e/resourceGroups/vnetTest",
+  "location": "westeurope",
+  "managedBy": null,
+  "name": "vnetTest",
+  "properties": {
+    "provisioningState": "Succeeded"
+  },
+  "tags": null
+}
+</pre>
+
+In case you are starting the lab from new, make sure that you have configure this resource group as the default one for the Azure CLI (so that you do not have to specify the resource group every time):
+
+```
+az configure --defaults group=vnetTest
+```
+
+**Step 3.** Now we can deploy all the objects we need, including the NVAs in a VMSS. In order to do that, we will leverage an ARM template. If you are working on a Windows OS, please use this command:
+
+<pre lang="...">
+TBD...
+</pre>
+
+Or if you are using Linux, please issue this command:
+
+<pre lang="...">
+az group deployment create --name netLabDeployment --template-uri https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/NetworkingLab\_master.json --resource-group vnetTest --parameters '{"createVPNgw":{"value":"no"}, "adminUsername":{"value":"lab-user"}, "adminPassword":{"value":"Microsoft123!"}, "nvaType":{"value":"<b>ubuntuScaleSet</b>"}}'
+</pre>
+
+**Note:** the previous commands can take between 15 and 20 minutes to be executed.
+
+**Note:** If you compare this command to the one we used to initialize the previous labs, the only differnce is the parameter `nvaType`, set to a new value. In the ARM template, this value for the parameter will force it to use a different sub-template for the NVAs.
+
+
+**Step 4.** Let us have a look at the scale set that has been created
+
+<pre lang="...">
+<b>az vmss list -o table</b>
+Location    Name                  Overprovision    ProvisioningState    ResourceGroup    SinglePlacementGroup
+----------  --------------------  ---------------  -------------------  ---------------  ----------------------
+westeurope  nvaVMSSkodmotixrpf3a  True             Succeeded            vnetTest         True
+</pre>
+
+<pre lang="...">
+<b>az vmss list-instances -n nvaVMSSkodmotixrpf3a -o table</b>
+  InstanceId  LatestModelApplied    Location    Name                    ProvisioningState    ResourceGroup    VmId
+------------  --------------------  ----------  ----------------------  -------------------  ---------------  ------------------------------------
+           0  True                  westeurope  nvaVMSSkodmotixrpf3a_0  Succeeded            VNETTEST         aca4c056-0aae-4072-bfbf-6f5727a1044e
+           3  True                  westeurope  nvaVMSSkodmotixrpf3a_3  Succeeded            VNETTEST         9aa2dbe9-57a6-409b-8abc-ea14c292f996
+</pre>
+
+**Note:** the name of the scale set will be different in your case, since it is suffixed with an unique string to prevent name conflicts.
+
+
+**Step 5.** Now let us have a look at the load balancers:
+
+<pre lang="...">
+<b>az network lb list -o table</b>
+Location    Name              ProvisioningState    ResourceGroup    ResourceGuid
+----------  ----------------  -------------------  ---------------  ------------------------------------
+westeurope  linuxnva-slb-ext  Succeeded            vnetTest         05421b1f-0223-48b2-a8be-cab5d0d7708c
+westeurope  linuxnva-slb-int  Succeeded            vnetTest         b82d40d5-c84c-492d-a056-e168f53cc6af
+</pre>
+
+**Step 6.** In this lab we are only using the internal load balancer. Let us make sure that there is an address pool associated to the internal load balancer, and that the VMs in our scale set are associated with it:
+
+az network lb address-pool list --lb-name linuxnva-slb-int -o table
+Name                     ProvisioningState    ResourceGroup
+-----------------------  -------------------  ---------------
+linuxnva-slbBackend-int  Succeeded            vnetTest
+</pre>
+
+<pre lang="...">
+<b>az network lb address-pool show --lb-name linuxnva-slb-int --name linuxnva-slbBackend-int</b>
+{
+  "backendIpConfigurations": [
+    {
+      "applicationGatewayBackendAddressPools": null,
+      "etag": null,
+      "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Compute/virtualMachineScaleSets/<b>nvaVMSSkodmotixrpf3a/virtualMachines/0</b>/networkInterfaces/nic0/ipConfigurations/ipconfig0",
+      "loadBalancerBackendAddressPools": null,
+      "loadBalancerInboundNatRules": null,
+      "name": null,
+      "primary": null,
+      "privateIpAddress": null,
+      "privateIpAddressVersion": null,
+      "privateIpAllocationMethod": null,
+      "provisioningState": null,
+      "publicIpAddress": null,
+      "resourceGroup": "vnetTest",
+      "subnet": null
+    },
+    {
+      "applicationGatewayBackendAddressPools": null,
+      "etag": null,
+      "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Compute/virtualMachineScaleSets/<b>nvaVMSSkodmotixrpf3a/virtualMachines/3</b>/networkInterfaces/nic0/ipConfigurations/ipconfig0",
+      "loadBalancerBackendAddressPools": null,
+      "loadBalancerInboundNatRules": null,
+      "name": null,
+      "primary": null,
+      "privateIpAddress": null,
+      "privateIpAddressVersion": null,
+      "privateIpAllocationMethod": null,
+      "provisioningState": null,
+      "publicIpAddress": null,
+      "resourceGroup": "vnetTest",
+      "subnet": null
+    }
+  ],
+  "etag": "W/\"2c435acf-1c56-406a-b690-8beed89cb94d\"",
+  "id": "/subscriptions/e7da9914-9b05-4891-893c-546cb7b0422e/resourceGroups/vnetTest/providers/Microsoft.Network/loadBalancers/linuxnva-slb-int/backendAddressPools/linuxnva-slbBackend-int",
+  "loadBalancingRules": [
+    {
+      "id": "/subscriptions/e7da9914-9b05-4891-893c-546cb7b0422e/resourceGroups/vnetTest/providers/Microsoft.Network/loadBalancers/linuxnva-slb-int/loadBalancingRules/ssh",
+      "resourceGroup": "vnetTest"
+    }
+  ],
+  "name": "linuxnva-slbBackend-int",
+  "outboundNatRule": null,
+  "provisioningState": "Succeeded",
+  "resourceGroup": "vnetTest"
+}
+</pre>
+
+
+**Step 7.** A very important piece of information that we still need about the load balancer is its virtual IP address, since this is going to be the next-hop for our routes:
+
+<pre lang="...">
+<b>az network lb frontend-ip list --lb-name linuxnva-slb-int -o table</b>
+Name              PrivateIpAddress    PrivateIpAllocationMethod    ProvisioningState    ResourceGroup
+----------------  ------------------  ---------------------------  -------------------  ---------------
+myFrontendConfig  <b>10.4.2.100</b>          Static                       Succeeded            vnetTest
+</pre>
+
+
+**Step 8.** Lastly, let us have a look at the rules configured. As you can see, the ARM template preconfigured a DSR SSH rule. DSR does not make a difference here. The reason is because traffic will not be addressed at the rule, but the rule will only be used as a next-hop in UDRs. Therefore, there is no IP address in the packet to NAT or not NAT.
+
+<pre lang="...">
+<b>az network lb rule list --lb-name linuxnva-slb-int -o table</b>
+  BackendPort  EnableFloatingIp      FrontendPort    IdleTimeoutInMinutes  LoadDistribution    Name    Protocol    ProvisioningState    ResourceGroup
+-------------  ------------------  --------------  ----------------------  ------------------  ------  ----------  -------------------  ---------------
+           22  True                            <b>22</b>                       4  Default             <b>ssh</b>     Tcp         Succeeded            vnetTest
+</pre>
+
+**Step 9.** We are done with the LB, now let us look at the routing. First, let us verify that there is no routing table associated to the subnets in myVnet1:
+
+<pre lang="...">
+<b>az network vnet show -n myVnet1 | findstr "name routeTable"</b>
+  "name": "myVnet1",
+      "name": "GatewaySubnet",
+      <b>"routeTable": null</b>
+          "name": null,
+          "name": null,
+      "name": "myVnet1Subnet1",
+      <b>"routeTable": null</b>
+      "name": "myVnet1Subnet2",
+      <b>"routeTable": null</b>
+      "name": "myVnet1Subnet3",
+      <b>"routeTable": null</b>
+      "name": "LinkTomyVnet4",
+</pre>
+
+**Note:** the previous output shows that there is no associated route table to each one of the subnets in the vnet.
+
+**Note:** if you are running this lab from a Unix machine, please replace the command `findstr "name routeTable"` with `grep 'E "name|routeTable"` 
+
+
+**Step 10.** Create two new route tables:
+
+<pre lang="...">
+<b>az network route-table create --name vnet1-subnet1</b>
+{
+  "etag": "W/\"...\"",
+  "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/routeTables/vnet1-subnet1",    
+  "location": "westeurope",
+  "name": "vnet1-subnet1",
+  "provisioningState": "Succeeded",
+  "resourceGroup": "vnetTest",
+  "routes": [],       
+  "subnets": null,    
+  "tags": null,       
+  "type": "Microsoft.Network/routeTables"
+}
+</pre>
+
+<pre lang="...">
+<b>az network route-table create --name vnet2-subnet1</b>
+{
+  "etag": "W/\"...\"",
+  "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/routeTables/vnet2-subnet1",
+  "location": "westeurope",
+  "name": "vnet2-subnet1",
+  "provisioningState": "Succeeded",
+  "resourceGroup": "vnetTest",
+  "routes": [],
+  "subnets": null,
+  "tags": null,
+  "type": "Microsoft.Network/routeTables"
+}
+</pre>
+
+**Step 11.** Now create routes pointing to Vnet1-Subnet1 and Vnet2-Subnet1 respectively. The next hop for both will be the virtual IP address of the load balancer, that we verified in Step 7.
+
+<pre lang="...">
+<b>az network route-table route create --address-prefix 10.2.0.0/16 --next-hop-ip-address 10.4.2.100 --next-hop-type VirtualAppliance --route-table-name vnet1-subnet1 -n vnet2</b>
+{
+  "addressPrefix": "10.2.0.0/16",
+  "etag": "W/\"dabc15c9-3a7e-4e8b-bc7f-c8bba239bb6e\"",
+  "id": "/subscriptions/e7da9914-9b05-4891-893c-546cb7b0422e/resourceGroups/vnetTest/providers/Microsoft.Network/routeTables/vnet1-subnet1/routes/vnet2",
+  "name": "vnet2",
+  "nextHopIpAddress": "10.4.2.100",
+  "nextHopType": "VirtualAppliance",
+  "provisioningState": "Succeeded",
+  "resourceGroup": "vnetTest"
+}
+</pre>
+
+<pre lang="...">
+<b>az network route-table route create --address-prefix 10.1.0.0/16 --next-hop-ip-address 10.4.2.100 --next-hop-type VirtualAppliance --route-table-name vnet2-subnet1 -n vnet1</b>
+{
+  "addressPrefix": "10.1.0.0/16",
+  "etag": "W/\"f7a2d8ed-4588-496f-9e25-3bafbb3ba7ee\"",
+  "id": "/subscriptions/e7da9914-9b05-4891-893c-546cb7b0422e/resourceGroups/vnetTest/providers/Microsoft.Network/routeTables/vnet2-subnet1/routes/vnet1",
+  "name": "vnet1",
+  "nextHopIpAddress": "10.4.2.100",
+  "nextHopType": "VirtualAppliance",
+  "provisioningState": "Succeeded",
+  "resourceGroup": "vnetTest"
+}
+</pre>
+
+**Step 12.** Lastly, we still need to associate the routing tables with the corresponding Vnets:
+
+<pre lang="...">
+<b>az network vnet subnet update -n myVnet1Subnet1 --vnet-name myVnet1 --route-table vnet1-subnet1</b>
+Output omitted
+</pre>
+
+<pre lang="...">
+<b>az network vnet subnet update -n myVnet2Subnet1 --vnet-name myVnet2 --route-table vnet2-subnet1</b>
+Output omitted
+</pre>
+
+
+**Step 13.** Find the public IP addresses for your VMs. You might want to save this output somewhere (for example, in a separate Notepad window), since you will be needing these IP addresses. Use the IP address of myVnet1-vm1-pip, and verify that you can connect over SSH (again, if you did not change the deployment command from Step 3, credentials for all VMs and NVAs are lab-user/Microsoft123!):
+
+<pre lang="...">
+<b>az network public-ip list -o table</b>
+  IdleTimeoutInMinutes  Location    Name                 ProvisioningState    PublicIpAddressVersion    PublicIpAllocationMethod    ResourceGroup    ResourceGuid                          IpAddress
+----------------------  ----------  -------------------  -------------------  ------------------------  --------------------------  ---------------  ------------------------------------  --------------
+                     4  westeurope  linuxnva-slbPip-ext  Succeeded            IPv4                      Dynamic                     vnetTest         9c00b975-fe9a-4062-9af5-e3edfe17b790
+                     4  westeurope  myVnet1-vm1-pip      Succeeded            IPv4                      Dynamic                     vnetTest         5362dde2-c7b8-4155-b806-13a09c121493  <b>52.174.159.47</b>
+                     4  westeurope  myVnet1-vm2-pip      Succeeded            IPv4                      Dynamic                     vnetTest         38d65b41-38a0-4704-8c78-7b99280b5558  52.166.190.4
+                     4  westeurope  myVnet2-vm1-pip      Succeeded            IPv4                      Dynamic                     vnetTest         d5b4bc59-1b12-418a-8ff0-a82939c08338  52.174.157.51
+                     4  westeurope  myVnet3-vm1-pip      Succeeded            IPv4                      Dynamic                     vnetTest         a91b01a8-6a29-41e8-b06e-4138ef48c936  52.174.154.201
+                     4  westeurope  myVnet4-vm1-pip      Succeeded            IPv4                      Dynamic                     vnetTest         5df2f4f5-e1ea-4207-8a63-7e20457fdd79  52.174.106.63
+                     4  westeurope  myVnet5-vm1-pip      Succeeded            IPv4                      Dynamic                     vnetTest         a26367a2-5abf-40a5-b671-17f6e51b9bfe  52.174.159.206
+                     4  westeurope  vnet4gwPip           Succeeded            IPv4                      Dynamic                     vnetTest         3af7b28c-05f0-4c7a-b0be-d6075cd0bd53
+                     4  westeurope  vnet5gwPip           Succeeded            IPv4                      Dynamic                     vnetTest         079ad2da-ff85-4cbf-8ad7-9df2423ff4df
+<pre>
+
+<pre lang="...">
+$ <b>ssh lab-user@52.174.159.47</b>
+The authenticity of host '52.174.159.47 (52.174.159.47)' can't be established.
+ECDSA key fingerprint is dd:8a:d4:d1:1e:e1:16:70:1e:ba:98:a6:fe:cc:a5:71.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added '52.174.159.47' (ECDSA) to the list of known hosts.
+lab-user@52.174.159.47's password:
+Welcome to Ubuntu 16.04.1 LTS (GNU/Linux 4.4.0-47-generic x86_64)
+...
+<b>lab-user@myVnet1-vm1</b>:~$
+</pre>
+
+**Step 14.** Finally, try to connect to the VM in subnet 2. The SSH traffic should be intercepted by the UDRs and sent over to the LB. The LB would then load balance it over both NVAs, that would source NAT it (to make sure to attract the return traffic) and send it forward to the VM in myVnet2.
+
+<pre lang="...">
+lab-user@myVnet1-vm1:~$ <b>ssh 10.2.1.4</b>
+ssh: connect to host 10.2.1.4 port 22: Connection timed out
+lab-user@myVnet1-vm1:~$
+</pre> 
+
+### Troubleshooting
+
+If SSH does not work, there are some items you can verify:
+
+Make sure that the routes are correctly programmed in the NICs of myVnet1-vm1 and myVnet2-vm1:
+
+<pre lang="...">
+<b>az network nic show-effective-route-table -n myVnet1-vm1-nic</b>
+{
+  "nextLink": null,
+  "value": [
+...
+    {
+      "addressPrefix": [
+        "<b>10.2.0.0/16</b>"
+      ],
+      "name": "vnet2",
+      "nextHopIpAddress": [
+        "<b>10.4.2.100</b>"
+      ],
+      "nextHopType": "VirtualAppliance",
+      "source": "User",
+      "state": "Active"
+    }
+  ]
+}
+</pre>
+
+<pre lang="...">
+<b>az network nic show-effective-route-table -n myVnet2-vm1-nic</b>
+{
+  "nextLink": null,
+  "value": [
+...
+    {
+      "addressPrefix": [
+        "<b>10.1.0.0/16</b>"
+      ],
+      "name": "vnet1",
+      "nextHopIpAddress": [
+        "<b>10.4.2.100</b>"
+      ],
+      "nextHopType": "VirtualAppliance",
+      "source": "User",
+      "state": "Active"
+    }
+  ]
+}
+</pre>
+
+Make sure that the VMs in the VMSS have IP forwarding enabled in their NIC.
+
+??????
+
+Capture traffic in the NVAs. You can get the IP addresses assigned to the NVAs in the VMSS from the Azure GUI. Find the resource group vnetTest, and go to the vnet myVnet4. In the Connected Devices menu you will see the IP addresses of the appliance, as this picture shows:
+
+You can now open a second connection to the public IP address of myVnet1-vm1, and from there connect to the NVAs. For example, if one NVA had the IP address 10.4.2.4, you would do the following:
+
+<pre lang="...">
+<b>ssh lab-user@52.174.159.47</b>
+...
+lab-user@myVnet1-vm1:~$ <b>ssh 10.4.2.4</b>
+...
+lab-user@linuxnva000000:~$
+</pre>
+
+From the NVA you can now capture SSH traffic going to/from myVnet2-vm1 (10.2.1.4):
+
+<pre lang="...">
+lab-user@linuxnva000000:~$ sudo tcpdump -i eth0 host 10.2.1.4 and port 22
+tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
+listening on eth0, link-type EN10MB (Ethernet), capture size 262144 bytes
+13:30:47.717321 IP 10.1.1.4.57380 > 10.2.1.4.ssh: Flags [S], seq 4138813573, win 29200, options [mss 1418,sackOK,TS val 1565618 ecr 0,nop,wscale 7], length 0
+<green># Incoming SYN from VM1 to VM2</green>
+13:30:47.717365 IP 10.4.2.4.57380 > 10.2.1.4.ssh: Flags [S], seq 4138813573, win 29200, options [mss 1418,sackOK,TS val 1565618 ecr 0,nop,wscale 7], length 0
+<green># Outgoing SYN from VM1 to VM2, source-natted to 10.2.1.4</green>
+13:30:47.720502 IP 10.2.1.4.ssh > 10.4.2.4.57380: Flags [S.], seq 2709733687, ack 4138813574, win 28960, options [mss 1418,sackOK,TS val 1562671 ecr 1565618,nop,wscale 7], length 0
+<green># Incoming SYN-ACK from VM2 to VM1, sent to the local address (because of SNAT)</green>
+13:30:47.720513 IP 10.2.1.4.ssh > 10.1.1.4.57380: Flags [S.], seq 2709733687, ack 4138813574, win 28960, options [mss 1418,sackOK,TS val 1562671 ecr 1565618,nop,wscale 7], length 0
+<green># Outgoing SYN-ACK from VM2 to VM1, undoing the source-NAT, with VM1's original IP address</green>
+13:30:48.714658 IP 10.1.1.4.57380 > 10.2.1.4.ssh: Flags [S], seq 4138813573, win 29200, options [mss 1418,sackOK,TS val 1565868 ecr 0,nop,wscale 7], length 0
+<red># After 1 second, VM1 resends the SYN. That means, the previous packet did not reach VM1</red>
+13:30:48.714699 IP 10.4.2.4.57380 > 10.2.1.4.ssh: Flags [S], seq 4138813573, win 29200, options [mss 1418,sackOK,TS val 1565868 ecr 0,nop,wscale 7], length 0
+13:30:48.716760 IP 10.2.1.4.ssh > 10.4.2.4.57380: Flags [S.], seq 2709733687, ack 4138813574, win 28960, options [mss 1418,sackOK,TS val 1562920 ecr 1565618,nop,wscale 7], length 0
+13:30:48.716787 IP 10.2.1.4.ssh > 10.1.1.4.57380: Flags [S.], seq 2709733687, ack 4138813574, win 28960, options [mss 1418,sackOK,TS val 1562920 ecr 1565618,nop,wscale 7], length 0
+13:30:49.713877 IP 10.2.1.4.ssh > 10.4.2.4.57380: Flags [S.], seq 2709733687, ack 4138813574, win 28960, options [mss 1418,sackOK,TS val 1563170 ecr 1565618,nop,wscale 7], length 0
+13:30:49.713911 IP 10.2.1.4.ssh > 10.1.1.4.57380: Flags [S.], seq 2709733687, ack 4138813574, win 28960, options [mss 1418,sackOK,TS val 1563170 ecr 1565618,nop,wscale 7], length 0
+<red># After 2 seconds, VM1 resends the SYN. That means, the previous packet did not reach VM1</red>
+13:30:50.722461 IP 10.1.1.4.57380 > 10.2.1.4.ssh: Flags [S], seq 4138813573, win 29200, options [mss 1418,sackOK,TS val 1566370 ecr 0,nop,wscale 7], length 0
+13:30:50.722488 IP 10.4.2.4.57380 > 10.2.1.4.ssh: Flags [S], seq 4138813573, win 29200, options [mss 1418,sackOK,TS val 1566370 ecr 0,nop,wscale 7], length 0
+13:30:50.724771 IP 10.2.1.4.ssh > 10.4.2.4.57380: Flags [S.], seq 2709733687, ack 4138813574, win 28960, options [mss 1418,sackOK,TS val 1563422 ecr 1565618,nop,wscale 7], length 0
+13:30:50.724791 IP 10.2.1.4.ssh > 10.1.1.4.57380: Flags [S.], seq 2709733687, ack 4138813574, win 28960, options [mss 1418,sackOK,TS val 1563422 ecr 1565618,nop,wscale 7], length 0
+13:30:52.726065 IP 10.2.1.4.ssh > 10.4.2.4.57380: Flags [S.], seq 2709733687, ack 4138813574, win 28960, options [mss 1418,sackOK,TS val 1563923 ecr 1565618,nop,wscale 7], length 0
+13:30:52.726098 IP 10.2.1.4.ssh > 10.1.1.4.57380: Flags [S.], seq 2709733687, ack 4138813574, win 28960, options [mss 1418,sackOK,TS val 1563923 ecr 1565618,nop,wscale 7], length 0
+<red># And so on...</red>
+13:30:54.734462 IP 10.1.1.4.57380 > 10.2.1.4.ssh: Flags [S], seq 4138813573, win 29200, options [mss 1418,sackOK,TS val 1567373 ecr 0,nop,wscale 7], length 0
+13:30:54.734487 IP 10.4.2.4.57380 > 10.2.1.4.ssh: Flags [S], seq 4138813573, win 29200, options [mss 1418,sackOK,TS val 1567373 ecr 0,nop,wscale 7], length 0
+13:30:54.736704 IP 10.2.1.4.ssh > 10.4.2.4.57380: Flags [S.], seq 2709733687, ack 4138813574, win 28960, options [mss 1418,sackOK,TS val 1564425 ecr 1565618,nop,wscale 7], length 0
+13:30:54.736714 IP 10.2.1.4.ssh > 10.1.1.4.57380: Flags [S.], seq 2709733687, ack 4138813574, win 28960, options [mss 1418,sackOK,TS val 1564425 ecr 1565618,nop,wscale 7], length 0
+13:30:58.733951 IP 10.2.1.4.ssh > 10.4.2.4.57380: Flags [S.], seq 2709733687, ack 4138813574, win 28960, options [mss 1418,sackOK,TS val 1565425 ecr 1565618,nop,wscale 7], length 0
+13:30:58.733985 IP 10.2.1.4.ssh > 10.1.1.4.57380: Flags [S.], seq 2709733687, ack 4138813574, win 28960, options [mss 1418,sackOK,TS val 1565425 ecr 1565618,nop,wscale 7], length 0
+13:31:02.746371 IP 10.1.1.4.57380 > 10.2.1.4.ssh: Flags [S], seq 4138813573, win 29200, options [mss 1418,sackOK,TS val 1569376 ecr 0,nop,wscale 7], length 0
+13:31:02.746406 IP 10.4.2.4.57380 > 10.2.1.4.ssh: Flags [S], seq 4138813573, win 29200, options [mss 1418,sackOK,TS val 1569376 ecr 0,nop,wscale 7], length 0
+13:31:02.748611 IP 10.2.1.4.ssh > 10.4.2.4.57380: Flags [S.], seq 2709733687, ack 4138813574, win 28960, options [mss 1418,sackOK,TS val 1566428 ecr 1565618,nop,wscale 7], length 0
+13:31:02.748624 IP 10.2.1.4.ssh > 10.1.1.4.57380: Flags [S.], seq 2709733687, ack 4138813574, win 28960, options [mss 1418,sackOK,TS val 1566428 ecr 1565618,nop,wscale 7], length 0
+13:31:10.749848 IP 10.2.1.4.ssh > 10.4.2.4.57380: Flags [S.], seq 2709733687, ack 4138813574, win 28960, options [mss 1418,sackOK,TS val 1568429 ecr 1565618,nop,wscale 7], length 0
+13:31:10.749876 IP 10.2.1.4.ssh > 10.1.1.4.57380: Flags [S.], seq 2709733687, ack 4138813574, win 28960, options [mss 1418,sackOK,TS val 1568429 ecr 1565618,nop,wscale 7], length 0
+13:31:18.778535 IP 10.1.1.4.57380 > 10.2.1.4.ssh: Flags [S], seq 4138813573, win 29200, options [mss 1418,sackOK,TS val 1573384 ecr 0,nop,wscale 7], length 0
+13:31:18.778578 IP 10.4.2.4.57380 > 10.2.1.4.ssh: Flags [S], seq 4138813573, win 29200, options [mss 1418,sackOK,TS val 1573384 ecr 0,nop,wscale 7], length 0
+13:31:18.780656 IP 10.2.1.4.ssh > 10.4.2.4.57380: Flags [S.], seq 2709733687, ack 4138813574, win 28960, options [mss 1418,sackOK,TS val 1570436 ecr 1565618,nop,wscale 7], length 0
+13:31:18.780666 IP 10.2.1.4.ssh > 10.1.1.4.57380: Flags [S.], seq 2709733687, ack 4138813574, win 28960, options [mss 1418,sackOK,TS val 1570436 ecr 1565618,nop,wscale 7], length 0
+13:31:34.785871 IP 10.2.1.4.ssh > 10.4.2.4.57380: Flags [S.], seq 2709733687, ack 4138813574, win 28960, options [mss 1418,sackOK,TS val 1574438 ecr 1565618,nop,wscale 7], length 0
+13:31:34.785899 IP 10.2.1.4.ssh > 10.1.1.4.57380: Flags [S.], seq 2709733687, ack 4138813574, win 28960, options [mss 1418,sackOK,TS val 1574438 ecr 1565618,nop,wscale 7], length 0
+</pre>
+
+**Note:** In the previous text comments have been introduced in colour prefixed by &#39;#&#39; to facilitate the interpretation of the capture. For abbreviation, VM1 is used for myVnet1-vm1, and VM2 for myVnet2-vm1.
+
+
+**Note:** If you do not see any traffic in the NVA, try to connect to the other one, since the Load Balancer might be sending the traffic over the other NVA
+
+
 # End the lab
 
 To end the lab, simply delete the resource group that you created in the first place (vnetTest in our example) from the Azure portal or from the Azure CLI: 
