@@ -2352,6 +2352,7 @@ listening on eth0, link-type EN10MB (Ethernet), capture size 262144 bytes
 **Note:** If you do not see any traffic in the NVA, try to connect to the other one, since the Load Balancer might be sending the traffic over the other NVA
 
 
+ 
 # End the lab
 
 To end the lab, simply delete the resource group that you created in the first place (vnetTest in our example) from the Azure portal or from the Azure CLI: 
