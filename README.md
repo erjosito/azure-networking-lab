@@ -313,7 +313,7 @@ True                       westeurope  installcustomscript  Succeeded
 **Step 2.** After verifying the public IP address assigned to the first VM in vnet1 (called &#39;myVnet1-vm1-pip&#39;, go back to the your list of IP addresses), connect to it using the credentials that you specified when deploying the template, and verify that you don’t have connectivity to the VM in vnet2. You can open an SSH session from the Linux bash shell in Windows (the red, circular icon in your taskbar), or you can use Putty (pre-installed in the Lab VM, you should have a link on your task bar). The following screenshots show you how to open Putty and use it to connect to a remote system over SSH:
  
 
-**Note:** please note the IP address for your VM will be unique, you can get the IP address assigned to "myVnet1-vm1-pip" with the command "az network public-ip list -o table". Type it in the "Host Name (or IP address)" text box in the dialog window above, and then click on "Open".
+**Note:** please note the IP address for your VM will be unique, you can get the IP address assigned to `myVnet1-vm1-pip` with the command `az network public-ip list -o table`. Type it in the "Host Name (or IP address)" text box in the dialog window above, and then click on "Open".
 
  
 The username and password were specified at creation time (that long command that invoked the ARM template). If you did not change the parameters, the username is &#39;lab-user&#39; and the password &#39;Microsoft123!&#39; (without the quotes).
@@ -746,7 +746,7 @@ lab-user@ myVnet1-vm2:~$ who
 lab-user pts/0        2017-03-23 23:41 (10.4.2.101)
 </pre>
 
-**Step 8.** This is expected, since firewalls are configured to source NAT the connections outgoing on that interface. Now open another Putty window, and connect over SSH to the public IP address of the firewall. Remember that you can retrieve the list of public IP address with the command "az network public-ip list -o table". Please go to the same firewall that you just saw in the previous step. That is, if in the `who` command you saw the IP address 10.4.2.101, connect with Putty to the public IP address &#39;nvaPip-1&#39;, if you saw 10.4.2.102, connect to &#39;nvaPip-2&#39;. In our example from the output above, we saw the &#39;10.4.2.101&#39;, so we will connect to the first NVA. Remember that the username is still &#39;lab-user&#39;, the password &#39;Microsoft123!&#39; (without the quotes).
+**Step 8.** This is expected, since firewalls are configured to source NAT the connections outgoing on that interface. Now open another Putty window, and connect over SSH to the public IP address of the firewall. Remember that you can retrieve the list of public IP address with the command `az network public-ip list -o table`. Please go to the same firewall that you just saw in the previous step. That is, if in the `who` command you saw the IP address 10.4.2.101, connect with Putty to the public IP address &#39;nvaPip-1&#39;, if you saw 10.4.2.102, connect to &#39;nvaPip-2&#39;. In our example from the output above, we saw the &#39;10.4.2.101&#39;, so we will connect to the first NVA. Remember that the username is still &#39;lab-user&#39;, the password &#39;Microsoft123!&#39; (without the quotes).
 After connecting to the firewall, you can display the NAT configuration with the following command:
 
 <pre lang="...">
@@ -1227,7 +1227,7 @@ and
 lab-user@linuxnva-2:~$ <b>sudo iptables -t nat -A PREROUTING -p tcp -d 1.2.3.4 --dport 22 -j DNAT --to-destination 10.3.1.4:22</b>
 </pre>
 
-**Note:** do not forget to replace here the bogus IP address "1.2.3.4" with the actual public IP address assigned in your environment to the public IP address "linuxnva-slbPip-ext". You can get the list of public IP addresses in your environment with the command "az network public-ip list -o table".
+**Note:** do not forget to replace here the bogus IP address `1.2.3.4` with the actual public IP address assigned in your environment to the public IP address "linuxnva-slbPip-ext". You can get the list of public IP addresses in your environment with the command `az network public-ip list -o table`.
 
 <pre lang="...">
 lab-user@linuxnva-2:~$ <b>sudo iptables -vL -t nat</b>
@@ -2209,7 +2209,7 @@ Output omitted
                      4  westeurope  myVnet5-vm1-pip      Succeeded            IPv4                      Dynamic                     vnetTest         a26367a2-5abf-40a5-b671-17f6e51b9bfe  52.174.159.206
                      4  westeurope  vnet4gwPip           Succeeded            IPv4                      Dynamic                     vnetTest         3af7b28c-05f0-4c7a-b0be-d6075cd0bd53
                      4  westeurope  vnet5gwPip           Succeeded            IPv4                      Dynamic                     vnetTest         079ad2da-ff85-4cbf-8ad7-9df2423ff4df
-<pre>
+</pre>
 
 <pre lang="...">
 $ <b>ssh lab-user@52.174.159.47</b>
