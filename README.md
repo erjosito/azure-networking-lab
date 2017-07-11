@@ -6,11 +6,11 @@
 
 [Introduction to Azure Networking](#intro)
 
-**[Part 0: First steps](#part0)**
+[Part 0: First steps](#part0)
 
-  [Lab 0: Initialize Environment](#lab0)
+- [Lab 0: Initialize Environment](#lab0)
 
-  [Lab 1: Explore Lab environment](#lab1)
+- [Lab 1: Explore Lab environment](#lab1)
 
 [Part 1: Spoke-to-Spoke communication over NVA](#part1)
 
