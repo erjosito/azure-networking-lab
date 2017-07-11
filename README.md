@@ -2301,6 +2301,72 @@ Make sure that the VMs in the VMSS have IP forwarding enabled in their NIC.
 
 HOW?????? The [ARM template](https://github.com/erjosito/azure-networking-lab/blob/ScaleSets/nvaLinux_1nic_noVnet_ScaleSet.json) is configured with enableIPforwarding=true (line 269)
 
+With the resource ID, you can now display the NIC settings:
+
+<pre lang="...">
+Get resource ID for interface!! az vmss list-instances??
+</pre>
+
+<pre lang="...">
+<b>az resource show --id /subscriptions/e7da9914-9b05-4891-893c-546cb7b0422e/resourceGroups/vnetTest/providers/Microsoft.Compute/virtualMachineScaleSets/nvaVMSSkodmotixrpf3a/virtualMachines/0/networkInterfaces/nic0</b>
+{
+  "id": "/subscriptions/e7da9914-9b05-4891-893c-546cb7b0422e/resourceGroups/vnetTest/providers/Microsoft.Compute/virtualMachineScaleSets/nvaVMSSkodmotixrpf3a/virtualMachines/0/networkInterfaces/nic0",
+  "identity": null,
+  "kind": null,
+  "location": null,
+  "managedBy": null,
+  "name": "nic0",
+  "plan": null,
+  "properties": {
+    "dnsSettings": {
+      "appliedDnsServers": [],
+      "dnsServers": []
+    },
+    "enableAcceleratedNetworking": false,
+    <b>"enableIPForwarding": false,</b>
+    "ipConfigurations": [
+      {
+        "etag": "W/\"30769db9-780b-42d7-99db-52e8cf60ac13\"",
+        "id": "/subscriptions/e7da9914-9b05-4891-893c-546cb7b0422e/resourceGroups/vnetTest/providers/Microsoft.Compute/virtualMachineScaleSets/nvaVMSSkodmotixrpf3a/virtualMachines/0/networkInterfaces/nic0/ipConfigurations/ipconfig0",
+        "name": "ipconfig0",
+        "properties": {
+          "loadBalancerBackendAddressPools": [
+            {
+              "id": "/subscriptions/e7da9914-9b05-4891-893c-546cb7b0422e/resourceGroups/vnetTest/providers/Microsoft.Network/loadBalancers/linuxnva-slb-int/backendAddressPools/linuxnva-slbBackend-int",
+              "resourceGroup": "vnetTest"
+            }
+          ],
+          "primary": true,
+          "privateIPAddress": "10.4.2.4",
+          "privateIPAddressVersion": "IPv4",
+          "privateIPAllocationMethod": "Dynamic",
+          "provisioningState": "Succeeded",
+          "subnet": {
+            "id": "/subscriptions/e7da9914-9b05-4891-893c-546cb7b0422e/resourceGroups/vnetTest/providers/Microsoft.Network/virtualNetworks/myVnet4/subnets/myVnet4Subnet2",
+            "resourceGroup": "vnetTest"
+          }
+        },
+        "resourceGroup": "vnetTest"
+      }
+    ],
+    "macAddress": "00-0D-3A-25-A2-18",
+    "provisioningState": "Succeeded",
+    "resourceGuid": "6c69b735-b4fc-4ba0-902d-0f98c706d067",
+    "virtualMachine": {
+      "id": "/subscriptions/e7da9914-9b05-4891-893c-546cb7b0422e/resourceGroups/vnetTest/providers/Microsoft.Compute/virtualMachineScaleSets/nvaVMSSkodmotixrpf3a/virtualMachines/0",
+      "resourceGroup": "vnetTest"
+    }
+  },
+  "resourceGroup": "vnetTest",
+  "sku": null,
+  "tags": null,
+  "type": null
+}
+</pre>
+
+**Note:** Remember to replace the resource ID in the command above with your own
+
+
 Capture traffic in the NVAs. You can get the IP addresses assigned to the NVAs in the VMSS from the Azure GUI. Find the resource group vnetTest, and go to the vnet myVnet4. In the Connected Devices menu you will see the IP addresses of the appliance, as this picture shows:
 
 You can now open a second connection to the public IP address of myVnet1-vm1, and from there connect to the NVAs. For example, if one NVA had the IP address 10.4.2.4, you would do the following:
