@@ -6,7 +6,7 @@
 
 [Introduction to Azure Networking](#intro)
 
-[Part 0: First steps](#part0)
+**[Part 0: First steps](#part0)**
 
 - [Lab 0: Initialize Environment](#lab0)
 
