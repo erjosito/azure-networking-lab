@@ -236,7 +236,7 @@
                 "capacity": "[parameters('vmCount')]"
             },
             "properties": {
-                "overprovision": "true",
+                "overprovision": true,
                 "upgradePolicy": {
                     "mode": "Manual"
                 },
@@ -262,11 +262,11 @@
                             {
                                 "name": "nic0",
                                 "properties": {
-                                    "primary": "true",
+                                    "primary": true,
+                                    "enableIPForwarding": true,
                                     "ipConfigurations": [
                                         {
                                             "name": "ipconfig0",
-                                            "enableIPForwarding": true,
                                             "properties": {
                                                 "subnet": {
                                                     "id": "[variables('subnet0Id')]"
