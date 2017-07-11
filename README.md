@@ -34,6 +34,10 @@
 
 - [Lab 9: VPN connection to the Hub Vnet](#lab9)
 
+**[Part 4: NVA scalability with VM Scale Sets](#part4)**
+
+- [Lab 10: NVA scalability with VM Scale Sets](#lab10)
+
 [End the lab](#end)
 
 [Conclusion](#conclusion)
