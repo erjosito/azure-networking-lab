@@ -12,27 +12,27 @@
 
 - [Lab 1: Explore Lab environment](#lab1)
 
-[Part 1: Spoke-to-Spoke communication over NVA](#part1)
+**[Part 1: Spoke-to-Spoke communication over NVA](#part1)**
 
-  [Lab 2: Spoke-to-Spoke communication over vnet gateway](#lab2)
+- [Lab 2: Spoke-to-Spoke communication over vnet gateway](#lab2)
 
-  [Lab 3: Microsegmentation with NVA](#lab3)
+- [Lab 3: Microsegmentation with NVA](#lab3)
 
-[Part 2: NVA Scalability and HA](#part2)
+**[Part 2: NVA Scalability and HA](#part2)**
 
-  [Lab 4: NVA Scalability](#lab4)
+- [Lab 4: NVA Scalability](#lab4)
 
-  [Lab 5: Outgoing Internet traffic protected by the NVA](#lab5)
+- [Lab 5: Outgoing Internet traffic protected by the NVA](#lab5)
 
-  [Lab 6: Incoming Internet traffic protected by the NVA](#lab6)
+- [Lab 6: Incoming Internet traffic protected by the NVA](#lab6)
 
-  [Lab 7: Advanced HTTP-based probes](#lab7)
+- [Lab 7: Advanced HTTP-based probes](#lab7)
 
-[Part 3: VPN gateway](#part3)
+**[Part 3: VPN gateway](#part3)**
 
-  [Lab 8: Spoke-to-Spoke communication over the VPN gateway](#lab8)
+- [Lab 8: Spoke-to-Spoke communication over the VPN gateway](#lab8)
 
-  [Lab 9: VPN connection to the Hub Vnet](#lab9)
+- [Lab 9: VPN connection to the Hub Vnet](#lab9)
 
 [End the lab](#end)
 
