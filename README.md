@@ -617,7 +617,7 @@ As a side remark, in order for these microsegmentation designs to work, the fire
 If all traffic is going through a single Network Virtual Appliance, chances are that it is not going to scale. Whereas you could scale it up by resizing the VM where it lives, not all VM sizes are supported by NVA vendors. Besides, scale out provides a more linear way of achieving additional performance, potentially even increasing and decreasing the number of NVAs automatically via scale sets.
 In this lab we will use two NVAs and will send the traffic over both of them by means of an Azure Load Balancer. Since return traffic must flow through the same NVA (since firewalling is a stateful operation and asymmetric routing would break it), the firewalls will source-NAT traffic to their individual addresses.
 
-![Architecture Image](https://github.com/erjosito/azure-networking-lab/blob/master/ansible_arch.png "Load Balancer for NVA Scale Out")
+![Architecture Image](https://github.com/erjosito/azure-networking-lab/blob/master/figure08.png "Load Balancer for NVA Scale Out")
 
 **Figure 7.** Load balancer for NVA scale out 
 
