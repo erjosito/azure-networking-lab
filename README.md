@@ -2304,28 +2304,28 @@ lab-user@linuxnva000000:~$ sudo tcpdump -i eth0 host 10.2.1.4 and port 22
 tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
 listening on eth0, link-type EN10MB (Ethernet), capture size 262144 bytes
 13:30:47.717321 IP 10.1.1.4.57380 > 10.2.1.4.ssh: Flags [S], seq 4138813573, win 29200, options [mss 1418,sackOK,TS val 1565618 ecr 0,nop,wscale 7], length 0
-<green># Incoming SYN from VM1 to VM2</green>
+<font color="green"># Incoming SYN from VM1 to VM2</font>
 13:30:47.717365 IP 10.4.2.4.57380 > 10.2.1.4.ssh: Flags [S], seq 4138813573, win 29200, options [mss 1418,sackOK,TS val 1565618 ecr 0,nop,wscale 7], length 0
-<green># Outgoing SYN from VM1 to VM2, source-natted to 10.2.1.4</green>
+<font color="green"># Outgoing SYN from VM1 to VM2, source-natted to 10.2.1.4</font>
 13:30:47.720502 IP 10.2.1.4.ssh > 10.4.2.4.57380: Flags [S.], seq 2709733687, ack 4138813574, win 28960, options [mss 1418,sackOK,TS val 1562671 ecr 1565618,nop,wscale 7], length 0
-<green># Incoming SYN-ACK from VM2 to VM1, sent to the local address (because of SNAT)</green>
+<font color="green"># Incoming SYN-ACK from VM2 to VM1, sent to the local address (because of SNAT)</font>
 13:30:47.720513 IP 10.2.1.4.ssh > 10.1.1.4.57380: Flags [S.], seq 2709733687, ack 4138813574, win 28960, options [mss 1418,sackOK,TS val 1562671 ecr 1565618,nop,wscale 7], length 0
-<green># Outgoing SYN-ACK from VM2 to VM1, undoing the source-NAT, with VM1's original IP address</green>
+<font color="green"># Outgoing SYN-ACK from VM2 to VM1, undoing the source-NAT, with VM1's original IP address</font>
 13:30:48.714658 IP 10.1.1.4.57380 > 10.2.1.4.ssh: Flags [S], seq 4138813573, win 29200, options [mss 1418,sackOK,TS val 1565868 ecr 0,nop,wscale 7], length 0
-<red># After 1 second, VM1 resends the SYN. That means, the previous packet did not reach VM1</red>
+<font color="red"># After 1 second, VM1 resends the SYN. That means, the previous packet did not reach VM1</font>
 13:30:48.714699 IP 10.4.2.4.57380 > 10.2.1.4.ssh: Flags [S], seq 4138813573, win 29200, options [mss 1418,sackOK,TS val 1565868 ecr 0,nop,wscale 7], length 0
 13:30:48.716760 IP 10.2.1.4.ssh > 10.4.2.4.57380: Flags [S.], seq 2709733687, ack 4138813574, win 28960, options [mss 1418,sackOK,TS val 1562920 ecr 1565618,nop,wscale 7], length 0
 13:30:48.716787 IP 10.2.1.4.ssh > 10.1.1.4.57380: Flags [S.], seq 2709733687, ack 4138813574, win 28960, options [mss 1418,sackOK,TS val 1562920 ecr 1565618,nop,wscale 7], length 0
 13:30:49.713877 IP 10.2.1.4.ssh > 10.4.2.4.57380: Flags [S.], seq 2709733687, ack 4138813574, win 28960, options [mss 1418,sackOK,TS val 1563170 ecr 1565618,nop,wscale 7], length 0
 13:30:49.713911 IP 10.2.1.4.ssh > 10.1.1.4.57380: Flags [S.], seq 2709733687, ack 4138813574, win 28960, options [mss 1418,sackOK,TS val 1563170 ecr 1565618,nop,wscale 7], length 0
-<red># After 2 seconds, VM1 resends the SYN. That means, the previous packet did not reach VM1</red>
+<font color="red"># After 2 seconds, VM1 resends the SYN. That means, the previous packet did not reach VM1</font>
 13:30:50.722461 IP 10.1.1.4.57380 > 10.2.1.4.ssh: Flags [S], seq 4138813573, win 29200, options [mss 1418,sackOK,TS val 1566370 ecr 0,nop,wscale 7], length 0
 13:30:50.722488 IP 10.4.2.4.57380 > 10.2.1.4.ssh: Flags [S], seq 4138813573, win 29200, options [mss 1418,sackOK,TS val 1566370 ecr 0,nop,wscale 7], length 0
 13:30:50.724771 IP 10.2.1.4.ssh > 10.4.2.4.57380: Flags [S.], seq 2709733687, ack 4138813574, win 28960, options [mss 1418,sackOK,TS val 1563422 ecr 1565618,nop,wscale 7], length 0
 13:30:50.724791 IP 10.2.1.4.ssh > 10.1.1.4.57380: Flags [S.], seq 2709733687, ack 4138813574, win 28960, options [mss 1418,sackOK,TS val 1563422 ecr 1565618,nop,wscale 7], length 0
 13:30:52.726065 IP 10.2.1.4.ssh > 10.4.2.4.57380: Flags [S.], seq 2709733687, ack 4138813574, win 28960, options [mss 1418,sackOK,TS val 1563923 ecr 1565618,nop,wscale 7], length 0
 13:30:52.726098 IP 10.2.1.4.ssh > 10.1.1.4.57380: Flags [S.], seq 2709733687, ack 4138813574, win 28960, options [mss 1418,sackOK,TS val 1563923 ecr 1565618,nop,wscale 7], length 0
-<red># And so on...</red>
+<font color="red"># And so on...</font>
 13:30:54.734462 IP 10.1.1.4.57380 > 10.2.1.4.ssh: Flags [S], seq 4138813573, win 29200, options [mss 1418,sackOK,TS val 1567373 ecr 0,nop,wscale 7], length 0
 13:30:54.734487 IP 10.4.2.4.57380 > 10.2.1.4.ssh: Flags [S], seq 4138813573, win 29200, options [mss 1418,sackOK,TS val 1567373 ecr 0,nop,wscale 7], length 0
 13:30:54.736704 IP 10.2.1.4.ssh > 10.4.2.4.57380: Flags [S.], seq 2709733687, ack 4138813574, win 28960, options [mss 1418,sackOK,TS val 1564425 ecr 1565618,nop,wscale 7], length 0
