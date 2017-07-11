@@ -261,8 +261,8 @@
                         "networkInterfaceConfigurations": [
                             {
                                 "name": "nic0",
-                                "enableIPForwarding": true,
                                 "properties": {
+                                    "enableIPForwarding": true,
                                     "primary": true,
                                     "ipConfigurations": [
                                         {
