@@ -236,7 +236,7 @@
                 "capacity": "[parameters('vmCount')]"
             },
             "properties": {
-                "overprovision": "true",
+                "overprovision": true,
                 "upgradePolicy": {
                     "mode": "Manual"
                 },
@@ -262,7 +262,7 @@
                             {
                                 "name": "nic0",
                                 "properties": {
-                                    "primary": "true",
+                                    "primary": true,
                                     "ipConfigurations": [
                                         {
                                             "name": "ipconfig0",
