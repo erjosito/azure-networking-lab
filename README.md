@@ -2304,8 +2304,14 @@ HOW?????? The [ARM template](https://github.com/erjosito/azure-networking-lab/bl
 With the resource ID, you can now display the NIC settings:
 
 <pre lang="...">
-Get resource ID for interface!! az vmss list-instances??
+<b>az vmss list-instances -n nvaVMSSkodmotixrpf3a | grep networkInterfaces</b>
+      "networkInterfaces": [
+          "id": "/subscriptions/e7da9914-9b05-4891-893c-546cb7b0422e/resourceGroups/vnetTest/providers/Microsoft.Compute/virtualMachineScaleSets/nvaVMSSkodmotixrpf3a/virtualMachines/0/networkInterfaces/nic0",
+      "networkInterfaces": [
+          "id": "/subscriptions/e7da9914-9b05-4891-893c-546cb7b0422e/resourceGroups/vnetTest/providers/Microsoft.Compute/virtualMachineScaleSets/nvaVMSSkodmotixrpf3a/virtualMachines/3/networkInterfaces/nic0",
 </pre>
+
+For example, for the first interface in the instance 0:
 
 <pre lang="...">
 <b>az resource show --id /subscriptions/e7da9914-9b05-4891-893c-546cb7b0422e/resourceGroups/vnetTest/providers/Microsoft.Compute/virtualMachineScaleSets/nvaVMSSkodmotixrpf3a/virtualMachines/0/networkInterfaces/nic0</b>
@@ -2366,6 +2372,7 @@ Get resource ID for interface!! az vmss list-instances??
 
 **Note:** Remember to replace the resource ID in the command above with your own
 
+**Note:** You can optionally issue the previous command with the option `findstr Forwarding` (for Windows) or `grep Forwarding` (for Linux), in order to get a more concise output
 
 Capture traffic in the NVAs. You can get the IP addresses assigned to the NVAs in the VMSS from the Azure GUI. Find the resource group vnetTest, and go to the vnet myVnet4. In the Connected Devices menu you will see the IP addresses of the appliance, as this picture shows:
 
