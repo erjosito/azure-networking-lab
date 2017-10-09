@@ -661,7 +661,7 @@ And the same command (observe the differences in red) for our second Linux-based
 Output omitted
 </pre>
 
-**Step 4.** Let us verify the LB's rules. In this case, we need to remove the existing one (that was created by default by the ARM template in the very first lab) and replace it with another, where we will enable Direct Server Return:
+**Step 4.** Let us verify the LB's rules. In this case, we need to remove the existing one (that was created by default by the ARM template in the very first lab) and replace it with another one, where we will enable the HA Ports feature. This feature essentially configures a load balancing rule for ALL TCP/UDP ports, so it will not be specific for SSH (in this case) or any other application:
 
 <pre lang="...">
 <b>az network lb rule list --lb-name linuxnva-slb-int -o table</b>
@@ -677,32 +677,10 @@ az network lb rule delete --lb-name linuxnva-slb-int -n ssh
 **Note:** the previous command will require some minutes to run
 
 <pre lang="...">
-<b>az network lb rule create --backend-pool-name linuxnva-slbBackend-int --protocol Tcp --backend-port 22 --frontend-port 22 --frontend-ip-name myFrontendConfig --lb-name linuxnva-slb-int --name sshRule --floating-ip true --probe-name myProbe</b>
-{
-  "backendAddressPool": {
-    "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/loadBalancers/linuxnva-slb-int/backendAddressPools/linuxnva-slbBackend-int",
-    "resourceGroup": "vnetTest"
-  },
-  "backendPort": 22,
-  "enableFloatingIp": true,
-  "etag": "W/\"...\"",
-  "frontendIpConfiguration": {
-    "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/loadBalancers/linuxnva-slb-int/frontendIPConfigurations/myFrontendConfig",
-    "resourceGroup": "vnetTest"
-  },
-  "frontendPort": 22,
-  "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/loadBalancers/linuxnva-slb-int/loadBalancingRules/sshRule",
-  "idleTimeoutInMinutes": 4,
-  "loadDistribution": "Default",
-  "name": "sshRule",
-  "probe": {
-    "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/loadBalancers/linuxnva-slb-int/probes/myProbe",
-    "resourceGroup": "vnetTest"
-  },
-  "protocol": "Tcp",
-  "provisioningState": "Succeeded",
-  "resourceGroup": "vnetTest"
-}
+<b>az network lb rule create --backend-pool-name linuxnva-slbBackend-int --protocol all --backend-port 0 --frontend-port 0 --frontend-ip-name myFrontendConfig --lb-name linuxnva-slb-int --name HARule --floating-ip true --probe-name myProbe</b>
+
+Output!!!!
+
 </pre>
 
 **Step 5.** Verify with the following command the fronted IP address that the load balancer has been preconfigured with (with the ARM template in the very first lab):
@@ -722,7 +700,7 @@ myFrontendConfig  10.4.2.100          Static
 az network route-table route update --route-table-name vnet1-subnet1 -n vnet1-subnet1 --next-hop-ip-address 10.4.2.100
 </pre>
 
-At this point communication between the VMs should be possible, flowing through the NVA, on the TCP ports specified by Load Balancer rules. Note that ICMP will still not work, but in this case, this is due to the fact that at this point in time, the Azure Load Balancer is not able to balance ICMP traffic, just TCP or UDP traffic (as configured by the load balancing rules, that require a TCP or a UDP port), so Pings do not even reach the NVAs.
+At this point communication between the VMs should be possible, flowing through the NVA. Note that ICMP will still not work, but in this case, this is due to the fact that at this point in time, the Azure Load Balancer is not able to balance ICMP traffic, just TCP or UDP traffic (as configured by the load balancing rules, that require a TCP or a UDP port), so Pings do not even reach the NVAs. Check ping!!!!!
 If you go back to the Putty window, you can verify that ping to the neighbor VM in the same subnet still does not work, but SSH does.
 
 <pre lang="...">
