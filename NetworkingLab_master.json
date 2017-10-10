@@ -35,13 +35,25 @@
             "type": "string",
             "allowedValues": [ "yes","no" ],
             "metadata": { "description": "Whether VPN gateways should be deployed at all or not" }
+        },
+        "lbSku": {
+            "defaultValue": "basic",
+            "type": "string",
+            "allowedValues": [ "basic","standard" ],
+            "metadata": { "description": "Whether Load Balancers should be Basic or Standard (preview)" }
+        },
+        "repoBranch": {
+            "defaultValue": "master",
+            "type": "string",
+            "metadata": { "description": "Branch out of the Github repo where the nested templates will be downloaded from" }
         }
     },
     "variables": {
-        "baseRepoURL": "https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/",
+        "baseRepoURL": "[concat('https://raw.githubusercontent.com/erjosito/azure-networking-lab/', parameters('repoBranch'), '/')]",
         "linuxVmTemplateURI": "[concat(variables('baseRepoURL'), 'linuxVM.json')]",
         "storageAccountName": "[concat('storage', uniqueString(resourceGroup().id))]",
         "multiVnetParams": {
+            "baseRepoURL": { "value": "[variables('baseRepoURL')]" },
             "storageAccountName": { "value": "[variables('storageAccountName')]" },            
             "vnetCount": { "value": 5 },
             "createGw": { "value": "no" },
@@ -60,6 +72,7 @@
         "customScriptUri": "[concat(variables('baseRepoURL'), variables('customScript'))]",
         "customScriptCmd": "[concat('chmod 666 ', variables('customScript'), ' && /bin/sh ./', variables('customScript'))]",
         "nvaParams": {
+            "baseRepoURL": { "value": "[variables('baseRepoURL')]" },
             "vmType": { "value": "ubuntu" },
             "vmCount": { "value": 2 },
             "vmName": { "value": "linuxnva" },
@@ -73,6 +86,7 @@
             "ip0": { "value": "10.4.2.10" },
             "ip1": { "value": "10.4.3.10" },
             "deployLBYesNo": { "value": "yes" },
+            "lbSku": { "value": "[parameters('lbSku')]" },
             "scriptUri": { "value": "[variables('customScriptUri')]" },
             "scriptCmd": { "value": "[variables('customScriptCmd')]" }
         },
@@ -153,6 +167,7 @@
 					"contentVersion": "1.0.0.0"
 				},
 				"parameters":  {
+                    "baseRepoURL": { "value": "[variables('baseRepoURL')]" },
                     "adminUsername": {"value": "[parameters('adminUsername')]"},
                     "adminPassword": {"value": "[parameters('adminPassword')]"},
                     "vmName": { "value": "myVnet1-vm2" },

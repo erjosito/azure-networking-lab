@@ -70,10 +70,20 @@
 		"deployLBYesNo": {
 			"defaultValue": "no",
 			"type": "string"
-		}
+		},
+        "lbSku": {
+            "defaultValue": "basic",
+            "type": "string",
+            "allowedValues": [ "basic","standard" ],
+            "metadata": { "description": "Whether Load Balancers should be Basic or Standard (preview)" }
+        },
+        "baseRepoURL": {
+            "defaultValue": "https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/",
+            "type": "string",
+            "metadata": { "description": "URL where the nested templates are downloaded from" }    
+        }
     },
     "variables": {
-        "baseRepoURL": "https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/",
         "defaultGw": {
             "nic0": "[concat(parameters('ip0'), '1')]",
             "nic1": "[concat(parameters('ip1'), '1')]"
@@ -95,12 +105,15 @@
         "vipSuffix": "100",
         "slbSubnet": "[parameters('subnet0Name')]",
 		"deployLBTemplate": {
-			"yes": "[concat(variables('baseRepoURL'), 'slb.json')]",
-			"no": "[concat(variables('baseRepoURL'), 'nothing.json')]"
+			"yes": "[concat(parameters('baseRepoURL'), 'slb.json')]",
+			"no": "[concat(parameters('baseRepoURL'), 'nothing.json')]"
 		},
 		"LBTemplateURI": "[variables('deployLBTemplate')[parameters('deployLBYesNo')]]",
         "deployLBintParametersHash": {
             "yes": {
+                "baseRepoURL": {
+                    "value": "[parameters('baseRepoURL')]"
+                },
                 "externalInternal": {
                     "value": "internal"
                 },
