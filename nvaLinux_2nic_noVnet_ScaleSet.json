@@ -74,10 +74,14 @@
 		"deployLBYesNo": {
 			"defaultValue": "no",
 			"type": "string"
-		}
+		},
+        "baseRepoURL": {
+            "defaultValue": "https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/",
+            "type": "string",
+            "metadata": { "description": "URL where the nested templates are downloaded from" }    
+        }
     },
     "variables": {
-        "baseRepoURL": "https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/",
         "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
         "subnet0Id": "[concat(variables('vnetID'), '/subnets/', parameters('subnet0Name'))]",
         "subnet1Id": "[concat(variables('vnetID'), '/subnets/', parameters('subnet1Name'))]",
@@ -97,8 +101,8 @@
         "vipSuffix": "100",
         "slbSubnet": "[parameters('subnet0Name')]",
 		"deployLBTemplate": {
-			"yes": "[concat(variables('baseRepoURL'), 'slb.json')]",
-			"no": "[concat(variables('baseRepoURL'), 'nothing.json')]"
+			"yes": "[concat(parameters('baseRepoURL'), 'slb.json')]",
+			"no": "[concat(parameters('baseRepoURL'), 'nothing.json')]"
 		},
 		"LBTemplateURI": "[variables('deployLBTemplate')[parameters('deployLBYesNo')]]",
         "deployLBintParametersHash": {

@@ -66,10 +66,14 @@
             "defaultValue": "",
             "type": "string",
             "metadata": { "description": "Not used, included for parameter-compatibility with nvaLinux_2nic_noVnet.json" }            
+        },
+        "baseRepoURL": {
+            "defaultValue": "https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/",
+            "type": "string",
+            "metadata": { "description": "URL where the nested templates are downloaded from" }    
         }
     },
     "variables": {
-        "baseRepoURL": "https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/",
         "defaultGw": {
             "nic0": "[concat(parameters('ip0'), '1')]",
             "nic1": "[concat(parameters('ip1'), '1')]"
@@ -187,7 +191,7 @@
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
-					"uri": "[concat(variables('baseRepoURL'), 'nic_noNSG_noSLB_PIP_static.json')]",
+					"uri": "[concat(parameters('baseRepoURL'), 'nic_noNSG_noSLB_PIP_static.json')]",
 					"contentVersion": "1.0.0.0"
 				},
 				"parameters":  {
@@ -212,7 +216,7 @@
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
-					"uri": "[concat(variables('baseRepoURL'), 'nic_noNSG_noSLB_noPIP_static.json')]",
+					"uri": "[concat(parameters('baseRepoURL'), 'nic_noNSG_noSLB_noPIP_static.json')]",
 					"contentVersion": "1.0.0.0"
 				},
 				"parameters":  {
