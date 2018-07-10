@@ -19,11 +19,11 @@
             "type": "string"
         },
         "ipPrefix": {
-            "defaultValue": "10.0.1",
+            "defaultValue": "not used",
             "type": "string"
         },
         "vipSuffix": {
-            "defaultValue": "100",
+            "defaultValue": "not used",
             "type": "string"
         },
         "pipName": {
