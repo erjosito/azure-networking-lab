@@ -87,7 +87,7 @@
             "condition": "[equals(parameters('lbSku'), 'basic')]",
 			"name": "AzureLBbasic",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2016-06-01",
+			"apiVersion": "2017-08-01",
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
