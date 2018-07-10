@@ -96,9 +96,9 @@ If you find any issue when running through this lab or any error in this guide, 
 
 ## Lab 0: Initialize Azure Environment <a name="lab0"></a>
 
-**Step 1.** Log into your system. If you are using the Learn On Demand lab environment, the user for the Windows VM is Admin, with the password Passw0rd!
+**Step 1.** Log into your system.
 
-**Step 2.** If you don’t have a valid Azure subscription, but have received a voucher code for Azure, go to https://www.microsoftazurepass.com/Home/HowTo for instructions about how to redeem it.  
+**Step 2.** If you don’t have a valid Azure subscription, you can create a free Azure subscription in https://azure.microsoft.com/en-us/free. If you have received a voucher code for Azure, go to https://www.microsoftazurepass.com/Home/HowTo for instructions on how to redeem it.  
 
 **Step 3.** Open a terminal window. In Windows, for example by hitting the Windows key in your keyboard, typing `cmd` and hitting the Enter key. You might want to maximize the command Window so that it fills your desktop.
 
@@ -671,17 +671,55 @@ Output omitted
 </pre>
 
 <pre lang="...">
-az network lb rule delete --lb-name linuxnva-slb-int -n ssh
+<b>az network lb rule delete --lb-name linuxnva-slb-int -n ssh</b>
 </pre>
 
 **Note:** the previous command will require some minutes to run
 
 <pre lang="...">
 <b>az network lb rule create --backend-pool-name linuxnva-slbBackend-int --protocol all --backend-port 0 --frontend-port 0 --frontend-ip-name myFrontendConfig --lb-name linuxnva-slb-int --name HARule --floating-ip true --probe-name myProbe</b>
-
-Output!!!!
-
+{
+  "backendAddressPool": {
+    "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/loadBalancers/linuxnva-slb-int/backendAddressPools/linuxnva-slbBackend-int",
+    "resourceGroup": "vnetTest"
+  },
+  "backendPort": 0,
+  "disableOutboundSnat": null,
+  "enableFloatingIp": true,
+  "etag": "W/\"f6c6c1c6-8067-40fb-941d-2ef965556afd\"",
+  "frontendIpConfiguration": {
+    "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/loadBalancers/linuxnva-slb-int/frontendIPConfigurations/myFrontendConfig",
+    "resourceGroup": "vnetTest"
+  },
+  "frontendPort": 0,
+  "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/loadBalancers/linuxnva-slb-int/loadBalancingRules/HARule",
+  "idleTimeoutInMinutes": 4,
+  "loadDistribution": "Default",
+  "name": "HARule",
+  "probe": {
+    "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/loadBalancers/linuxnva-slb-int/probes/myProbe",
+    "resourceGroup": "vnetTest"
+  },
+  "protocol": "All",
+  "provisioningState": "Succeeded",
+  "resourceGroup": "vnetTest"
+}
 </pre>
+
+**Note:** At the time of this writing the HA Ports feature (and the standard ILB feature itself) are in preview. In order to be able to use these features you need to include your subscription in the preview with these commands (may take up to 1 hour to take effect):
+
+<pre lang="...">
+az feature register --name AllowLBPreview --namespace Microsoft.Network
+</pre>
+
+<pre lang="...">
+az feature register --name AllowILBAllPortsRule --namespace Microsoft.Network
+</pre>
+
+<pre lang="...">
+az provider register -n Microsoft.Network
+</pre>
+
 
 **Step 5.** Verify with the following command the fronted IP address that the load balancer has been preconfigured with (with the ARM template in the very first lab):
 
@@ -802,7 +840,8 @@ Another problem that needs to be solved is return traffic. With stateful network
 ## Lab 5: Outgoing Internet traffic protected by an NVA <a name="lab5"></a>
 
 What if we want to send all traffic leaving the vnet towards the public Internet through the NVAs? We need to make sure that Internet traffic to/from all VMs flows through the NVAs via User-Defined Routes, and that NVAs source-NAT the outgoing traffic with their public IP address, so that they get the return traffic too.
-For this test we will use the VM in vnet3.
+
+For this test we will use the VM in vnet3, and the first steps of the following guide will establish connectivity between Vnets 1 and 3, by creating the corresponding routing through the NVAs.
 
 **Step 1.** Go back to your Windows command prompt, and create a routing table for myVnet3Subnet1:
 
@@ -823,24 +862,7 @@ bnet1",
 }
 </pre>
 
-**Step 2.** Now create a default route in that table pointing to the internal LB VIP (10.4.2.100):
-
-<pre lang="">
-<b>az network route-table route create --address-prefix 0.0.0.0/0 --next-hop-ip-address 10.4.2.100 --next-hop-type VirtualAppliance --route-table-name vnet3-subnet1 -n default</b>
-{
-  "addressPrefix": "0.0.0.0/0",
-  "etag": "W/\"...\"",
-  "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/routeTables/vnet3-su
-bnet1/routes/default",
-  "name": "default",
-  "nextHopIpAddress": "10.4.2.100",
-  "nextHopType": "VirtualAppliance",
-  "provisioningState": "Succeeded",
-  "resourceGroup": "vnetTest"
-}
-</pre>
-
-**Step 3.** Associate the route table to the subnet myVnet3Subnet1:
+**Step 2.** Associate the route table to the subnet myVnet3Subnet1:
 
 <pre lang="">
 <b>az network vnet subnet update -n myVnet3Subnet1 --vnet-name myVnet3
@@ -848,8 +870,7 @@ bnet1/routes/default",
 Output omitted
 </pre>
 
-**Step 4.** We want to verify that Vnet3 has connectivity to our other spoke Vnets (Vnet1 and Vnet2). Add another default route for Vnet1Subnet1 pointing to the internal load balancer's VIP in Vnet3Subnet1, and the reciprocal route in the custom routing table for Vnet1Subnet1, and verify that you have SSH connectivity between the VM in Vnet1 and the VM in Vnet3.
-
+**Step 3.** We want to configure connectivity from Vnet3 to our other spoke Vnets (Vnet1 and Vnet2). Add another default route for Vnet1Subnet1 pointing to the internal load balancer's VIP in Vnet3Subnet1, and the reciprocal route in the custom routing table for Vnet1Subnet1, and verify that you have SSH connectivity between the VM in Vnet1 and the VM in Vnet3.
  
 <pre lang="">
 <b>az network route-table route create --address-prefix 10.1.1.0/24 --next-hop-ip-address 10.4.2.100 --next-hop-type VirtualAppliance --route-table-name vnet3-subnet1 -n vnet1subnet1</b>
@@ -879,7 +900,7 @@ Output omitted
 }
 </pre>
 
-Now let us verify that we have connectivity. As usual, we will use ssh, since the firewalls are blocking ICMP traffic:
+Now you should be able to connect to the VM in Vnet 3:
 
 <pre lang="">
 lab-user@myVnet1-vm1:~$ <b>ssh 10.3.1.4</b>
@@ -916,49 +937,42 @@ Chain POSTROUTING (policy ACCEPT 29 packets, 1740 bytes)
  1220 73886 <b>MASQUERADE</b>  all  --  any    <b>eth1</b>    anywhere       anywhere
  </pre>
 
-**Step 6.** Note that you don’t have Internet access to the VM in myVnet3Subnet1 any more, after changing default routing for that subnet. To verify that, we will use the command curl to connect to the Internet service `ifconfig.co`. If successful, the command should return the public IP address of the VM. Run the command to make sure that it does not work yet:
+**Step 6.** Note that you don’t have Internet access to the VM in myVnet3Subnet1 any more, after changing default routing for that subnet. To verify that, we will use the command curl to connect to the Internet service `ifconfig.co`. If successful, the command should return the public IP address of the VM. Run the command:
+
+**It should work now if using HA Ports!**
 
 <pre lang="">
 lab-user@myVnet3-vm1:~$ <b>curl ifconfig.co</b>
-curl: (7) Failed to connect to ifconfig.co port 80: Connection timed out
+1.2.3.4
 </pre>
 
-**Step 7.** In order to provide outgoing Internet access for web traffic (port 80), let's add another rule to the internal load balancer to allow for port 80. For this, please go back to your Windows command prompt:
+**Note:** in your own environment you will see a public IP address other than 1.2.3.4
+
+**Step 2.** Now create a default route in that table pointing to the internal LB VIP (10.4.2.100):
 
 <pre lang="">
-<b>az network lb rule create --backend-pool-name linuxnva-slbBackend-int --protocol Tcp --backend-port 80 --frontend-port 80 --frontend-ip-name myFrontendConfig --lb-name linuxnva-slb-int --name httpRule --floating-ip true --probe-name myProbe</b>
+<b>az network route-table route create --address-prefix 0.0.0.0/0 --next-hop-ip-address 10.4.2.100 --next-hop-type VirtualAppliance --route-table-name vnet3-subnet1 -n default</b>
 {
-  "backendAddressPool": {
-    "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/loadBalancers/linuxnva-slb-int/backendAddressPools/linuxnva-slbBackend-int",
-    "resourceGroup": "vnetTest"
-  },
-  "backendPort": 80,
-  "enableFloatingIp": true,
+  "addressPrefix": "0.0.0.0/0",
   "etag": "W/\"...\"",
-  "frontendIpConfiguration": {
-    "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/loadBalancers/linuxnva-slb-int/frontendIPConfigurations/myFrontendConfig",
-    "resourceGroup": "vnetTest"
-  },
-  "frontendPort": 80,
-  "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/loadBalancers/linuxnva-slb-int/loadBalancingRules/httpRule",
-  "idleTimeoutInMinutes": 4,
-  "loadDistribution": "Default",
-  "name": "httpRule",
-  "probe": {
-    "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/loadBalancers/linuxnva-slb-int/probes/myProbe",
-    "resourceGroup": "vnetTest"
-  },
-  "protocol": "Tcp",
+  "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/routeTables/vnet3-su
+bnet1/routes/default",
+  "name": "default",
+  "nextHopIpAddress": "10.4.2.100",
+  "nextHopType": "VirtualAppliance",
   "provisioningState": "Succeeded",
   "resourceGroup": "vnetTest"
 }
 </pre>
 
-Now run again our curl command, to verify that it is now working:
+
+Now run again our curl command, to verify that the NVAs are dropping the traffic to ifconfig.co (IP address 188.113.88.193 at the time of this writing, if ifconfig.co resolves to an IP address different than that, the curl command to ifconfig.co will keep working):
 
 <pre lang="">
 lab-user@myVnet3-vm1:~$ <b>curl ifconfig.co</b>
-52.232.81.172
+curl: (7) Failed to connect to ifconfig.co port 80: Connection timed out
+lab-user@myVnet3-vm1:~$ <b>curl ipinfo.io/ip</b>
+1.2.3.4
 </pre>
 
 **Note:** in the previous output you would see your own IP address, which would obviously defer from the one shown in the example above.
@@ -985,6 +999,8 @@ For this we need an external load balancer, with a public IP address, that will 
 **Figure 8.** LBs in front and behind the NVAs
 
 Note that in the case of an NVA with a single interface, the answer to the question about on which interface the answer to the probe goes is trivial, but in this lab we represent it to illustrate the most frequent situation where 3rd-pary firewalls have separate internal and external interfaces.
+
+Another fact relevant for this architecture is the lack of support for HA ports for external Load Balancers. The rationale behind this is that you typically want to lock down the ports on which your VMs are exposed to the public Internet. Therefore, opening up all ports on an external Load Balancer and redirecting to a server farm is not something that would be recommended. 
 
 As it can be seen in the figure, there are several issues that need to be figured out.
 

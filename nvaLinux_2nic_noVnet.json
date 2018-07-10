@@ -11,7 +11,7 @@
             "type": "string"
         },
         "storageAccountName": {
-            "defaultValue": "asatestjoselito",
+            "defaultValue": "put here an unique name for your storage account",
             "type": "string"
         },
         "vmType": {
@@ -29,6 +29,10 @@
         },
         "vmUsr": {
             "defaultValue": "myadmin",
+            "type": "string"
+        },
+        "vmSize": {
+            "defaultValue": "Standard_B2ms",
             "type": "string"
         },
         "vmPwd": {
@@ -93,7 +97,7 @@
                 "product": "UbuntuServer",
                 "publisher": "Canonical",
                 "sku": "16.04.0-LTS",
-                "vmSize": "Standard_D2_v2"
+                "vmSize": "[parameters('vmSize')]"
             }
         },
         "settings": "[variables('settingsTable')[parameters('vmType')]]",

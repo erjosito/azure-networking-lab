@@ -230,7 +230,7 @@
             "type": "Microsoft.Compute/virtualMachineScaleSets",
             "name": "[parameters('vmSSName')]",
             "location": "[resourceGroup().location]",
-            "apiVersion": "2016-04-30-preview",
+            "apiVersion": "2017-12-01",
             "dependsOn": [
                 "slb-int",
                 "slb-ext"
@@ -317,7 +317,7 @@
         {
             "comments": "Create the autoscale settings for the VM scale set",
             "type": "Microsoft.Insights/autoscaleSettings",
-            "apiVersion": "2015-04-01",
+            "apiVersion": "2017-12-01",
             "name": "[parameters('scaleSettingsName')]",
             "location": "[resourceGroup().location]",
             "dependsOn": [

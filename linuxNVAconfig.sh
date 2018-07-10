@@ -62,6 +62,8 @@ ipaddext=`ip a | grep 10.4.3 | awk '{print $2}' | awk -F '/' '{print $1}'`   # e
 
 # Deny forwarded ICMP
 sudo iptables -A FORWARD -p icmp -j DROP
+# Deny specific IP address
+sudo iptables -A FORWARD -d 188.113.88.193 -j DROP
 # Allow forwarded traffic
 sudo iptables -A FORWARD -i eth1 -j ACCEPT
 sudo iptables -A FORWARD -o eth1 -j ACCEPT
