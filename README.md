@@ -653,14 +653,14 @@ westeurope  linuxnva-slb-int  Succeeded            vnetTest
 Output omitted
 </pre>
 
-And the same command (observe the differences in red) for our second Linux-based NVA appliance:
+And a similar command for our second Linux-based NVA appliance:
 
 <pre lang="...">
 <b>az network nic ip-config address-pool add --ip-config-name linuxnva-<red>2</red>-nic0-ipConfig --nic-name linuxnva-<red>2</red>-nic0 --address-pool linuxnva-slbBackend-int --lb-name linuxnva-slb-int</b>
 Output omitted
 </pre>
 
-**Step 4.** Let us verify the LB's rules. In this case, we need to remove the existing one (that was created by default by the ARM template in the very first lab) and replace it with another one, where we will enable the HA Ports feature. This feature essentially configures a load balancing rule for ALL TCP/UDP ports, so it will not be specific for SSH (in this case) or any other application:
+**Step 4.** Let us verify the LB's rules. In this case, we need to remove the existing one (that was created by default by the ARM template in the very first lab) and replace it with another one, where we will enable the HA Ports feature. This feature essentially configures a load balancing rule for ALL TCP/UDP ports, so it will not be specific for SSH (as in this example) or any other application:
 
 <pre lang="...">
 <b>az network lb rule list --lb-name linuxnva-slb-int -o table</b>
@@ -705,18 +705,14 @@ Output omitted
 }
 </pre>
 
-**Note:** At the time of this writing the HA Ports feature (and the standard ILB feature itself) are in preview. In order to be able to use these features you need to include your subscription in the preview with these commands (may take up to 1 hour to take effect):
+**Note:** HA ports work only on standard Load Balancers. In order to verify which SKU the load balancers have, you can use issue this command:
 
 <pre lang="...">
-az feature register --name AllowLBPreview --namespace Microsoft.Network
-</pre>
-
-<pre lang="...">
-az feature register --name AllowILBAllPortsRule --namespace Microsoft.Network
-</pre>
-
-<pre lang="...">
-az provider register -n Microsoft.Network
+<b> az network lb list --query [].[name,sku.name] -o table</b>
+Column1           Column2
+----------------  ---------
+linuxnva-slb-ext  Basic
+linuxnva-slb-int  Basic
 </pre>
 
 
