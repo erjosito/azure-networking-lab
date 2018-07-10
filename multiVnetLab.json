@@ -47,7 +47,7 @@
             "metadata": { "description": "Type of VM to optionally create in the first subnet in every vnet"}
 		},
         "adminUsername": {
-            "defaultValue": "jose",
+            "defaultValue": "lab-user",
             "type": "string",
             "metadata": { "description": "Username for the VMs"}
 		},

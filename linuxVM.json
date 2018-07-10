@@ -51,7 +51,7 @@
                 "sku": "16.04.0-LTS",
                 "publisher": "canonical",
                 "offer": "UbuntuServer",
-                "size": "Standard_A0"
+                "size": "Standard_B1s"
             }
         },
         "skuData": "[variables('skuDataTable')[parameters('vmType')]]",

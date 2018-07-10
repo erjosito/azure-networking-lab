@@ -261,23 +261,23 @@ True                  westeurope  00-0D-3A-28-2A-28  linuxnva-2-nic1
 
 
 <pre lang="...">
-<b>az network public-ip list -o table</b>
-Name               PublicIpAllocationMethod    ResourceGroup    IpAddress
------------------  -------------------  ----------------------  -----------
-linuxnva-slbpip    Dynamic                     vnetTest         11.11.11.11
-myVnet1vm1pip      Dynamic                     vnetTest         1.1.1.1
-myVnet1vm2pip      Dynamic                     vnetTest         1.1.1.2
-myVnet2vm1pip      Dynamic                     vnetTest         2.2.2.2
-myVnet3vm1pip      Dynamic                     vnetTest         3.3.3.3
-myVnet4vm1pip      Dynamic                     vnetTest         4.4.4.4
-myVnet5vm1pip      Dynamic                     vnetTest         5.5.5.5
-nvaPip-1           Dynamic                     vnetTest         6.6.6.6
-nvaPip-2           Dynamic                     vnetTest         7.7.7.7
-vnet4gwPip         Dynamic                     vnetTest       
-vnet5gwPip         Dynamic                     vnetTest       
+<b>az network public-ip list --query '[].[name,ipAddress]' -o table</b>
+Column1              Column2
+-------------------  ---------------
+linuxnva-slbPip-ext
+myVnet1-vm1-pip      1.1.1.1
+myVnet1-vm2-pip      1.1.1.2
+myVnet2-vm1-pip      2.2.2.2
+myVnet3-vm1-pip      3.3.3.3
+myVnet4-vm1-pip      4.4.4.4
+myVnet5-vm1-pip      5.5.5.5
+nvaPip-1             6.6.6.6
+nvaPip-2             7.7.7.7
+vnet4gwPip
+vnet5gwPip
 </pre>
 
-**Note:** Some columns of the ouput above have been removed for clarity purposes. Furthermore, the public IP addresses in the table are obviously not the ones you will see in your environment. Note the actual public IP addresses in your environment somewhere (like a Notepad window), since you will be needing them for the rest of the lab.
+**Note:** You might have notice the --query option in the command above. The reason is that in newer CLI releases, the standard command to list public IP addresses does not show the IP addresses themselves, interestingly enough. With the --query option you can force the Azure CLI to show the information you are interested in. Furthermore, the public IP addresses in the table are obviously not the ones you will see in your environment. **Note the actual public IP addresses in your environment somewhere** (like a Notepad window), since you will be needing them for the rest of the lab.
 
 
 **Step 2.** Connect to the Azure portal (http://portal.azure.com) and locate the resource group that we have just created (called &#39;vnetTest&#39;, if you did not change it). Verify the objects that have been created and explore their properties and states.
@@ -310,10 +310,10 @@ AutoUpgradeMinorVersion    Location    Name                 ProvisioningState
 True                       westeurope  installcustomscript  Succeeded        
 </pre>
 
-**Step 2.** After verifying the public IP address assigned to the first VM in vnet1 (called &#39;myVnet1-vm1-pip&#39;, go back to the your list of IP addresses), connect to it using the credentials that you specified when deploying the template, and verify that you don’t have connectivity to the VM in vnet2. You can open an SSH session from the Linux bash shell in Windows (the red, circular icon in your taskbar), or you can use Putty (pre-installed in the Lab VM, you should have a link on your task bar). The following screenshots show you how to open Putty and use it to connect to a remote system over SSH:
- 
+**Step 2.** After verifying the public IP address assigned to the first VM in vnet1 (called &#39;myVnet1-vm1-pip&#39;, go back to the your list of IP addresses), connect to it using the credentials that you specified when deploying the template, and verify that you don’t have connectivity to the VM in vnet2. You can open an SSH session from the Linux bash shell in Windows if you have installed the Linux subsystem, or you can use an application such as Putty (https://putty.org).
 
-**Note:** please note the IP address for your VM will be unique, you can get the IP address assigned to "myVnet1-vm1-pip" with the command "az network public-ip list -o table". Type it in the "Host Name (or IP address)" text box in the dialog window above, and then click on "Open".
+
+**Note:** please note the IP address for your VM will be unique, you can get the IP address assigned to "myVnet1-vm1-pip" with the command "az network public-ip list -o table --query [].[name,ipAddress]". Type it in the "Host Name (or IP address)" text box in the dialog window above, and then click on "Open".
 
  
 The username and password were specified at creation time (that long command that invoked the ARM template). If you did not change the parameters, the username is &#39;lab-user&#39; and the password &#39;Microsoft123!&#39; (without the quotes).
@@ -409,7 +409,7 @@ Output omitted
 
 **Note:** if you are using the Azure CLI on a Linux system, replace the `findstr` commands in the previous step with `grep`
 
-**Step 9.** Now we can tell Azure to send traffic from subnet 1 to subnet 2 over the hub vnet. Normally you would do this by sending traffic to the vnet router. Let’s see what happens if we try this with vnet1. In order to do so, we need to add a new route to our custom routing table:
+**Step 9.** Now we can tell Azure to send traffic from subnet 1 to subnet 2 over the hub vnet. Normally you would do this by sending traffic to the vnet router (that is, the L3 functionality inherent to every Azure vnet). Let’s see what happens if we try this with vnet1. In order to do so, we need to add a new route to our custom routing table:
 
 <pre lang="...">
 <b>az network route-table route create --address-prefix 10.2.0.0/16 --next-hop-type vnetLocal --route-table-name vnet1-subnet1 -n vnet2</b>
@@ -451,9 +451,9 @@ However, if we verify the routing table that has been programmed in the interfac
     },
 </pre>
 
-**Note:** the previous command takes some seconds to run, since it access the routing programmed into the NIC. If you cannot find the route with the addressPrefix 10.2.0.0/16 (at the bottom of the output), please wait a few seconds and issue the command again, sometimes it takes some time to program the NICs in Azure.
+**Note:** the previous command takes some seconds to run, since it accesses the routing entries programmed into the NIC itself. If you cannot find the route with the addressPrefix 10.2.0.0/16 (at the bottom of the output), please wait a few seconds and issue the command again, sometimes it takes some time (around 1 minute) to program the NICs in Azure.
 
-The fact that the routes have not been properly programmed essentially means, that we need a different method to send spoke-to-spoke traffic, and the native vnet router just will not cut it. For this purpose, we will use the Network Virtual Appliance (our virtual Linux-based firewall) as next-hop. In other words, you need an additional routing device (in this case the NVA, it could be the VPN gateway) other than the standard vNet routing functionality.
+The fact that the routes have not been properly programmed essentially means that we need a different method to send spoke-to-spoke traffic, and the native vnet router just will not cut it. For this purpose, we will use the Network Virtual Appliance (our virtual Linux-based firewall) as next-hop. In other words, you need an additional routing device (in this case the NVA, it could be the VPN gateway) other than the standard vNet routing functionality.
 
 **Step 11.** Now we will install in each route table routes for the other side, but this time pointing to the private IP address of the Network Virtual Appliance in vnet 4. 
 
@@ -511,16 +511,14 @@ AddressPrefix    Name     NextHopIpAddress    NextHopType       ProvisioningStat
     }
 </pre>
 
-**Note:** the previous command takes some seconds to run, since it access the routing programmed into the NIC. If you cannot find the route with the addressPrefix 10.2.0.0/16 (at the bottom of the output), please wait a few seconds and issue the command again, sometimes it takes some time to program the NICs in Azure
+**Note:** the previous command takes some seconds to run, since it accesses the routing programmed into the NIC. If you cannot find the route with the addressPrefix 10.2.0.0/16 (at the bottom of the output), please wait a few seconds and issue the command again, sometimes it takes some time to program the NICs in Azure
 
-**Step 13.** And now VM1 should be able to reach VM2:
+**Step 13.** And now VM1 should be able to connect to VM2 over SSH (it is normal if you are asked to confirm the identity of the VM):
 
 <pre lang="...">
-lab-user@myVnet1vm:~$ <b>ping 10.2.1.4</b>
-PING 10.2.1.4 (10.2.1.4) 56(84) bytes of data.
-64 bytes from 10.2.1.4: icmp_seq=4 ttl=63 time=7.59 ms
-64 bytes from 10.2.1.4: icmp_seq=5 ttl=63 time=5.79 ms
-64 bytes from 10.2.1.4: icmp_seq=6 ttl=63 time=4.90 ms
+lab-user@myVnet1vm:~$ <b>ssh 10.2.1.4</b>
+The authenticity of host '10.2.1.4 (10.2.1.4)' can't be established.
+...output omitted
 </pre>
 
 ### What we have learnt
@@ -577,7 +575,7 @@ lab-user@myVnet1-vm1:~$
 
 **Note:** this command needs to be issued from your machine, outside of the putty window
 
-**Step 3.** If you go back to the Putty window and restart the ping, you will notice that after some seconds ping will stop working. Traffic does not stop to work immediately because of the time it takes Azure to reprogram the User-Defined Routes in every NIC. 
+**Step 3.** If you go back to the Putty window and restart the ping, you will notice that after some seconds (the time it takes Azure to program the routes you just configured in the NICs of the VMs) ping will stop working, because traffic is going through the firewalls now, configured to drop ICMP packets.
 
 <pre lang="...">
 lab-user@myVnet1-vm1:~$ <b>ping 10.1.1.5</b>
@@ -595,10 +593,11 @@ rtt min/avg/max/mdev = 0.620/1.160/4.284/0.766 ms
 lab-user@myVnet1-vm1:~$
 </pre>
 
-**Step 4.** To verify that routing is still correct, you can now try SSH instead of ping. The fact that SSH works, but ping does not, demonstrates that the traffic is being dropped by the NVA.
+**Step 4.** To verify that routing is still correct, you can now try SSH instead of ping. The fact that SSH works, but ping does not, demonstrates that the traffic now goes through the NVA (configured to allow SSH, but to drop ICMP packets).
 
 <pre lang="...">
 lab-user@myVnet1-vm1:~$ <b>ssh 10.1.1.5</b>
+Output omitted
 </pre>
 
 
@@ -657,7 +656,7 @@ Output omitted
 And the same command (observe the differences in red) for our second Linux-based NVA appliance:
 
 <pre lang="...">
-<b>az network nic ip-config address-pool add --ip-config-name linuxnva-2-nic0-ipConfig --nic-name linuxnva-2-nic0 --address-pool linuxnva-slbBackend-int --lb-name linuxnva-slb-int</b>
+<b>az network nic ip-config address-pool add --ip-config-name linuxnva-<red>2</red>-nic0-ipConfig --nic-name linuxnva-<red>2</red>-nic0 --address-pool linuxnva-slbBackend-int --lb-name linuxnva-slb-int</b>
 Output omitted
 </pre>
 
