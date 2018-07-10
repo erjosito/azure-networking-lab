@@ -30,6 +30,10 @@
             "defaultValue": "myPublicIp",
             "type": "string"
         },
+        "pipSku": {
+            "defaultValue": "basic",
+            "type": "string"
+        },
         "frontendPort": {
             "defaultValue": 1022,
             "type": "int",
@@ -69,6 +73,10 @@
             "comments": "Public IP address",
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "[parameters('pipName')]",
+            "sku": {
+                "name": "[parameters('pipSku')]",
+                "tier": "Regional"
+            },
             "apiVersion": "2016-03-30",
             "location": "[resourceGroup().location]",
             "properties": {

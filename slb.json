@@ -106,7 +106,8 @@
                     "backendConfigName": { "value": "[parameters('backendConfigName')]"},
                     "ipPrefix": { "value": "[parameters('ipPrefix')]"},
                     "vipSuffix": { "value": "[parameters('vipSuffix')]"},
-                    "pipName": { "value": "[parameters('pipName')]"}
+                    "pipName": { "value": "[parameters('pipName')]"},
+                    "pipSku": { "value": "[parameters('lbSku')]"}
                 }
 			}
         },
