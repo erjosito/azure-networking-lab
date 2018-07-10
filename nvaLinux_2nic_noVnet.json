@@ -161,6 +161,9 @@
         "deployLBintParameters": "[variables('deployLBintParametersHash')[parameters('deployLBYesNo')]]",
         "deployLBextParametersHash": {
             "yes": {
+                "baseRepoURL": {
+                    "value": "[parameters('baseRepoURL')]"
+                },
                 "externalInternal": {
                     "value": "external"
                 },
