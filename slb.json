@@ -83,8 +83,8 @@
 
     "resources": [
 		{
-            "comments": "Azure Load Balancer, Basic SKU, internal or external",
-            "condition": "[equals(parameters('lbSku'), 'basic')]",
+            "comments": "Azure Load Balancer, Basic SKU internal or Basic/Standard external (here the only difference is the PIP type)",
+            "condition": "[or(equals(parameters('lbSku'), 'basic'), equals(parameters('externalInternal'), 'external'))]",
 			"name": "AzureLBbasic",
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2017-05-10",
