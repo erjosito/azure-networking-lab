@@ -192,7 +192,7 @@
 			"comments": "Create NVAs in vnet4, if createNVA=yes",
             "name": "nva",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2016-06-01",
+			"apiVersion": "2017-05-10",
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
