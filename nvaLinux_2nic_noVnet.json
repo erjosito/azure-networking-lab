@@ -343,6 +343,7 @@
                     "ipAddress": { "value": "[concat(parameters('ip1'), copyIndex(1))]" },                    
                     "vnetName": { "value": "[parameters('vnetName')]" },
                     "subnetName": { "value": "[parameters('subnet1Name')]"},
+                    "pipSku": { "value": "[parameters('lbSku')]"},
                     "pipName": { "value": "[concat(parameters('pipName'), '-', copyIndex(1))]" }
                 }
             },

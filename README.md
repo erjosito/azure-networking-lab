@@ -712,7 +712,7 @@ Output omitted
 Column1           Column2
 ----------------  ---------
 linuxnva-slb-ext  Basic
-linuxnva-slb-int  Basic
+linuxnva-slb-int  Standard
 </pre>
 
 

@@ -22,6 +22,10 @@
             "defaultValue": "myPIP",
             "type": "string"
         },
+        "pipSku": {
+            "defaultValue": "basic",
+            "type": "string"
+        }
     },
     "variables": {
         "ipConfigName": "[concat(parameters('nicName'),'-ipConfig')]",
@@ -31,8 +35,12 @@
         {
             "comments": "Public IP address",
             "type": "Microsoft.Network/publicIPAddresses",
+            "sku": {
+                "name": "[parameters('pipSku')]",
+                "tier": "Regional"
+            },
             "name": "[parameters('pipName')]",
-            "apiVersion": "[variables('apiVersion')]",
+            "apiVersion": "2018-02-01",
             "location": "[resourceGroup().location]",
             "properties": {
                 "publicIPAllocationMethod": "Dynamic",
