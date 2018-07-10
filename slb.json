@@ -72,12 +72,12 @@
 	},
 
     "variables": {
-		"deployLBTemplate": {
+		"deployBasicLBTemplate": {
 			"internal": "[concat(parameters('baseRepoURL'), 'internalLB.json')]",
 			"external": "[concat(parameters('baseRepoURL'), 'externalLB.json')]"
 		},
-		"LBTemplateURI": "[variables('deployLBTemplate')[parameters('externalInternal')]]",
-		"LBStandardTemplateURI": "[concat(parameters('baseRepoURL'), 'internalLB_standard.json')]"
+		"BasicLBTemplateUri": "[variables('deployBasicLBTemplate')[parameters('externalInternal')]]",
+		"LBStandardTemplateUri": "[concat(parameters('baseRepoURL'), 'internalLB_standard.json')]"
     },
 
 
@@ -91,7 +91,7 @@
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
-					"uri": "[variables('LBTemplateUri')]",
+					"uri": "[variables('BasicLBTemplateUri')]",
 					"contentVersion": "1.0.0.0"
 				},
 				"parameters":  {
@@ -120,7 +120,7 @@
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
-					"uri": "[variables('LBStandardTemplateURI')]",
+					"uri": "[variables('LBStandardTemplateUri')]",
 					"contentVersion": "1.0.0.0"
 				},
 				"parameters":  {
