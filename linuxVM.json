@@ -33,6 +33,10 @@
                 "ubuntu"
             ]
         },
+        "vmSize": {
+            "defaultValue": "Standard_B1s",
+            "type": "string"
+        },
         "baseRepoURL": {
             "defaultValue": "https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/",
             "type": "string",
@@ -51,7 +55,7 @@
                 "sku": "16.04.0-LTS",
                 "publisher": "canonical",
                 "offer": "UbuntuServer",
-                "size": "Standard_B1s"
+                "size": "[parameters('vmSize')]"
             }
         },
         "skuData": "[variables('skuDataTable')[parameters('vmType')]]",

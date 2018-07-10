@@ -37,7 +37,7 @@
             "metadata": { "description": "Whether VPN gateways should be deployed at all or not" }
         },
         "lbSku": {
-            "defaultValue": "basic",
+            "defaultValue": "standard",
             "type": "string",
             "allowedValues": [ "basic","standard" ],
             "metadata": { "description": "Whether Load Balancers should be Basic or Standard (preview)" }
@@ -46,6 +46,11 @@
             "defaultValue": "master",
             "type": "string",
             "metadata": { "description": "Branch out of the Github repo where the nested templates will be downloaded from" }
+        },
+        "vmSize": {
+            "defaultValue": "Standard_B1s",
+            "type": "string",
+            "metadata": { "description": "Size with which VMs (not the NVAs) will be created. Might be useful to modify if hitting quota limits" }
         }
     },
     "variables": {
@@ -60,6 +65,7 @@
             "enableBgp": { "value": "true" },
             "createVm": { "value": "yes" },            
             "vmType": { "value": "ubuntu" },            
+            "vmSize": { "value": "[parameters('vmSize')]" },            
             "adminUsername": { "value": "[parameters('adminUsername')]" },            
             "adminPassword": { "value": "[parameters('adminPassword')]" }
         },
@@ -172,6 +178,7 @@
                     "adminPassword": {"value": "[parameters('adminPassword')]"},
                     "vmName": { "value": "myVnet1-vm2" },
                     "vmType": {"value": "ubuntu"},
+                    "vmSize": { "value": "[parameters('vmSize')]" },            
                     "vnetName": { "value": "myVnet1" },
                     "subnetName": { "value": "myVnet1Subnet1" },
                     "storageAccountName": { "value": "[variables('storageAccountName')]"}

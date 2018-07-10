@@ -46,6 +46,10 @@
             ],
             "metadata": { "description": "Type of VM to optionally create in the first subnet in every vnet"}
 		},
+        "vmSize": {
+            "defaultValue": "Standard_B1s",
+            "type": "string"
+        },
         "adminUsername": {
             "defaultValue": "lab-user",
             "type": "string",
@@ -105,6 +109,8 @@
                     "createGw": { "value": "[parameters('createGw')]"},
                     "enableBgp": { "value": "[parameters('enableBgp')]"},
                     "createVm": { "value": "[parameters('createVm')]"},
+                    "vmType": { "value": "[parameters('vmType')]"},
+                    "vmSize": { "value": "[parameters('vmSize')]"},
                     "adminUsername": { "value": "[parameters('adminUsername')]"},
                     "adminPassword": { "value": "[parameters('adminPassword')]"}
                 }

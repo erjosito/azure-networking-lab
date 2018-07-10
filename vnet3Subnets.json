@@ -40,6 +40,18 @@
             "type": "string",
             "allowedValues": ["yes", "no"]
         },
+        "vmType": {
+            "defaultValue": "ubuntu",
+            "type": "string",
+            "allowedValues": [
+                "ubuntu"
+            ],
+            "metadata": { "description": "Type of VM to optionally create in the first subnet in every vnet"}
+		},
+        "vmSize": {
+            "defaultValue": "Standard_B1s",
+            "type": "string"
+        },
         "adminUsername": {
             "defaultValue": null,
             "type": "string"
@@ -97,7 +109,8 @@
                 "vmName": { "value": "[concat(variables('vmName'), '1')]" },
                 "vnetName": { "value": "[parameters('vnetName')]" },
                 "subnetName": { "value": "[concat(parameters('subnetNamePrefix'), '1')]" },
-                "vmType": { "value": "ubuntu" },
+                "vmType": { "value": "[parameters('vmType')]"},
+                "vmSize": { "value": "[parameters('vmSize')]"},
                 "adminUsername": { "value": "[parameters('adminUsername')]" },
                 "adminPassword": { "value": "[parameters('adminPassword')]" }
             },
