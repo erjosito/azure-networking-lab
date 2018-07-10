@@ -71,7 +71,7 @@
             "comments": "Internal Load Balancer",
             "type": "Microsoft.Network/loadBalancers",
             "name": "[parameters('slbName')]",
-            "apiVersion": "2016-03-30",
+            "apiVersion": "2017-08-01",
             "location": "[resourceGroup().location]",
             "sku": {
                     "name": "Standard"

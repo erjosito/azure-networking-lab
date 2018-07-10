@@ -62,7 +62,7 @@
             "defaultValue": "basic",
             "type": "string",
             "allowedValues": [ "basic","standard" ],
-            "metadata": { "description": "Whether Load Balancers should be Basic or Standard (preview)" }
+            "metadata": { "description": "Whether Load Balancers should be Basic or Standard" }
         },
         "baseRepoURL": {
             "defaultValue": "https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/",
@@ -87,7 +87,7 @@
             "condition": "[equals(parameters('lbSku'), 'basic')]",
 			"name": "AzureLBbasic",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2017-08-01",
+			"apiVersion": "2017-05-10",
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
@@ -115,7 +115,7 @@
             "condition": "[equals(parameters('lbSku'), 'standard')]",
 			"name": "AzureLBstandard",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2017-08-01",
+			"apiVersion": "2017-05-10",
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
