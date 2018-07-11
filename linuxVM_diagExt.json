@@ -32,11 +32,6 @@
             "allowedValues": [
                 "ubuntu"
             ]
-        },
-        "baseRepoURL": {
-            "defaultValue": "https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/",
-            "type": "string",
-            "metadata": { "description": "URL where the nested templates are downloaded from" }    
         }
     },
  
@@ -45,7 +40,7 @@
         "pipName": "[concat(parameters('vmName'),'pip')]",
 		"diskName": "[concat(parameters('vmName'),'disk')]",
 		"apiVersion": "2016-03-30",
-		"nicTemplateURI": "[concat(parameters('baseRepoURL'), 'nic_noNSG_noSLB_PIP_dynamic.json')]",
+		"nicTemplateURI": "[uri(deployment().properties.templateLink.uri, 'nic_noNSG_noSLB_PIP_dynamic.json')]",
         "skuDataTable": {
             "ubuntu": {
                 "sku": "16.04.0-LTS",

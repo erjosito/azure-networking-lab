@@ -63,21 +63,16 @@
             "type": "string",
             "allowedValues": [ "basic","standard" ],
             "metadata": { "description": "Whether Load Balancers should be Basic or Standard" }
-        },
-        "baseRepoURL": {
-            "defaultValue": "https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/",
-            "type": "string",
-            "metadata": { "description": "URL where the nested templates are downloaded from" }    
         }
 	},
 
     "variables": {
 		"deployBasicLBTemplate": {
-			"internal": "[concat(parameters('baseRepoURL'), 'internalLB.json')]",
-			"external": "[concat(parameters('baseRepoURL'), 'externalLB.json')]"
+			"internal": "[uri(deployment().properties.templateLink.uri, 'internalLB.json')]",
+			"external": "[uri(deployment().properties.templateLink.uri, 'externalLB.json')]"
 		},
 		"BasicLBTemplateUri": "[variables('deployBasicLBTemplate')[parameters('externalInternal')]]",
-		"LBStandardTemplateUri": "[concat(parameters('baseRepoURL'), 'internalLB_standard.json')]"
+		"LBStandardTemplateUri": "[uri(deployment().properties.templateLink.uri, 'internalLB_standard.json')]"
     },
 
 

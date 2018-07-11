@@ -59,11 +59,6 @@
             "defaultValue": null,
             "type": "securestring",
             "metadata": { "description": "Password for the VMs"}
-        },
-        "baseRepoURL": {
-            "defaultValue": "https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/",
-            "type": "string",
-            "metadata": { "description": "URL where the nested templates are downloaded from" }    
         }
     },
  
@@ -96,11 +91,10 @@
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
-					"uri": "[concat(parameters('baseRepoURL'), 'vnet3Subnets.json')]",
+					"uri": "[uri(deployment().properties.templateLink.uri, 'vnet3Subnets.json')]",
 					"contentVersion": "1.0.0.0"
 				},
 				"parameters":  {
-                    "baseRepoURL": { "value": "[parameters('baseRepoURL')]" },
                     "vnetName": { "value": "[concat(parameters('vnetNamePrefix'), copyIndex(1))]" },
                     "vnetOctets12": { "value": "[concat(parameters('vnetOctet1'), copyIndex(1), '.')]" },
                     "subnetNamePrefix": { "value": "[concat(parameters('vnetNamePrefix'), copyIndex(1), 'Subnet')]"},

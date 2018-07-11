@@ -42,11 +42,6 @@
             "allowedValues": [ "basic","standard" ],
             "metadata": { "description": "Whether internal Load Balancers should be Basic or Standard" }
         },
-        "repoBranch": {
-            "defaultValue": "master",
-            "type": "string",
-            "metadata": { "description": "Branch out of the Github repo where the nested templates will be downloaded from" }
-        },
         "vmSize": {
             "defaultValue": "Standard_B1s",
             "type": "string",
@@ -54,11 +49,9 @@
         }
     },
     "variables": {
-        "baseRepoURL": "[concat('https://raw.githubusercontent.com/erjosito/azure-networking-lab/', parameters('repoBranch'), '/')]",
-        "linuxVmTemplateURI": "[concat(variables('baseRepoURL'), 'linuxVM.json')]",
+        "linuxVmTemplateURI": "[uri(deployment().properties.templateLink.uri, 'linuxVM.json')]",
         "storageAccountName": "[concat('storage', uniqueString(resourceGroup().id))]",
         "multiVnetParams": {
-            "baseRepoURL": { "value": "[variables('baseRepoURL')]" },
             "storageAccountName": { "value": "[variables('storageAccountName')]" },            
             "vnetCount": { "value": 5 },
             "createGw": { "value": "no" },
@@ -69,16 +62,15 @@
             "adminUsername": { "value": "[parameters('adminUsername')]" },            
             "adminPassword": { "value": "[parameters('adminPassword')]" }
         },
-        "multiVnetTemplateUri": "[concat(variables('baseRepoURL'), 'multiVnetLab.json')]",
+        "multiVnetTemplateUri": "[uri(deployment().properties.templateLink.uri, 'multiVnetLab.json')]",
         "customScriptHash": {
             "ubuntu": "linuxNVAconfig.sh",
             "ubuntuScaleSet": "linuxNVAconfig-1nic.sh"
         },
         "customScript": "[variables('customScriptHash')[parameters('nvaType')]]",
-        "customScriptUri": "[concat(variables('baseRepoURL'), variables('customScript'))]",
+        "customScriptUri": "[uri(deployment().properties.templateLink.uri, variables('customScript'))]",
         "customScriptCmd": "[concat('chmod 666 ', variables('customScript'), ' && /bin/sh ./', variables('customScript'))]",
         "nvaParams": {
-            "baseRepoURL": { "value": "[variables('baseRepoURL')]" },
             "vmType": { "value": "ubuntu" },
             "vmCount": { "value": 2 },
             "vmName": { "value": "linuxnva" },
@@ -101,8 +93,8 @@
             "no": {}
         },
         "vpnGwTemplateUriHash": {
-            "yes": "[concat(variables('baseRepoURL'), 'vpnGw.json')]",
-            "no": "[concat(variables('baseRepoURL'), 'nothing.json')]"
+            "yes": "[uri(deployment().properties.templateLink.uri, 'vpnGw.json')]",
+            "no": "[uri(deployment().properties.templateLink.uri, 'nothing.json')]"
         },
         "vpnGwTemplateUri": "[variables('vpnGwTemplateUriHash')[parameters('createVPNgw')]]",
         "vpnGwTemplateParamsHash1": {
@@ -131,18 +123,18 @@
         },
         "PeeringUseRemoteGateways": "[variables('PeeringUseRemoteGatewaysHash')[parameters('createVPNgw')]]",
         "NVATemplateUri": {
-            "csr": "[concat(variables('baseRepoURL'), 'nva_2nic_noVnet.json')]",
-            "asa": "[concat(variables('baseRepoURL'), 'nva_2nic_noVnet.json')]",
-            "ubuntu": "[concat(variables('baseRepoURL'), 'nvaLinux_2nic_noVnet.json')]",
-            "ubuntuScaleSet": "[concat(variables('baseRepoURL'), 'nvaLinux_1nic_noVnet_ScaleSet_ILBonly.json')]"
+            "csr": "[uri(deployment().properties.templateLink.uri, 'nva_2nic_noVnet.json')]",
+            "asa": "[uri(deployment().properties.templateLink.uri, 'nva_2nic_noVnet.json')]",
+            "ubuntu": "[uri(deployment().properties.templateLink.uri, 'nva_2nic_noVnet.json')]",
+            "ubuntuScaleSet": "[uri(deployment().properties.templateLink.uri, 'nvaLinux_1nic_noVnet_ScaleSet_ILBonly.json')]"
         },
         "NVATemplateUriYesNo": {
             "yes": "[variables('NVATemplateUri')[parameters('nvaType')]]",
-            "no": "[concat(variables('baseRepoURL'), 'nothing.json')]"
+            "no": "[uri(deployment().properties.templateLink.uri, 'nothing.json')]"
         },
         "UDRTemplateUriYesNo": {
-            "yes": "[concat(variables('baseRepoURL'), 'UDR_Lab.json')]",
-            "no": "[concat(variables('baseRepoURL'), 'nothing.json')]"
+            "yes": "[uri(deployment().properties.templateLink.uri, 'UDR_Lab.json')]",
+            "no": "[uri(deployment().properties.templateLink.uri, 'nothing.json')]"
         },
         "UDRTemplateUri": "[variables('UDRTemplateUriYesNo')[parameters('createUDR')]]"
     },
@@ -173,7 +165,6 @@
 					"contentVersion": "1.0.0.0"
 				},
 				"parameters":  {
-                    "baseRepoURL": { "value": "[variables('baseRepoURL')]" },
                     "adminUsername": {"value": "[parameters('adminUsername')]"},
                     "adminPassword": {"value": "[parameters('adminPassword')]"},
                     "vmName": { "value": "myVnet1-vm2" },
@@ -213,7 +204,7 @@
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
-					"uri": "[concat(variables('baseRepoURL'), 'vnetPeeringHubNSpoke.json')]",
+					"uri": "[uri(deployment().properties.templateLink.uri, 'vnetPeeringHubNSpoke.json')]",
 					"contentVersion": "1.0.0.0"
 				},
 				"parameters": {
@@ -234,7 +225,7 @@
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
-					"uri": "[concat(variables('baseRepoURL'), 'vnetPeeringHubNSpoke.json')]",
+					"uri": "[uri(deployment().properties.templateLink.uri, 'vnetPeeringHubNSpoke.json')]",
 					"contentVersion": "1.0.0.0"
 				},
 				"parameters": {
@@ -255,7 +246,7 @@
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
-					"uri": "[concat(variables('baseRepoURL'), 'vnetPeeringHubNSpoke.json')]",
+					"uri": "[uri(deployment().properties.templateLink.uri, 'vneetPeeringHubNSpoke.json')]",
 					"contentVersion": "1.0.0.0"
 				},
 				"parameters": {

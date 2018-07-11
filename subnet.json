@@ -61,11 +61,6 @@
 		"slbVipSuffix": {
             "defaultValue": "100",
             "type": "string"
-        },
-        "baseRepoURL": {
-            "defaultValue": "https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/",
-            "type": "string",
-            "metadata": { "description": "URL where the nested templates are downloaded from" }    
         }
     },
  
@@ -75,8 +70,8 @@
 		"diskName": "[concat(parameters('vmPrefix'),'disk')]",
 		"apiVersion": "2016-03-30",
 		"deployLBTemplate": {
-			"yes": "[concat(parameters('baseRepoURL'), 'slb.json')]",
-			"no": "[concat(parameters('baseRepoURL'), 'nothing.json')]"
+			"yes": "[uri(deployment().properties.templateLink.uri, 'slb.json')]",
+			"no": "[uri(deployment().properties.templateLink.uri, 'nothing.json')]"
 		},
 		"LBTemplateURI": "[variables('deployLBTemplate')[parameters('deployLBYesNo')]]",
         "deployLBParametersHash": {
@@ -111,8 +106,8 @@
         },
         "deployLBParameters": "[variables('deployLBParametersHash')[parameters('deployLBYesNo')]]",
 		"deployNicTemplate": {
-			"yes": "[concat(parameters('baseRepoURL'), 'nic_nsg_slb.json')]",
-			"no": "[concat(parameters('baseRepoURL'), 'nic_nsg.json')]"
+			"yes": "[uri(deployment().properties.templateLink.uri, 'nic_nsg_slb.json')]",
+			"no": "[uri(deployment().properties.templateLink.uri, 'nic_nsg.json')]"
 		},
 		"nicTemplateURI": "[variables('deployNicTemplate')[parameters('deployLBYesNo')]]"
 	},

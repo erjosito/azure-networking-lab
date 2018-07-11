@@ -59,19 +59,14 @@
         "adminPassword": {
             "defaultValue": null,
             "type": "securestring"
-        },
-        "baseRepoURL": {
-            "defaultValue": "https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/",
-            "type": "string",
-            "metadata": { "description": "URL where the nested templates are downloaded from" }    
         }
     },
     "variables": {
         "apiVersion": "2016-03-30",
         "vnetSpace": "[concat(parameters('vnetOctets12'), '0.0/16')]",
         "gwTemplateUriTable": {
-            "yes": "[concat(parameters('baseRepoURL'), 'vpnGw.json')]",
-            "no": "[concat(parameters('baseRepoURL'), 'nothing.json')]"
+            "yes": "[uri(deployment().properties.templateLink.uri, 'vpnGw.json')]",
+            "no": "[uri(deployment().properties.templateLink.uri, 'nothing.json')]"
         },
         "gwTemplateUri": "[variables('gwTemplateUriTable')[parameters('createGw')]]",
         "gwTemplateParamTable": {
@@ -86,8 +81,8 @@
         },
         "gwTemplateParam": "[variables('gwTemplateParamTable')[parameters('createGw')]]",
         "gwPipUriTable": {
-            "yes": "[concat(parameters('baseRepoURL'), 'pipDynamic.json')]",
-            "no": "[concat(parameters('baseRepoURL'), 'nothing.json')]"
+            "yes": "[uri(deployment().properties.templateLink.uri, 'pipDynamic.json')]",
+            "no": "[uri(deployment().properties.templateLink.uri, 'nothing.json')]"
         },
         "gwPipUri": "[variables('gwPipUriTable')[parameters('createGw')]]",
         "gwPipParamTable": {
@@ -99,8 +94,8 @@
         },
         "gwPipParam": "[variables('gwPipParamTable')[parameters('createGw')]]",
         "vmTemplateUriTable": {
-            "yes": "[concat(parameters('baseRepoURL'), 'linuxVM.json')]",
-            "no": "[concat(parameters('baseRepoURL'), 'nothing.json')]"
+            "yes": "[uri(deployment().properties.templateLink.uri, 'linuxVM.json')]",
+            "no": "[uri(deployment().properties.templateLink.uri, 'nothing.json')]"
         },
         "vmName": "[concat(parameters('vnetName'), '-vm')]",
         "vmTemplateUri": "[variables('vmTemplateUriTable')[parameters('createVm')]]",
