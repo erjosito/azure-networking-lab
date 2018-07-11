@@ -62,7 +62,7 @@
             "metadata": { "description": "This string will be completed with the copyIndex: .101, .102, etc" }
         },
         "scriptUri": {
-            "defaultValue": "https://raw.githubusercontent.com/erjosito/azure-network-lab/master/linuxNVAconfig.sh",
+            "defaultValue": "[uri(deployment().properties.templateLink.uri, 'linuxNVAconfig.sh')]",
             "type": "string",
             "metadata": { "description": "Script that will be executed" }            
         },
@@ -71,10 +71,10 @@
             "type": "string",
             "metadata": { "description": "Command to run the script" }            
         },
-		"deployLBYesNo": {
-			"defaultValue": "no",
-			"type": "string"
-		},
+        "deployLBYesNo": {
+            "defaultValue": "no",
+            "type": "string"
+        },
         "lbSku": {
             "defaultValue": "basic",
             "type": "string",
