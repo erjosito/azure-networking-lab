@@ -246,7 +246,7 @@
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
-					"uri": "[uri(deployment().properties.templateLink.uri, 'vneetPeeringHubNSpoke.json')]",
+					"uri": "[uri(deployment().properties.templateLink.uri, 'vnetPeeringHubNSpoke.json')]",
 					"contentVersion": "1.0.0.0"
 				},
 				"parameters": {
