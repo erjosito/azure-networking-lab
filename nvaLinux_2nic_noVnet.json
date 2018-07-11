@@ -312,7 +312,7 @@
                     "nicName": {"value": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic0')]"},
                     "ipAddress": { "value": "[concat(parameters('ip0'), copyIndex(1))]" },                    
                     "vnetName": { "value": "[parameters('vnetName')]" },
-                    "subnetName": { "value": "[parameters('subnet1Name')]"},
+                    "subnetName": { "value": "[parameters('subnet0Name')]"},
                     "pipSku": { "value": "[parameters('lbSku')]"},
                     "pipName": { "value": "[concat(parameters('pipName'), '-', copyIndex(1))]" }
                 }
@@ -339,7 +339,7 @@
                     "nicName": {"value": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic1')]"},
                     "ipAddress": { "value": "[concat(parameters('ip1'), copyIndex(1))]" },                    
                     "vnetName": { "value": "[parameters('vnetName')]" },
-                    "subnetName": { "value": "[parameters('subnet0Name')]"}
+                    "subnetName": { "value": "[parameters('subnet1Name')]"}
                 }
             },
             "dependsOn": [  
