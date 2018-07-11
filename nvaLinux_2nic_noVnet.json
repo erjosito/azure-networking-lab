@@ -298,33 +298,8 @@
             ]
         },
 		{
-			"comments": "Create eth0",
-            "name": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic0')]",
-			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2016-06-01",
-			"properties": {
-				"mode": "Incremental",
-				"templateLink": {
-					"uri": "[uri(deployment().properties.templateLink.uri, 'nic_noNSG_noSLB_noPIP_static.json')]",
-					"contentVersion": "1.0.0.0"
-				},
-				"parameters":  {
-                    "nicName": {"value": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic0')]"},
-                    "ipAddress": { "value": "[concat(parameters('ip0'), copyIndex(1))]" },                    
-                    "vnetName": { "value": "[parameters('vnetName')]" },
-                    "subnetName": { "value": "[parameters('subnet0Name')]"}
-                }
-            },
-            "dependsOn": [  
-            ],
-            "copy": {
-                "name": "[concat(parameters('vmName'), '-nic0')]",
-                "count": "[parameters('vmCount')]"
-            }
-        },
-		{
-            "comments": "Create eth1",
-			"name": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic1')]",
+            "comments": "Create eth0",
+			"name": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic0')]",
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2016-06-01",
 			"properties": {
@@ -334,8 +309,8 @@
 					"contentVersion": "1.0.0.0"
 				},
 				"parameters":  {
-                    "nicName": {"value": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic1')]"},
-                    "ipAddress": { "value": "[concat(parameters('ip1'), copyIndex(1))]" },                    
+                    "nicName": {"value": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic0')]"},
+                    "ipAddress": { "value": "[concat(parameters('ip0'), copyIndex(1))]" },                    
                     "vnetName": { "value": "[parameters('vnetName')]" },
                     "subnetName": { "value": "[parameters('subnet1Name')]"},
                     "pipSku": { "value": "[parameters('lbSku')]"},
@@ -343,6 +318,32 @@
                 }
             },
             "dependsOn": [
+            ],
+            "copy": {
+                "name": "[concat(parameters('vmName'), '-nic0')]",
+                "count": "[parameters('vmCount')]"
+            }
+        },
+		{
+			"comments": "Create eth1",
+            "name": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic1')]",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2016-06-01",
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[uri(deployment().properties.templateLink.uri, 'nic_noNSG_noSLB_noPIP_static.json')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters":  {
+                    "nicName": {"value": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic1')]"},
+                    "ipAddress": { "value": "[concat(parameters('ip1'), copyIndex(1))]" },                    
+                    "vnetName": { "value": "[parameters('vnetName')]" },
+                    "subnetName": { "value": "[parameters('subnet0Name')]"}
+                }
+            },
+            "dependsOn": [  
+                "[concat(parameters('vmName'), '-nic0')]"
             ],
             "copy": {
                 "name": "[concat(parameters('vmName'), '-nic1')]",
