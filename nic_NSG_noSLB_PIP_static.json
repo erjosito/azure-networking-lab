@@ -71,6 +71,7 @@
                     {
                         "name": "[concat(parameters('nicName'), '-ipconfig0')]",
                         "properties": {
+                            "privateIPAddress": "[parameters('ipAddress')]",
                             "privateIPAllocationMethod": "Static",
                             "publicIPAddress": {
                                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('pipName'))]"

@@ -54,6 +54,7 @@
                     {
                         "name": "[concat(parameters('nicName'), '-ipconfig0')]",
                         "properties": {
+                            "privateIPAddress": "[parameters('ipAddress')]",
                             "privateIPAllocationMethod": "Static",
                             "subnet": {
                                 "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')), '/subnets/', parameters('subnetName'))]"
