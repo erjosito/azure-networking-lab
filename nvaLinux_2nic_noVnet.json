@@ -307,7 +307,7 @@
 		{
             "comments": "Create eth0 with or without PIP, depending on the template",
             "condition": "[equals(parameters('createPip'), 'yes')]",
-			"name": "[concat(parameters('vmName'), '-', copyIndex(1), '-pnic0')]",
+			"name": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic0')]",
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2016-06-01",
 			"properties": {
@@ -328,7 +328,7 @@
             "dependsOn": [
             ],
             "copy": {
-                "name": "[concat(parameters('vmName'), '-pnic0')]",
+                "name": "[concat(parameters('vmName'), '-nic0')]",
                 "count": "[parameters('vmCount')]"
             }
         },
