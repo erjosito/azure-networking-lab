@@ -88,10 +88,10 @@
         }
     },
     "variables": {
-        "nicTemplatePipNoNsg": "[uri(deployment().properties.templateLink.uri, 'nic_noNSG_noSLB_PIP_static.json')]",
-        "nicTemplateNoPipNoNsg": "[uri(deployment().properties.templateLink.uri, 'nic_noNSG_noSLB_noPIP_static.json')]",
+        "nicTemplatePipNsg": "[uri(deployment().properties.templateLink.uri, 'nic_NSG_noSLB_PIP_static.json')]",
         "nicTemplateNoPipNsg": "[uri(deployment().properties.templateLink.uri, 'nic_NSG_noSLB_noPIP_static.json')]",
-        "nic0Template": "[if(equals(parameters('createPip'), 'yes'), variables('nicTemplatePipNoNsg'), variables('nicTemplateNoPipNoNsg'))]",
+        "nicTemplateNoPipNoNsg": "[uri(deployment().properties.templateLink.uri, 'nic_noNSG_noSLB_noPIP_static.json')]",
+        "nic0Template": "[if(equals(parameters('createPip'), 'yes'), variables('nicTemplatePipNsg'), variables('nicTemplateNoPipNsg'))]",
         "nic1Template": "[variables('nicTemplateNoPipNoNsg')]",
         "defaultGw": {
             "nic0": "[concat(parameters('ip0'), '1')]",

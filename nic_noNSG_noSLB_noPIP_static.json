@@ -17,6 +17,14 @@
         "ipAddress": {
             "defaultValue": "10.0.0.1",
             "type": "string"
+        },
+        "pipName": {
+            "defaultValue": "left for parameter compatibility",
+            "type": "string"
+        },
+        "pipSku": {
+            "defaultValue": "left for parameter compatibility",
+            "type": "string"
         }
     },
     "variables": {

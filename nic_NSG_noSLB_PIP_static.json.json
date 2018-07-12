@@ -1,0 +1,98 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "nicName": {
+            "defaultValue": "myNic",
+            "type": "string"
+        },
+        "vnetName": {
+            "defaultValue": "myVnet",
+            "type": "string"
+        },
+        "subnetName": {
+            "defaultValue": "serverSubnet",
+            "type": "string"
+        },
+        "ipAddress": {
+            "defaultValue": "10.0.0.1",
+            "type": "string"
+        },
+        "pipName": {
+            "defaultValue": "myPIP",
+            "type": "string"
+        },
+        "pipSku": {
+            "defaultValue": "basic",
+            "type": "string"
+        }
+    },
+    "variables": {
+		"networkApiVersion": "2016-03-30"
+    },
+    "resources": [
+        {
+            "comments": "Public IP address",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "sku": {
+                "name": "[parameters('pipSku')]",
+                "tier": "Regional"
+            },
+            "name": "[parameters('pipName')]",
+            "apiVersion": "2018-02-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "publicIPAllocationMethod": "[if(equals(parameters('pipSku'), 'basic'), 'Dynamic', 'Static')]",
+                "idleTimeoutInMinutes": 4
+            },
+            "resources": [],
+            "dependsOn": []
+        },
+        {
+			"comments": "NSG with no custom rules, only the default rules",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[concat(parameters('nicName'), '-nsg')]",
+            "apiVersion": "[variables('networkApiVersion')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": []
+            },
+            "resources": [],
+            "dependsOn": []
+        },
+        {
+			"comments": "NIC created with static IP address, no public IP and IP Forwarding",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[parameters('nicName')]",
+            "apiVersion": "[variables('networkApiVersion')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "[concat(parameters('nicName'), '-ipconfig0')]",
+                        "properties": {
+                            "privateIPAllocationMethod": "Static",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('pipName'))]"
+                            },
+                            "subnet": {
+                                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')), '/subnets/', parameters('subnetName'))]"
+                            }
+                        }
+                    }
+                ],
+                "dnsSettings": {
+                    "dnsServers": []
+                },
+                "enableIPForwarding": true,
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('nicName'), '-nsg'))]"
+                }
+            },
+            "resources": [],
+            "dependsOn": [
+                "[concat(parameters('nicName'), '-nsg')]"
+            ]
+        }
+    ]
+}
