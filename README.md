@@ -22,7 +22,9 @@
 
 - [Lab 4: NVA Scalability](#lab4)
 
-- [Lab 5: Outgoing Internet traffic protected by the NVA](#lab5)
+- [Lab 5: Using the Azure LB for return traffic](#lab5)
+
+- [Lab 5: Outgoing Internet traffic protected by the NVA](#lab6)
 
 - [Lab 6: Incoming Internet traffic protected by the NVA](#lab6)
 
@@ -208,11 +210,11 @@ You can see some diagrams about the deployed environment here, so that you can i
 
 Note that the output of these commands might be different, if the template deployment from lab 0 is not completed yet.
 
-![Architecture Image](https://github.com/erjosito/azure-networking-lab/blob/master/figure01.png "Overall vnet diagram")
+![Architecture Image](figure01.png "Overall vnet diagram")
  
 **Figure 1.** Overall vnet diagram
 
-![Architecture Image](https://github.com/erjosito/azure-networking-lab/blob/master/figure02.png "Subnet design")
+![Architecture Image](figure02.png "Subnet design")
 
 **Figure 2.** Subnet design of every vnet
 
@@ -305,7 +307,7 @@ lab-user@myVnet1-vm2:~$
 **Step 3.** Connect to the Azure portal (http://portal.azure.com) and locate the resource group that we have just created (called &#39;vnetTest&#39;, if you did not change it). Verify the objects that have been created and explore their properties and states.
 
 
-![Architecture Image](https://github.com/erjosito/azure-networking-lab/blob/master/figureRG.png "Resource Group in Azure Portal")
+![Architecture Image](figureRG.png "Resource Group in Azure Portal")
 
 **Figure 4:** Azure portal with the resource group created for this lab
 
@@ -582,7 +584,7 @@ You can verify the routes installed in the routing table, as well as the routes 
 
 Some organizations wish to filter not only traffic between specific network segments, but traffic inside of a subnet as well, in order to reduce the probability of successful attacks spreading inside of an organization. This is what some in the industry know as &#39;microsegmentation&#39;.
 
-![Architecture Image](https://github.com/erjosito/azure-networking-lab/blob/master/figure05.png "Microsegmentation")
+![Architecture Image](figure05.png "Microsegmentation")
 
 **Figure 6.** Intra-subnet NVA-based filtering, also known as “microsegmentation”
 
@@ -823,7 +825,7 @@ lab-user pts/0        2017-03-23 23:41 (<b>10.4.2.101</b>)
 <pre lang="...">
 lab-user@myVnet1-vm2:~$ <b>ssh 10.4.2.101</b>
 lab-user@10.4.2.101's password:
-<i>...Output omitted...</li>
+<i>...Output omitted...</i>
 lab-user@linuxnva-1:~$
 lab-user@linuxnva-1:~$ <b>sudo iptables -L -t nat</b>
 Chain PREROUTING (policy ACCEPT)
@@ -1027,10 +1029,16 @@ There are other load balancing algorithms, as you can see in https://docs.micros
 "SourceIP"
 </pre>
 
-Now you can test SSH connections, they should still work.
-I
+Now you can test SSH connections, they should still work. Why?
 
-## Lab 5: Outgoing Internet traffic protected by an NVA <a name="lab5"></a>
+### What we have learnt
+
+Using an Azure LB for the return traffic is a viable possibility as well, since the hash-based load balancing algorithms are symmetric, meaning that for a pair of source and destination combinations it will send traffic to the same NVA.
+
+Note that this schema is the standard mechanism to deploy active/active clusters of NVAs.
+
+
+## Lab 6: Outgoing Internet traffic protected by an NVA <a name="lab6"></a>
 
 What if we want to send all traffic leaving the vnet towards the public Internet through the NVAs? We need to make sure that Internet traffic to/from all VMs flows through the NVAs via User-Defined Routes, and that NVAs source-NAT the outgoing traffic with their public IP address, so that they get the return traffic too.
 
@@ -1187,7 +1195,7 @@ In this lab we will explore what needs to be done so that certain VMs can be acc
 For this we need an external load balancer, with a public IP address, that will take traffic from the Internet, and send it to one of the Network Virtual Appliances, as next figure shows:
 
  
-![Architecture Image](https://github.com/erjosito/azure-networking-lab/blob/master/figure09.png "LB sandwich")
+![Architecture Image](figure09.png "LB sandwich")
 
 **Figure 8.** LBs in front and behind the NVAs
 
@@ -1668,7 +1676,7 @@ For this lab you will need to have set up virtual network gateways in vnets 4 an
 
 Spokes can speak to other spokes by redirecting traffic to a vnet gateway or an NVA in the hub vnet by means of UDRs. The following diagram illustrates what we are trying to achieve in this lab:
 
-![Architecture Image](https://github.com/erjosito/azure-networking-lab/blob/master/figure03.png "Spoke to spoke communication")
+![Architecture Image](figure03.png "Spoke to spoke communication")
 
 **Figure 9.** Spoke-to-spoke communication over vnet gateway
 
@@ -1944,7 +1952,7 @@ PING 10.5.1.4 (10.5.1.4) 56(84) bytes of data.
 64 bytes from 10.5.1.4: icmp_seq=2 ttl=62 time=9.92 ms
 </pre>
 
-![Architecture Image](https://github.com/erjosito/azure-networking-lab/blob/master/figureVpn.png "VPN and Vnet Peering")
+![Architecture Image](figureVpn.png "VPN and Vnet Peering")
 
 **Figure 10:** VPN connection through Vnet peering
 
@@ -1994,7 +2002,7 @@ True                   LinkTomyVnet3  Connected
 
 However, you might want to push this traffic through the Network Virtual Appliances too. For example, if you wish to firewall the traffic that leaves your hub and spoke environment. The process that we have seen in previous labs with UDR manipulation is valid for the GatewaySubnet of Vnet4 as well (where the hub VPN gateway is located), as the following figure depicts:
 
-![Architecture Image](https://github.com/erjosito/azure-networking-lab/blob/master/figure06.png "VPN, Vnet Peering and NVA")
+![Architecture Image](figure06.png "VPN, Vnet Peering and NVA")
 
 **Figure 11.** VPN traffic combined with Vnet peering and a Network Virtual Appliance
 
