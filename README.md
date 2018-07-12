@@ -112,7 +112,7 @@ If you find any issue when running through this lab or any error in this guide, 
 
 **Figure.** Cloud shell with two tmux panels
 
-![Cloud Shell Image](https://github.com/erjosito/azure-networking-lab/blob/master/az_shell_tmux.PNG "Cloud Shell with 2 tmux panels")
+![Cloud Shell Image](az_shell_tmux.PNG "Cloud Shell with 2 tmux panels")
 
 
 **Step 4.** Create a new resource group, where we will place all our objects (so that you can easily delete everything after you are done). The last command also sets the default resource group to the newly created one, so that you do not need to download it.
