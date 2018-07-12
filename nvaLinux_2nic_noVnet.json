@@ -44,7 +44,7 @@
             "type": "string"
         },
         "createPip": {
-            "defaultValue": "yes",
+            "defaultValue": "no",
             "type": "string",
             "allowedValues": ["yes", "no"]
         },
