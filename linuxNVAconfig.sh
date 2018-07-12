@@ -26,14 +26,14 @@ sudo rm /var/www/html/index.html
 sudo apt-get install wget -you
 sudo wget https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/index.php -P /var/www/html/
 
+#############
+#  Routing  #
+#############
+
 # Set up a better routing metric on eth1 (external, 10.4.3.0/24)
 sudo apt-get install ifmetric -y
 sudo ifmetric eth0 100
 sudo ifmetric eth1 10
-
-#############
-#  Routing  #
-#############
 
 # configure static routes for the vnet space to eth0
 sudo route add -net 10.0.0.0/13 gw 10.4.2.1 dev eth0
@@ -62,12 +62,27 @@ ipaddext=`ip a | grep 10.4.3 | awk '{print $2}' | awk -F '/' '{print $1}'`   # e
 
 # Deny forwarded ICMP
 sudo iptables -A FORWARD -p icmp -j DROP
-# Deny specific IP address
+# Deny specific IP address (ifconfig.co)
 sudo iptables -A FORWARD -d 188.113.88.193 -j DROP
-# Allow forwarded traffic
-sudo iptables -A FORWARD -i eth1 -j ACCEPT
-sudo iptables -A FORWARD -o eth1 -j ACCEPT
+
+# Allow forwarded outgoing traffic (port 80)
+sudo iptables -A FORWARD -i eth0 -o eth1 -p tcp --dport 80 -j ACCEPT 
+sudo iptables -A FORWARD -i eth1 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT 
+
+# Allow SSH traffic on eth0
+sudo iptables -A FORWARD -i eth0 -p tcp --dport ssh -j ACCEPT 
+sudo iptables -A FORWARD -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT 
+# Deny every other forwarded traffic on eth0
+sudo iptables -A FORWARD -i eth0 -j DROP
+
 # SNAT for traffic going to the vnets
 sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
 # SNAT for traffic going to the Internet
 sudo iptables -t nat -A POSTROUTING -o eth1 -j MASQUERADE
+
+# Allow forwarded traffic on eth1
+#sudo iptables -A FORWARD -i eth1 -j ACCEPT
+#sudo iptables -A FORWARD -o eth1 -j ACCEPT
+
+# Default deny
+sudo iptables -A FORWARD -j DROP

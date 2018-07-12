@@ -24,8 +24,6 @@
 
 - [Lab 5: Using the Azure LB for return traffic](#lab5)
 
-- [Lab 5: Outgoing Internet traffic protected by the NVA](#lab6)
-
 - [Lab 6: Incoming Internet traffic protected by the NVA](#lab6)
 
 - [Lab 7: Advanced HTTP-based probes](#lab7)
@@ -840,9 +838,10 @@ target     prot opt source               destination
 Chain POSTROUTING (policy ACCEPT)
 target     prot opt source               destination
 <b>MASQUERADE </b> all  --  anywhere             anywhere
+<b>MASQUERADE </b> all  --  anywhere             anywhere
 </pre>
 
-**Note:** the Linux machines that we use as firewalls in this lab have the Linux package "iptables" installed to work as firewall. A tutorial of iptables is out of the scope of this lab guide. Suffice to say here that the word "MASQUERADE" means to translate the source IP address of packets and replace it with its own interface address. In other words, source-NAT.
+**Note:** the Linux machines that we use as firewalls in this lab have the Linux package "iptables" installed to work as firewall. A tutorial of iptables is out of the scope of this lab guide. Suffice to say here that the word "MASQUERADE" means to translate the source IP address of packets and replace it with its own interface address. In other words, source-NAT. There are two MASQUERADE entries, one per each interface of the NVA. You can see to which interface the entries refer to with the command sudo iptables -vL -t nat
 
 **Step 9.** We will simulate a failure of the NVA where the connection is going through (in this case 10.4.2.101, linuxnva-1). First of all, verify that both ports 1138 (used by the internal load balancer of this lab scenario) and 1139 (used by the external load balancer of a lab scenario later in this guide) are open:
 
@@ -989,8 +988,6 @@ Chain POSTROUTING (policy ACCEPT 0 packets, 0 bytes)
 lab-user@linuxnva-1:~$ 
 lab-user@linuxnva-1:~$ <b>sudo iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE</b>
 lab-user@linuxnva-1:~$ 
-lab-user@linuxnva-1:~$ <b>sudo iptables -t nat -D POSTROUTING -o eth1 -j MASQUERADE</b>
-lab-user@linuxnva-1:~$ 
 lab-user@linuxnva-1:~$ <b>sudo iptables -vL -t nat</b>
 Chain PREROUTING (policy ACCEPT 0 packets, 0 bytes)
  pkts bytes target     prot opt in     out     source               destination
@@ -1003,6 +1000,7 @@ Chain OUTPUT (policy ACCEPT 3 packets, 180 bytes)
 
 Chain POSTROUTING (policy ACCEPT 3 packets, 180 bytes)
  pkts bytes target     prot opt in     out     source               destination
+ 5419  325K MASQUERADE  all  --  any    eth1    anywhere             anywhere
 </pre>
 
 **Step 2:** Now you can go back to the jump host, connect to vm1, and verify that the source IP address has not been source-natted:
@@ -1101,12 +1099,12 @@ Output omitted
 }
 </pre>
 
-Now you should be able to connect to the VM in Vnet 3:
+At this point you should be able to connect to the VM in Vnet 3 from our jump host, and verify that you have connectivity to internet. I like using the Internet URL ifconfig.co, that returns your public IP address as seen by the Web server:
 
 <pre lang="">
-lab-user@myVnet1-vm1:~$ <b>ssh 10.3.1.4</b>
+lab-user@myVnet1-vm2:~$ <b>ssh 10.3.1.4</b>
 ssh: connect to host 10.3.1.4 port 22: Connection timed out
-lab-user@myVnet1vm:~$ <b>ssh 10.3.1.4</b>
+lab-user@myVnet1vm2:~$ <b>ssh 10.3.1.4</b>
 The authenticity of host '10.3.1.4 (10.3.1.4)' can't be established.
 ECDSA key fingerprint is SHA256:ofxGjkNl2WYq+GvlEUYNTd5WiAlV4Za2/X3BwcpX8hQ.
 Are you sure you want to continue connecting (yes/no)? yes
@@ -1114,12 +1112,71 @@ Warning: Permanently added '10.3.1.4' (ECDSA) to the list of known hosts.
 lab-user@10.3.1.4's password:
 Welcome to Ubuntu 16.04.1 LTS (GNU/Linux 4.4.0-47-generic x86_64)
 ...
-lab-user@myVnet3-vm1:~$
+lab-user@myVnet3-vm1:~$ curl ifconfig.co
+1.2.3.4
 </pre>
 
-**Note:** as in the example above, it might happen that your first SSH attempt does not work, if the routes have not been programmed in the VM NICs just yet. If that is the case, please wait a few seconds and try again.
+**Note:** in your own environment you will see a public IP address other than 1.2.3.4
 
-**Step 5.** In the Putty window with the connection of your NVA, verify that the NVAs are source-NATting (known as &#39;masquerading&#39; in iptables speech) all traffic outgoing its external interface (eth1):
+**Step 4.** Now we can redirect traffic to our NVAs, by adding an additional entry to the routing table for Vnet3-Subnet3:
+
+<pre lang="">
+<b>az network route-table route create --address-prefix 0.0.0.0/0 --next-hop-ip-address 10.4.2.100 --next-hop-type VirtualAppliance --route-table-name vnet3-subnet1 -n default</b>
+{
+  "addressPrefix": "0.0.0.0/0",
+  "etag": "W/\"13f07168-d40f-473d-9cd1-1d67464fcaf2\"",
+  "id": "/subscriptions/e7da9914-9b05-4891-893c-546cb7b0422e/resourceGroups/vnetTest/providers/Microsoft.Network/routeTables/vnet3-subnet1/routes/default",
+  "name": "default",
+  "nextHopIpAddress": "10.4.2.100",
+  "nextHopType": "VirtualAppliance",
+  "provisioningState": "Succeeded",
+  "resourceGroup": "vnetTest"
+}
+</pre>
+
+At this point, your the routing table for Vnet3-Subnet1 should look like this:
+
+<pre lang="">
+<b>az network route-table route list --route-table-name vnet3-subnet1 -o table</b>
+AddressPrefix    Name     NextHopIpAddress    NextHopType       ProvisioningState    ResourceGroup
+---------------  -------  ------------------  ----------------  -------------------  ---------------
+10.1.0.0/16      vnet1    10.4.2.100          VirtualAppliance  Succeeded            vnetTest
+0.0.0.0/0        default  10.4.2.100          VirtualAppliance  Succeeded            vnetTest
+</pre>
+
+And if we check the effective routes in the NIC for our VM in Vnet3, you should see that our custom route to the NVA has overridden the system route to the Internet:
+
+<pre lang="">
+<b>az network nic show-effective-route-table -n myVnet3-vm1-nic</b>
+<i>...Output omitted...</i>
+  {
+      "addressPrefix": [
+        "0.0.0.0/0"
+      ],
+      "disableBgpRoutePropagation": false,
+      "name": null,
+      "nextHopIpAddress": [],
+      "nextHopType": "Internet",
+      "source": "Default",
+      "state": <b>"Invalid"</b>
+    },
+<i>...Output omitted...</i>
+    {
+      "addressPrefix": [
+        <b>"0.0.0.0/0"</b>
+      ],
+      "disableBgpRoutePropagation": false,
+      "name": "default",
+      "nextHopIpAddress": [
+        "10.4.2.100"
+      ],
+      "nextHopType": "VirtualAppliance",
+      "source": "User",
+      "state": <b>"Active"</b>
+    }
+</pre>
+
+**Step 5.** In the terminal with the connection to the SSH jump host, verify that the NVAs are source-NATting (known as &#39;masquerading&#39; in iptables speech) all traffic outgoing its external interface (eth1):
 
 <pre lang="">
 lab-user@linuxnva-1:~$ <b>sudo iptables -vL -t nat</b>
@@ -1134,325 +1191,89 @@ Chain OUTPUT (policy ACCEPT 2157 packets, 137K bytes)
 
 Chain POSTROUTING (policy ACCEPT 29 packets, 1740 bytes)
  pkts bytes target     prot opt in     out     source         destination
-  910 61924 <b>MASQUERADE</b>  all  --  any    <b>eth0</b>    anywhere       anywhere
- 1220 73886 <b>MASQUERADE</b>  all  --  any    <b>eth1</b>    anywhere       anywhere
- </pre>
+  910 61924 <b>MASQUERADE</b>  all  --  any    <b>eth1</b>    anywhere       anywhere
+</pre>
 
-**Step 6.** Note that you don’t have Internet access to the VM in myVnet3Subnet1 any more, after changing default routing for that subnet. To verify that, we will use the command curl to connect to the Internet service `ifconfig.co`. If successful, the command should return the public IP address of the VM. Run the command:
 
-**It should work now if using HA Ports!**
+
+**Step 6.** We need to do something else. You might remember that the NVAs have associated NSGs with default rules. Default rules would not allow traffic to the Internet to reach the NVA NICs, so let us fix that:
+
+<pre lang="...">
+<b>az network nsg rule create --nsg-name linuxnva-1-nic0-nsg -n allow_fwd_internet --priority 110 --access Allow --direction Inbound --protocol "*" --source-address-prefixes VirtualNetwork --source-port-ranges "*" --destination-address-prefixes Internet --destination-port-ranges "*"</b>
+<i>Output omitted</i>
+<b>az network nsg rule create --nsg-name linuxnva-2-nic0-nsg -n allow_fwd_internet --priority 110 --access Allow --direction Inbound --protocol "*" --source-address-prefixes VirtualNetwork --source-port-ranges "*" --destination-address-prefixes Internet --destination-port-ranges "*"</b>
+<i>Output omitted</i>
+</pre>
+
+**Step 7.** If you test our curl command from VM3, you will see that it does not work yet. Actually if you log to any of the NVAs, you will see that they do not have any Internet connectivity whatsoever! How is this possible? We broke Internet connectivity when we associated the NVAs to the internal load balancer. In order to restore Internet connectivity, we need to assign public IP addresses to the external interfaces of the NVAs. The following example creates a standard public IP address and assigns it to the external NIC of nva1. **Please do the same for nva2**.
+
+<pre lang="...">
+<b>az network public-ip create -n nva1-pip --sku Standard</b>
+{
+  "publicIp": {
+    "dnsSettings": null,
+    "etag": "W/\"55e74572-5660-496d-85bd-6d43824b8468\"",
+    "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/publicIPAddresses/nva1-pip",
+    "idleTimeoutInMinutes": 4,
+    "ipAddress": "5.6.7.8",
+    "ipConfiguration": null,
+    "ipTags": [],
+    "location": "westeurope",
+    "name": "nva1-pip",
+    "provisioningState": "Succeeded",
+    "publicIpAddressVersion": "IPv4",
+    "publicIpAllocationMethod": "Static",
+    "resourceGroup": "vnetTest",
+    "resourceGuid": "7347852d-f566-4300-bb3b-e007b7ca44d5",
+    "sku": {
+      "name": <b>"Standard"</b>,
+      "tier": "Regional"
+    },
+    "tags": null,
+    "type": "Microsoft.Network/publicIPAddresses",
+    "zones": null
+  }
+}
+<b>az network nic ip-config update --nic-name linuxnva-2-nic1 -n linuxnva-1-nic1-ipConfig --public-ip-address nva1-pip</b>
+<i>Output omitted</i>
+</pre>
+
+**Note:** if you have put attention you are probably wondering why do we need a standard public IP address? The reason is that standard load balancers and basic IP address cannot coexist in the same availability set. If you tried to associate a basic public IP address to the NVA, you would get this error: <i>bla bla - Different basic sku and standard sku load balancer or public Ip resources in availability set is not allowed - bla bla</i>
+
+
+**Step 8.** Now you can try to reach the public Internet from our VM3:
 
 <pre lang="">
 lab-user@myVnet3-vm1:~$ <b>curl ifconfig.co</b>
-1.2.3.4
+5.6.7.8
 </pre>
 
-**Note:** in your own environment you will see a public IP address other than 1.2.3.4
-
-**Step 2.** Now create a default route in that table pointing to the internal LB VIP (10.4.2.100):
+**Note:** Observe that the public IP address that VM3 gets back from the ifconfig.co service is one of the public IP addresses assigned to the NVAs. You can get the public IP addresses in your resource group with this command:
 
 <pre lang="">
-<b>az network route-table route create --address-prefix 0.0.0.0/0 --next-hop-ip-address 10.4.2.100 --next-hop-type VirtualAppliance --route-table-name vnet3-subnet1 -n default</b>
-{
-  "addressPrefix": "0.0.0.0/0",
-  "etag": "W/\"...\"",
-  "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/routeTables/vnet3-su
-bnet1/routes/default",
-  "name": "default",
-  "nextHopIpAddress": "10.4.2.100",
-  "nextHopType": "VirtualAppliance",
-  "provisioningState": "Succeeded",
-  "resourceGroup": "vnetTest"
-}
+<b>az network public-ip list --query [].[name,ipAddress,sku.name] -o table</b>
+Column1              Column2         Column3
+-------------------  --------------  ---------
+linuxnva-slbPip-ext                  Basic
+myVnet1-vm2-pip      1.2.3.4         Basic
+nva1-pip             5.6.7.8         Standard
+nva2-pip             9.10.11.12      Standard
+vnet4gwPip                           Basic
+vnet5gwPip 
 </pre>
 
-
-Now run again our curl command, to verify that the NVAs are dropping the traffic to ifconfig.co (IP address 188.113.88.193 at the time of this writing, if ifconfig.co resolves to an IP address different than that, the curl command to ifconfig.co will keep working):
-
-<pre lang="">
-lab-user@myVnet3-vm1:~$ <b>curl ifconfig.co</b>
-curl: (7) Failed to connect to ifconfig.co port 80: Connection timed out
-lab-user@myVnet3-vm1:~$ <b>curl ipinfo.io/ip</b>
-1.2.3.4
-</pre>
-
-**Note:** in the previous output you would see your own IP address, which would obviously defer from the one shown in the example above.
+**Note:** in the previous output you would see your own IP addresses, which will obviously defer from the ones shown in the example above.
 
 ### What we have learnt
 
-Essentially the mechanism for redirecting traffic going from Azure VMs to the public Internet through an NVA is very similar to the problems we have seen previously in this lab. You need to configure UDRs pointing to the NVA (or to an internal load balancer that sends traffic to the NVA). Source NAT at the firewall will guarantee that the return traffic (destination-to-source) is sent to the same NVA that processed the initial packets (source-to-destination).
+Essentially the mechanism for redirecting traffic going from Azure VMs to the public Internet through an NVA is very similar to the problems we have seen previously in this lab. You need to configure UDRs pointing to the NVA (or to an internal load balancer that sends traffic to the NVA). 
 
+Source NAT at the firewall will guarantee that the return traffic (destination-to-source) is sent to the same NVA that processed the initial packets (source-to-destination).
 
+Your NSGs should allow traffic to get into the firewall and to get out from the firewall to the Internet.
 
+Lastly, standard public IP addresses will be required in the NVAs, since otherwise Internet access is not possible while associated to the internal load balancer. The public IP address must be standard (not basic) to coexist with the internal load balancer (standard too, to support the HA port feature). 
 
-
-
-
- 
-## Lab 6: Incoming Internet traffic protected by an NVA (optional) <a name="lab6"></a>
-
-In this lab we will explore what needs to be done so that certain VMs can be accessed from the public Internet.
-For this we need an external load balancer, with a public IP address, that will take traffic from the Internet, and send it to one of the Network Virtual Appliances, as next figure shows:
-
- 
-![Architecture Image](figure09.png "LB sandwich")
-
-**Figure 8.** LBs in front and behind the NVAs
-
-Note that in the case of an NVA with a single interface, the answer to the question about on which interface the answer to the probe goes is trivial, but in this lab we represent it to illustrate the most frequent situation where 3rd-pary firewalls have separate internal and external interfaces.
-
-Another fact relevant for this architecture is the lack of support for HA ports for external Load Balancers. The rationale behind this is that you typically want to lock down the ports on which your VMs are exposed to the public Internet. Therefore, opening up all ports on an external Load Balancer and redirecting to a server farm is not something that would be recommended. 
-
-As it can be seen in the figure, there are several issues that need to be figured out.
-
-**Step 1.** First things first, let&#39;s have a look at the external load balancer from our Windows command prompt:
-
-<pre lang="...">
-<b>az network lb list -o table</b>
-Location    Name         ProvisioningState    ResourceGroup
-----------  -----------  -------------------  ---------------
-westeurope  nva-slb-ext  Succeeded            vnetTest
-westeurope  nva-slb-int  Succeeded            vnetTest
-</pre>
-
-<pre lang="...">
-<b>az network lb show -n linuxnva-slb-ext | findstr name</b>
-      "name": "linuxnva-slbBackend-ext",
-      "name": "myFrontendConfig",
-        "name": null,
-      "name": "mySLBConfig",
-  "name": "linuxnva-slb-ext",
-      "name": "myProbe",
-</pre>
-
-**Note:** if you are running the previous step from a Linux machine, please replace the command `findstr` with `grep`
-
-**Step 2.** Now you can add the external interfaces of the NVAs to the backend address pool of the external load balancer:
-
-<pre lang="...">
-<b>az network nic ip-config address-pool add --ip-config-name linuxnva-1-nic1-ipConfig --nic-name linuxnva-1-nic1 --address-pool linuxnva-slbBackend-ext --lb-name linuxnva-slb-ext</b>
-Output omitted
-</pre>
-
-<pre lang="...">
-<b>az network nic ip-config address-pool add --ip-config-name linuxnva-2-nic1-ipConfig --nic-name linuxnva-2-nic1 --address-pool linuxnva-slbBackend-ext --lb-name linuxnva-slb-ext</b>
-Output omitted
-</pre>
-
-**Step 3.** Let us verify the LB's rules. In this case, we need to remove the existing one and replace it with another, where we will enable Direct Server Return and configure both sides on port 22:
-
-<pre lang="...">
-<b>az network lb rule list --lb-name linuxnva-slb-ext -o table</b>
-  BackendPort    FrontendPort    LoadDistribution    Name         Protocol
--------------  --------------    ------------------  -----------  --------
-           22            1022    Default             ssh          Tcp       
-</pre>
-
-**Note:** some column have been removed from the previous output for simplicity
-
-<pre lang="...">
-az network lb rule delete --lb-name linuxnva-slb-ext -n ssh
-</pre>
-
-<pre lang="...">
-<b>az network lb rule create --backend-pool-name linuxnva-slbBackend-ext --protocol Tcp --backend-port 22 --frontend-port 22 --frontend-ip-name myFrontendConfig --lb-name linuxnva-slb-ext --name sshRule --floating-ip true --probe-name myProbe</b>
-{
-  "backendAddressPool": {
-    "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/loadBalancers/linuxnva-slb-ext/backendAddressPools/linuxnva-slbBackend-ext",
-    "resourceGroup": "vnetTest"
-  },
-  "backendPort": 22,
-  "enableFloatingIp": true,
-  "etag": "W/\"...\"",
-  "frontendIpConfiguration": {
-    "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/loadBalancers/linuxnva-slb-ext/frontendIPConfigurations/myFrontendConfig",```
-
-    "resourceGroup": "vnetTest"
-  },
-  "frontendPort": 22,
-  "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/loadBalancers/linuxnva-slb-ext/loadBalancingRules/sshRule",
-  "idleTimeoutInMinutes": 4,
-  "loadDistribution": "Default",
-  "name": "sshRule",
-  "probe": {
-    "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/loadBalancers/linuxnva-slb-ext/probes/myProbe",
-    "resourceGroup": "vnetTest"
-  },
-  "protocol": "Tcp",
-  "provisioningState": "Succeeded",
-  "resourceGroup": "vnetTest"
-}
-</pre>
-
-**Step 4.**	The first problem we need to solve is routing at the NVA. VMs get a static route for 168.63.129.16 pointing to their primary interface, in this case, eth0. Verify that that is the case, since the disabling/enabling of eth0 in a previous lab might have deleted that route.
-
-<pre lang="...">
-lab-user@linuxnva-2:~$ <b>route -n</b>
-Kernel IP routing table
-Destination     Gateway         Genmask         Flags Metric Ref  Use Iface
-0.0.0.0         10.4.3.1        0.0.0.0         UG    0      0      0 eth1
-0.0.0.0         10.4.2.1        0.0.0.0         UG    100    0      0 eth0
-10.0.0.0        10.4.2.1        255.248.0.0     UG    0      0      0 eth0
-10.4.2.0        0.0.0.0         255.255.255.0   U     100    0      0 eth0
-10.4.3.0        0.0.0.0         255.255.255.0   U     10     0      0 eth1
-<b>168.63.129.16</b>   10.4.2.1        255.255.255.255 UGH   100    0      0 eth0
-169.254.169.254 10.4.2.1        255.255.255.255 UGH   100    0      0 eth0
-</pre>
-
-If the route to 168.63.129.16 is not there, you can add it easily:
-
-```
-sudo route add -host 168.63.129.16 gw 10.4.2.1 dev eth0
-```
-
-By the way, if the route to 168.63.129.16 disappeared, you probably need to add another static route telling the firewall where to find the 10.0.0.0/8 networks (where all our Vnets are):
-
-```
-sudo route add -net 10.0.0.0/8 gw 10.4.2.1 dev eth0
-```
-
-Now we are sure that the NVA has a static route for the IP address where the LB probes come from (168.63.129.16) pointing to 10.4.2.1 (eth1, its internal, vnet-facing interface). So that when a probe from the internal load balancer arrives, its answer will be sent down eth0.
-However, what happens when a probe arrives from the external load balancer on eth1? Since the static route is pointing down to eth0, the NVA would send the answer there. But this is not going to work, because the answer needs to be sent over the same interface.
-
-**Step 5.** You can  verify this behavior connecting to one of the NVA VMs and capturing traffic on both ports (filtering it to the TCP ports where the probes are configured). In this case we are connecting to linuxnva-1, and verifying the internal interface and TCP port (eth0, TCP port 1138):
-
-<pre lang="...">
-lab-user@linuxnva-1:~$ <b>sudo tcpdump -i eth0 port 1138</b>
-tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
-listening on eth0, link-type EN10MB (Ethernet), capture size 262144 bytes
-22:50:49.277214 IP 168.63.129.16.50717 > 10.4.2.101.1138: Flags <b>[SEW]</b>, seq 2412262844, win 8192, options [mss 1440,nop,wscale 8,nop,nop,sackOK], length 0
-22:50:49.277239 IP 10.4.2.101.1138 > 168.63.129.16.50717: Flags <b>[S.]</b>, seq 3801638535, ack 2412262845, win 29200, options [mss 1460,nop,nop,sackOK,nop,wscale 7], length 0
-22:50:49.277501 IP 168.63.129.16.50717 > 10.4.2.101.1138: Flags <b>[.]</b>, ack 1, win 513, length 0
-22:50:49.589219 IP 168.63.129.16.50288 > 10.4.2.101.1138: Flags [F.], seq 0, ack 1, win 64240, length 0
-22:50:50.198577 IP 168.63.129.16.50288 > 10.4.2.101.1138: Flags [F.], seq 0, ack 1, win 64240, length 0
-</pre>
-
-You can see that the 3-way handshake (`S` is SYN, `.` is ACK, so you see the `SYN`/`SYN-ACK`/`ACK` sequence marked in red above) completes successfully on the internal interface, as the TCP flags of the capture indicate. But if we have a look at the external interface, things look different there:
-
-<pre lang="...">
-lab-user@nva-1:~$ <b>sudo tcpdump -i eth1 port 1139</b>
-tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
-listening on eth1, link-type EN10MB (Ethernet), capture size 262144 bytes
-22:54:15.584402 IP 168.63.129.16.56583 > 10.4.3.101.1139: Flags <b>[SEW]</b>, seq 314423445, win 8192, options [mss 1440,nop,wscale 8,nop,nop,sackOK], length 0
-22:54:18.584140 IP 168.63.129.16.56583 > 10.4.3.101.1139: Flags <b>[SEW]</b>, seq 314423445, win 8192, options [mss 1440,nop,wscale 8,nop,nop,sackOK], length 0
-22:54:24.584127 IP 168.63.129.16.56583 > 10.4.3.101.1139: Flags <b>[S]</b>, seq 314423445, win 8192, options [mss 1440,nop,nop,sackOK], length 0
-22:54:30.587651 IP 168.63.129.16.56995 > 10.4.3.101.1139: Flags <b>[SEW]</b>, seq 2980654025, win 8192, options [mss 1440,nop,wscale 8,nop,nop,sackOK], length 0
-22:54:33.587444 IP 168.63.129.16.56995 > 10.4.3.101.1139: Flags <b>[SEW]</b>, seq 2980654025, win 8192, options [mss 1440,nop,wscale 8,nop,nop,sackOK], length 0
-</pre>
-
-As you can see in the TCP flags, the 3-way handshake never completes (only SYN, the SYN-ACK never comes back): the Load Balancer keeps sending packets with the SYN flag on, without getting a single ACK back.
-
-**Step 6.** The problem here is routing. The NVA is getting the health checks from the load balancer always from the same IP address, but it needs to seem them back on different interfaces. How to route to the same IP address depending on where the packet is coming from?
-In order to fix routing, we are going to implement policy based routing in both NVAs. The first step is creating a custom route table at the Linux level, by modifying the file rt_tables and adding the line `201 slbext`:
-
-<pre lang="...">
-lab-user@linuxnva-1:~$ <b>sudo vi /etc/iproute2/rt_tables</b>
-</pre>
-
-The file now should look like something like this:
-
-<pre lang="...">
-lab-user@linuxnva-1:~$ <b>more /etc/iproute2/rt_tables</b>
-#
-# reserved values
-#
-255     local
-254     main
-253     default
-0       unspec
-#
-# local
-#
-#1      inr.ruhep
-201 <b>slbext</b>
-</pre>
-
-**Step 7.** Now we add a rule that will tell Linux when to use that routing table. That is, when it needs to send the answer to the LB probe from the external interface (10.4.3.101 in the case of linuxnva-1, 10.4.3.102 for nva-2).
-
-<pre lang="...">
-lab-user@linuxnva-1:~$ <b>sudo ip rule add from 10.4.3.101 to 168.63.129.16 lookup slbext</b>
-</pre>
-
-or
-
-<pre lang="...">
-lab-user@linuxnva-2:~$ <b>sudo ip rule add from 10.4.3.102 to 168.63.129.16 lookup slbext</b>
-</pre>
-
-**Step 8.** And finally, we populate the custom routing table with a single route, pointing up to eth1:
-lab-user@linuxnva-1:~$ sudo ip route add 168.63.129.16 via 10.4.3.1 dev eth1 table slbext
-
-**Step 9.** Verify that the commands took effect, and that the TCP 3-way handshake is now correctly established on eth1:
-
-<pre lang="...">
-lab-user@linuxnva-1:~$ <b>ip rule list</b>
-0:      from all lookup local
-32765:  <b>from 10.4.3.101 to 168.63.129.16 lookup slbext</b>
-32766:  from all lookup main
-32767:  from all lookup default
-</pre>
-
-<pre lang="...">
-lab-user@nva-1:~$ <b>ip route show table slbext</b>
-168.63.129.16 via 10.4.3.1 dev eth1
-</pre>
-
-<pre lang="...">
-<b>lab-user@linuxnva-1:~$ sudo tcpdump -i eth1 port 1139</b>
-tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
-listening on eth1, link-type EN10MB (Ethernet), capture size 262144 bytes
-23:11:45.774301 IP 168.63.129.16.54073 > 10.4.3.101.1139: Flags <b>[SEW]</b>, seq 3604073494, win 8192, options [mss 1440,nop,wscale 8,nop,nop,sackOK], length 0
-23:11:45.774333 IP 10.4.3.101.1139 > 168.63.129.16.54073: Flags <b>[S.]</b>, seq 2611260758, ack 3604073495, win 29200, options [mss 1460,nop,nop,sackOK,nop,wscale 7], length 0
-23:11:45.774488 IP 168.63.129.16.54073 > 10.4.3.101.1139: Flags <b>[.]</b>, ack 1, win 513, length 0
-23:11:46.086572 IP 168.63.129.16.53650 > 10.4.3.101.1139: Flags [F.], seq 0, ack 1, win 64240, length 0
-23:11:46.695967 IP 168.63.129.16.53650 > 10.4.3.101.1139: Flags [F.], seq 0, ack 1, win 64240, length 0
-</pre>
-
-**Step 10.** Don’t forget to run the previous procedure (from step 6) in linuxnva-2 too (or in linuxnva-1, if you did them on linuxnva-2).
-
-**Step 11.** One missing piece is the NAT configuration at both firewalls: traffic will arrive from the external load balancer addressed to the VIP assigned to the load balancer, since we configured Direct Server Return (also known as floating IP). Now we need to NAT that address to the VM where we want to send this traffic to, in both firewalls:
-
-<pre lang="...">
-lab-user@linuxnva-1:~$ <b>sudo iptables -t nat -A PREROUTING -p tcp -d 1.2.3.4 --dport 22 -j DNAT --to-destination 10.3.1.4:22</b>
-</pre>
-
-and
-
-<pre lang="...">
-lab-user@linuxnva-2:~$ <b>sudo iptables -t nat -A PREROUTING -p tcp -d 1.2.3.4 --dport 22 -j DNAT --to-destination 10.3.1.4:22</b>
-</pre>
-
-**Note:** do not forget to replace here the bogus IP address "1.2.3.4" with the actual public IP address assigned in your environment to the public IP address "linuxnva-slbPip-ext". You can get the list of public IP addresses in your environment with the command "az network public-ip list -o table".
-
-<pre lang="...">
-lab-user@linuxnva-2:~$ <b>sudo iptables -vL -t nat</b>
-Chain PREROUTING (policy ACCEPT 114 packets, 6118 bytes)
- pkts bytes target     prot opt in     out     source        destination
-    0     0 DNAT       tcp  --  any    any     anywhere      1.2.3.4        tcp dpt:ssh to:10.3.1.4:22
-
-Chain INPUT (policy ACCEPT 39 packets, 1967 bytes)
- pkts bytes target     prot opt in     out     source        destination
-
-Chain OUTPUT (policy ACCEPT 59 packets, 3831 bytes)
- pkts bytes target     prot opt in     out     source        destination
-
-Chain POSTROUTING (policy ACCEPT 0 packets, 0 bytes)
- pkts bytes target     prot opt in     out     source        destination
- 1193 81052 MASQUERADE  all  --  any    eth0    anywhere      anywhere
- 1574 95368 MASQUERADE  all  --  any    eth1    anywhere      anywhere
-</pre>
-
-**Step 12.** Now we should be able to connect to the VM from the public Internet. Open another Putty window, and try to connect to the public IP address of the load balancer (1.2.3.4 in our example).
-
-
-**Note:** please make sure to replace 3.3.3.3 with the actual public IP address of your VM 
-
-
-### What we have learnt
-
-For traffic incoming from the public Internet, you need to add an extra level of external load balancer. Having multiple load balancers managing traffic to the same set of firewalls can be problematic, specially if the firewalls have multiple interfaces, since health check probes could be inadvertently sent the wrong way, which would break the setup.
-
-One possibility to avoid such complexity (that we did not explore in this particular lab) would be using single-NIC firewalls, also known as &#39;firewall-on-a-stick&#39;, as opposed to having separate external and internal interfaces.
 
  
 ## Lab 7: Advanced HTTP-based probes (optional)
@@ -1461,9 +1282,14 @@ Standard TCP probes only verify that the interface being probed answers to TCP s
 
 HTTP probes can be implemented for that purpose. The probes will call for an HTTP URL that will return different HTTP codes, after verifying that all connectivity for the specific NVA is OK. We will use PHP for this, and a script that pings a series of IP addresses or DNS names, both in the Vnet and the public Internet (to verify internal and external connectivity). See the file `index.php` in this repository for more details.
 
-**Step 1.**	We need to change the probe from TCP-based to HTTP-based, for example, in the internal LB (you can do it in the external one too). From your Windows command prompt:
+**Step 1.**	We need to change the probe from TCP-based to HTTP-based. From your command prompt with Azure CLI:
 
 <pre lang="...">
+<b>az network lb probe show -n myProbe --lb-name linuxnva-slb-int --query [protocol,port]</b>
+[
+  "Tcp",
+  1138
+]
 <b>az network lb probe update -n myProbe --lb-name linuxnva-slb-int --protocol Http --path "/" --port 80</b>
 {
   "etag": "W/\"...\"",
@@ -1487,12 +1313,17 @@ HTTP probes can be implemented for that purpose. The probes will call for an HTT
   "requestPath": "/",
   "resourceGroup": "vnetTest"
 }
+<b>az network lb probe show -n myProbe --lb-name linuxnva-slb-int --query [protocol,port]</b>
+[
+  "Http",
+  80
+]
 </pre>
 
-**Step 2.**	Verify the content that NVAs return to the probe. You can query this from any VM, for example, from your Putty window connected to Vnet1-vm1:
+**Step 2.**	Verify the content that NVAs return to the probe. You can query this from any VM, for example, from our jump host Vnet1-vm2:
 
 ```
-lab-user@myVnet1-vm1:~$ curl -i 10.4.2.101
+lab-user@myVnet1-vm2:~$ curl -i 10.4.2.101
 HTTP/1.1 200 OK
 Date: Tue, 28 Mar 2017 00:08:47 GMT
 Server: Apache/2.4.18 (Ubuntu)
@@ -1514,9 +1345,12 @@ Content-Type: text/html; charset=UTF-8
 </html>
 ```
 
-**Step 3.**	Verify the logic of the "/var/www/html/index.php" file in each NVA VM, from the putty window connected to any of the NVAs. As you can see, it returns the HTTP code 200 only if a list of IP addresses or DNS names is reachable. You can query this from any VM, for example, from your Putty window connected to Vnet1-vm1:
+**Step 3.**	Verify the logic of the "/var/www/html/index.php" file in each NVA VM. Connect to one of the NVAs from the jump host, and have a look at the file `/var/www/html/index.php`. As you can see, it returns the HTTP code 200 only if a list of IP addresses or DNS names is reachable. For example, if the firewall has lost internet connectivity for some reason, or connectivity to its management server, you might want to failover to the other one:
 
 ```
+lab-user@myVnet1-vm2:~$ ssh 10.4.2.101
+lab-user@10.4.2.101's password:
+lab-user@linuxnva-1:~$
 lab-user@linuxnva-1:~$ more /var/www/html/index.php
 <html>
    <header>
@@ -1553,11 +1387,11 @@ lab-user@linuxnva-1:~$ more /var/www/html/index.php
 lab-user@nva-1:~$
 ```
 
-Now the probe for the internal load balancer will fail even if the internal interface is up, but for whatever reason the NVA cannot connect to the Internet, therefore enhancing the overall reliability of the solution.
+Now the probe for the internal load balancer will fail even if the internal interface is up, but for whatever reason the NVA cannot connect to the Internet, therefore enhancing the overall reliability of the solution. Advanced probes are a very powerful tool that can be used to recognize multiple problems: is a specific daemon (iptables?) running correctly, is a necessary service reachable (DNS, authentication, logging), etc.
 
 ### What we have learnt
 
-Advanced HTTP probes can be used to verify additional information, so that firewalls are taken out of rotation whenever complex failure scenarios occur, such as the failure of an interface other than the one the probe was sent to, or a certain process not being running in the system (to detect if the firewall daemon is still running).
+Advanced HTTP probes can be used to verify additional information, so that firewalls are taken out of rotation whenever complex failure scenarios occur, such as the failure of an upstream interface, or a certain process not being running in the system (for example if the firewall daemon is not running).
 
 
 # Part 3: VPN to external site <a name="part3"></a>
