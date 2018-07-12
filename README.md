@@ -100,7 +100,20 @@ If you find any issue when running through this lab or any error in this guide, 
 
 **Step 2.** If you don’t have a valid Azure subscription, you can create a free Azure subscription in https://azure.microsoft.com/en-us/free. If you have received a voucher code for Azure, go to https://www.microsoftazurepass.com/Home/HowTo for instructions on how to redeem it.  
 
-**Step 3.** Open a terminal window. In Windows, for example by hitting the Windows key in your keyboard, typing `cmd` and hitting the Enter key. You might want to maximize the command Window so that it fills your desktop.
+**Step 3.** Open a terminal window. Here you have different options:
+
+* If you are using the Azure CLI on Windows, you can press the Windows key in your keyboard, then type `cmd` and hit the Enter key. You might want to maximize the command Window so that it fills your desktop.
+
+* If you are using the Azure CLI on the Linux subsystem for Windows, open your Linux console
+
+* If you are using Linux or Mac, you probably do not need me to tell me how to open a Terminal window
+
+* Alternatively you can use the Azure shell, no matter on which OS you are working. Open the URL https://shell.azure.com on a Web browser, and after authenticating with your Azure credentials you will get to an Azure Cloud Shell. In this lab we will use the Azure CLI (and not Powershell), so make sure you select the Bash shell. You can optionally use tmux, as this figure shows:  
+
+**Figure.** Cloud shell with two tmux panels
+
+![Cloud Shell Image](https://github.com/erjosito/azure-networking-lab/blob/master/az_shell_tmux.png "Cloud Shell with 2 tmux panels")
+
 
 **Step 4.** Create a new resource group, where we will place all our objects (so that you can easily delete everything after you are done). The last command also sets the default resource group to the newly created one, so that you do not need to download it.
 
