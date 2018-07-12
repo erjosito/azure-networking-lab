@@ -52,7 +52,7 @@
             "properties": {
                 "ipConfigurations": [
                     {
-                        "name": "[concat(parameters('nicName'), '-ipconfig0')]",
+                        "name": "[concat(parameters('nicName'), '-ipConfig')]",
                         "properties": {
                             "privateIPAddress": "[parameters('ipAddress')]",
                             "privateIPAllocationMethod": "Static",

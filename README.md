@@ -156,11 +156,8 @@ Name               Timestamp                         State
 -----------------  --------------------------------  ---------
 Name               Timestamp                         State
 -----------------  --------------------------------  ---------
-myVnet1gwPip       2017-06-29T19:15:28.204648+00:00  Succeeded
 myVnet5gwPip       2017-06-29T19:15:28.227920+00:00  Succeeded
-myVnet3gwPip       2017-06-29T19:15:28.315235+00:00  Succeeded
 myVnet4gwPip       2017-06-29T19:15:31.617920+00:00  Succeeded
-myVnet2gwPip       2017-06-29T19:15:32.969018+00:00  Succeeded
 myVnet5-vm1-nic    2017-06-29T19:15:38.468886+00:00  Succeeded
 myVnet1VpnGw       2017-06-29T19:15:38.565418+00:00  Succeeded
 myVnet5VpnGw       2017-06-29T19:15:39.056567+00:00  Succeeded
@@ -200,7 +197,9 @@ vnet1subnet1vm2    2017-06-29T19:26:53.109076+00:00  Succeeded
 nva                2017-06-29T19:29:24.679832+00:00  Succeeded
 netLabDeployment   2017-06-29T19:29:26.491546+00:00  Succeeded
 </pre>
- 
+
+**Note:** You might see other resource names when using your template, since newer lab versions might have different object names
+
 ## Lab 1: Explore the Azure environment <a name="lab1"></a> 
 
 **Step 1.** You don’t need to wait until all objects in the template have been successfully deployed (although it would be good, to make sure that everything is there). In your second terminal window, start exploring the objects created by the ARM template: vnets, subnets, VMs, interfaces, public IP addresses, etc. Save the output of these commands (copying and pasting to a text file for example).
@@ -278,29 +277,39 @@ True                  westeurope  00-0D-3A-28-2A-28  linuxnva-2-nic1
 Column1              Column2
 -------------------  ---------------
 linuxnva-slbPip-ext
-myVnet1-vm1-pip      1.1.1.1
-myVnet1-vm2-pip      1.1.1.2
-myVnet2-vm1-pip      2.2.2.2
-myVnet3-vm1-pip      3.3.3.3
-myVnet4-vm1-pip      4.4.4.4
-myVnet5-vm1-pip      5.5.5.5
-nvaPip-1             6.6.6.6
-nvaPip-2             7.7.7.7
+myVnet1-vm2-pip      1.2.3.4
 vnet4gwPip
 vnet5gwPip
 </pre>
 
-**Note:** You might have notice the --query option in the command above. The reason is that in newer CLI releases, the standard command to list public IP addresses does not show the IP addresses themselves, interestingly enough. With the --query option you can force the Azure CLI to show the information you are interested in. Furthermore, the public IP addresses in the table are obviously not the ones you will see in your environment. **Note the actual public IP addresses in your environment somewhere** (like a Notepad window), since you will be needing them for the rest of the lab.
+**Note:** You might have notice the --query option in the command above. The reason is that in newer CLI releases, the standard command to list public IP addresses does not show the IP addresses themselves, interestingly enough. With the --query option you can force the Azure CLI to show the information you are interested in. Furthermore, the public IP addresses in the table are obviously not the ones you will see in your environment.
 
+As you see, we have a single public IP address allocated to myVnet1-vm2. We will use this VM as jump host for the lab.
 
-**Step 2.** Connect to the Azure portal (http://portal.azure.com) and locate the resource group that we have just created (called &#39;vnetTest&#39;, if you did not change it). Verify the objects that have been created and explore their properties and states.
+**Step 2.** Using the public IP address from the previous step open an SSH terminal (putty on windows, terminal on Mac/Linux, tmux panel in the cloud shell, etc) and connect to the jump host. If you did not modified the ARM templates used to provision the environment, the user is lab-user, and the password Microsoft123!
+
+<pre lang="...">
+<b>ssh lab-user@1.2.3.4</b>
+The authenticity of host '1.2.3.4 (1.2.3.4)' can't be established.
+ECDSA key fingerprint is SHA256:FghxuVL+BuKux27Homrsm3nYjb7o/gE/SfFoiRYl5Y4.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added '1.2.3.4' (ECDSA) to the list of known hosts.
+lab-user@1.2.3.4's password:
+Welcome to Ubuntu 16.04.4 LTS (GNU/Linux 4.13.0-1018-azure x86_64)
+... ouput omitted...
+lab-user@myVnet1-vm2:~$
+</pre>
+
+**Note:** do not forget to use the public IP address of your environment instead of 1.2.3.4
+
+**Step 3.** Connect to the Azure portal (http://portal.azure.com) and locate the resource group that we have just created (called &#39;vnetTest&#39;, if you did not change it). Verify the objects that have been created and explore their properties and states.
 
 
 ![Architecture Image](https://github.com/erjosito/azure-networking-lab/blob/master/figureRG.png "Resource Group in Azure Portal")
 
 **Figure 4:** Azure portal with the resource group created for this lab
 
-**Note:** you might want to open two new additional Windows command prompt windows and launch the two commands from Lab 8, Step 1. Each of those commands (can be run in parallel) will take around 45 minutes, so you can leave them running while you proceed with Labs 2 through 7. If you are not planning to run Labs 8-9, you can safely ignore this paragraph.
+**Note:** you might want to open two new additional command prompt windows (or tmux panels) and launch the two commands from Lab 8, Step 1. Each of those commands (can be run in parallel) will take around 45 minutes, so you can leave them running while you proceed with Labs 2 through 7. If you are not planning to run Labs 8-9, you can safely ignore this paragraph.
 
 
 # PART 1: Hub and Spoke Networking <a name="part1"></a>
@@ -310,7 +319,7 @@ vnet5gwPip
 In some situations you would want some kind of security between the different Vnets. Although this security can be partially provided by Network Security Groups, certain organizations might require some more advanced filtering functionality such as the one that firewalls provide.
 In this lab we will insert a Network Virtual Appliance in the communication flow. Typically these Network Virtual Appliance might be a next-generation firewall of vendors such as Barracuda, Checkpoint, Cisco or Palo Alto, to name a few, but in this lab we will use a Linux machine with 2 interfaces and traffic forwarding enabled. For this exercise, the firewall will be inserted as a &#39;firewall on a stick&#39;, that is one single interface will suffice.
 
-![Architecture Image](https://github.com/erjosito/azure-networking-lab/blob/master/figure04.png "Spoke-to-spoke and NVAs")
+![Architecture Image](figure04.png "Spoke-to-spoke and NVAs")
 
 **Figure 5.** Spoke-to-spoke traffic going through an NVA
 
@@ -323,11 +332,19 @@ AutoUpgradeMinorVersion    Location    Name                 ProvisioningState
 True                       westeurope  installcustomscript  Succeeded        
 </pre>
 
-**Step 2.** After verifying the public IP address assigned to the first VM in vnet1 (called &#39;myVnet1-vm1-pip&#39;, go back to the your list of IP addresses), connect to it using the credentials that you specified when deploying the template, and verify that you don’t have connectivity to the VM in vnet2. You can open an SSH session from the Linux bash shell in Windows if you have installed the Linux subsystem, or you can use an application such as Putty (https://putty.org).
+**Step 2.** From your jump host ssh session connect to myVnet1-vm1 using the credentials that you specified when deploying the template, and verify that you don’t have connectivity to the VM in vnet2. You can open an SSH session from the Linux bash shell in Windows if you have installed the Linux subsystem, or you can use an application such as Putty (https://putty.org).
 
-
-**Note:** please note the IP address for your VM will be unique, you can get the IP address assigned to "myVnet1-vm1-pip" with the command "az network public-ip list -o table --query [].[name,ipAddress]". Type it in the "Host Name (or IP address)" text box in the dialog window above, and then click on "Open".
-
+<pre lang="...">
+lab-user@myVnet1-vm2:~$ <b>ssh 10.1.1.4</b>
+The authenticity of host '10.1.1.4 (10.1.1.4)' can't be established.
+ECDSA key fingerprint is SHA256:y4T92R4Qd968bf1ElHUazOvXLidj0RmgDOb4wxfpe7s.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added '10.1.1.4' (ECDSA) to the list of known hosts.
+lab-user@10.1.1.4's password:
+Welcome to Ubuntu 16.04.4 LTS (GNU/Linux 4.13.0-1018-azure x86_64)
+<i>...Output omitted...</i>
+lab-user@myVnet1-vm1:~$
+</pre>
  
 The username and password were specified at creation time (that long command that invoked the ARM template). If you did not change the parameters, the username is &#39;lab-user&#39; and the password &#39;Microsoft123!&#39; (without the quotes).
 
@@ -341,14 +358,13 @@ lab-user@myVnet1-vm1:~$
 
 **Note:** you do not need to wait for the "ssh 10.2.1.4" command to time out if you do not want to. Besides, if you are wondering why we are not testing with a simple ping, the reason is because the NVAs are preconfigured to drop ICMP traffic, as we will see in later labs.
 
-**Step 4.** Back in the command prompt window, verify that the involved subnets (myVnet1-Subnet1 and myVnet2-Subnet1) do not have any routing table attached:
+**Step 4.** Back in the command prompt window where you are running the Azure CLI, verify that the involved subnets (myVnet1-Subnet1 and myVnet2-Subnet1) do not have any routing table attached:
 
 <pre lang="...">
-<b>az network vnet subnet show --vnet-name myVnet1 -n myVnet1Subnet1 | findstr routeTable</b>
-  "routeTable": null
+<b>az network vnet subnet show --vnet-name myVnet1 -n myVnet1Subnet1 --query routeTable</b>
 </pre>
 
-**Note:** if you are using the Azure CLI on a Linux system, replace the "findstr" command in the previous step with "grep"
+**Note:** You should get no output out of the previous command
 
 **Step 5.** Create a custom route table named "vnet1-subnet1", and another one called "vnet2-subnet1":
 
@@ -398,29 +414,48 @@ westeurope  vnet2-subnet1  Succeeded            vnetTest
 
 <pre lang="...">
 <b>az network vnet subnet update -n myVnet1Subnet1 --vnet-name myVnet1 --route-table vnet1-subnet1</b>
-Output omitted
+<i>Output omitted</i>
 </pre>
 
 <pre lang="...">
 <b>az network vnet subnet update -n myVnet2Subnet1 --vnet-name myVnet2 --route-table vnet2-subnet1</b>
-Output omitted
+<i>Output omitted</i>
 </pre>
 
 **Step 8.** And now you can check that the subnets are associated with the right routing tables:
 
 <pre lang="...">
-<b>az network vnet subnet show --vnet-name myVnet1 -n myVnet1Subnet1 | findstr routeTable</b>
-"routeTable": {
-    "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/routeTables/vnet1-subnet1",
+<b>az network vnet subnet show --vnet-name myVnet1 -n myVnet1Subnet1 --query routeTable</b>
+{
+  "disableBgpRoutePropagation": null,
+  "etag": null,
+  "id": "/subscriptions/e7da9914-9b05-4891-893c-546cb7b0422e/resourceGroups/vnetTest/providers/Microsoft.Network/routeTables/vnet1-subnet1",
+  "location": null,
+  "name": null,
+  "provisioningState": null,
+  "resourceGroup": "vnetTest",
+  "routes": null,
+  "subnets": null,
+  "tags": null,
+  "type": null
+}
 </pre>
 
 <pre lang="...">
-<b>az network vnet subnet show --vnet-name myVnet2 -n myVnet2Subnet1 | findstr routeTable</b>
-  "routeTable": {
-    "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/routeTables/vnet2-subnet1",
-</pre>
-
-**Note:** if you are using the Azure CLI on a Linux system, replace the `findstr` commands in the previous step with `grep`
+<b>az network vnet subnet show --vnet-name myVnet2 -n myVnet2Subnet1 --query routeTable</b>
+{
+  "disableBgpRoutePropagation": null,
+  "etag": null,
+  "id": "/subscriptions/e7da9914-9b05-4891-893c-546cb7b0422e/resourceGroups/vnetTest/providers/Microsoft.Network/routeTables/vnet2-subnet1",
+  "location": null,
+  "name": null,
+  "provisioningState": null,
+  "resourceGroup": "vnetTest",
+  "routes": null,
+  "subnets": null,
+  "tags": null,
+  "type": null
+}</pre>
 
 **Step 9.** Now we can tell Azure to send traffic from subnet 1 to subnet 2 over the hub vnet. Normally you would do this by sending traffic to the vnet router (that is, the L3 functionality inherent to every Azure vnet). Let’s see what happens if we try this with vnet1. In order to do so, we need to add a new route to our custom routing table:
 
@@ -530,8 +565,8 @@ AddressPrefix    Name     NextHopIpAddress    NextHopType       ProvisioningStat
 
 <pre lang="...">
 lab-user@myVnet1vm:~$ <b>ssh 10.2.1.4</b>
-The authenticity of host '10.2.1.4 (10.2.1.4)' can't be established.
-...output omitted
+<i>...output omitted</i>
+lab-user@myVnet2-vm1:~$
 </pre>
 
 ### What we have learnt
@@ -551,26 +586,29 @@ Some organizations wish to filter not only traffic between specific network segm
 
 **Figure 6.** Intra-subnet NVA-based filtering, also known as “microsegmentation”
 
-**Step 1.** In order to be able to test the topology above, we will use the second VM in myVnet1-Subnet1. (vnet1-vm2). We need to instruct all VMs in subnet 1 to send local traffic to the NVAs as well. First, let us verify that both VMs can reach each other. Exit the session from Vnet2-vm1 to come back to Vnet1-vm1, and verify that you can reach its neighbor VM in 10.1.1.5:
+**Step 1.** In order to be able to test the topology above, we will our jump host, which happens to be the second VM in myVnet1-Subnet1 (vnet1-vm2). We need to instruct all VMs in this subnet to send local traffic to the NVAs as well. First, let us verify that both VMs can reach each other. Exit the session from Vnet2-vm1 and Vnet1-vm1 to come back to Vnet1-vm2, and verify that you can reach its neighbor VM in 10.1.1.4:
 
 <pre lang="...">
 lab-user@myVnet2-vm1:~$ <b>exit</b>
 logout
 Connection to 10.2.1.4 closed.
-lab-user@myVnet1-vm1:~$ <b>ping 10.1.1.5</b>
-PING 10.1.1.5 (10.1.1.5) 56(84) bytes of data.
-64 bytes from 10.1.1.5: icmp_seq=1 ttl=64 time=0.612 ms
-64 bytes from 10.1.1.5: icmp_seq=2 ttl=64 time=3.62 ms
-64 bytes from 10.1.1.5: icmp_seq=3 ttl=64 time=2.71 ms
-64 bytes from 10.1.1.5: icmp_seq=4 ttl=64 time=0.748 ms
+lab-user@myVnet1-vm1:~$ <b>exit</b>
+logout
+Connection to 10.1.1.4 closed.
+lab-user@myVnet1-vm2:~$ <b>ping 10.1.1.4</b>
+PING 10.1.1.4 (10.1.1.4) 56(84) bytes of data.
+64 bytes from 10.1.1.4: icmp_seq=1 ttl=64 time=0.612 ms
+64 bytes from 10.1.1.4: icmp_seq=2 ttl=64 time=3.62 ms
+64 bytes from 10.1.1.4: icmp_seq=3 ttl=64 time=2.71 ms
+64 bytes from 10.1.1.4: icmp_seq=4 ttl=64 time=0.748 ms
 ^C
---- 10.1.1.5 ping statistics ---
+--- 10.1.1.4 ping statistics ---
 4 packets transmitted, 4 received, <b>0% packet loss</b>, time 3002ms
 rtt min/avg/max/mdev = 0.612/1.924/3.628/1.287 ms
-lab-user@myVnet1-vm1:~$
+lab-user@myVnet1-vm2:~$
 </pre>
 
-**Step 2.** We want to be able to control traffic flowing between the two VMs, even if they are in the same subnet. For that purpose, we want to send this traffic to our NVA (firewall). This can be easily done by adding an additional User-Defined Route to the corresponding routing table. Go back to your Windows command prompt, and type this command:
+**Step 2.** We want to be able to control traffic flowing between the two VMs, even if they are in the same subnet. For that purpose, we want to send this traffic to our NVA (firewall). This can be easily done by adding an additional User-Defined Route to the corresponding routing table. Go back to your Azure CLI command prompt, and type this command:
 
 <pre lang="...">
 <b>az network route-table route create --address-prefix 10.1.1.0/24 --next-hop-ip-address 10.4.2.101 --next-hop-type VirtualAppliance --route-table-name vnet1-subnet1 -n vnet1-subnet1</b>
@@ -588,19 +626,19 @@ lab-user@myVnet1-vm1:~$
 
 **Note:** this command needs to be issued from your machine, outside of the putty window
 
-**Step 3.** If you go back to the Putty window and restart the ping, you will notice that after some seconds (the time it takes Azure to program the routes you just configured in the NICs of the VMs) ping will stop working, because traffic is going through the firewalls now, configured to drop ICMP packets.
+**Step 3.** If you go back to the SSH window and restart the ping, you will notice that after some seconds (the time it takes Azure to program the routes you just configured in the NICs of the VMs) ping will stop working, because traffic is going through the firewalls now, configured to drop ICMP packets.
 
 <pre lang="...">
-lab-user@myVnet1-vm1:~$ <b>ping 10.1.1.5</b>
-PING 10.1.1.5 (10.1.1.5) 56(84) bytes of data.
-64 bytes from 10.1.1.5: icmp_seq=1 ttl=64 time=2.22 ms
-64 bytes from 10.1.1.5: icmp_seq=2 ttl=64 time=0.847 ms
+lab-user@myVnet1-vm2:~$ <b>ping 10.1.1.4</b>
+PING 10.1.1.4 (10.1.1.4) 56(84) bytes of data.
+64 bytes from 10.1.1.4: icmp_seq=1 ttl=64 time=2.22 ms
+64 bytes from 10.1.1.4: icmp_seq=2 ttl=64 time=0.847 ms
 ...
-64 bytes from 10.1.1.5: icmp_seq=30 ttl=64 time=0.762 ms
-64 bytes from 10.1.1.5: icmp_seq=31 ttl=64 time=0.689 ms
-64 bytes from 10.1.1.5: icmp_seq=32 ttl=64 time=3.00 ms
+64 bytes from 10.1.1.4: icmp_seq=30 ttl=64 time=0.762 ms
+64 bytes from 10.1.1.4: icmp_seq=31 ttl=64 time=0.689 ms
+64 bytes from 10.1.1.4: icmp_seq=32 ttl=64 time=3.00 ms
 ^C
---- 10.1.1.5 ping statistics ---
+--- 10.1.1.4 ping statistics ---
 98 packets transmitted, 32 received, 67% packet loss, time 97132ms
 rtt min/avg/max/mdev = 0.620/1.160/4.284/0.766 ms
 lab-user@myVnet1-vm1:~$
@@ -609,8 +647,9 @@ lab-user@myVnet1-vm1:~$
 **Step 4.** To verify that routing is still correct, you can now try SSH instead of ping. The fact that SSH works, but ping does not, demonstrates that the traffic now goes through the NVA (configured to allow SSH, but to drop ICMP packets).
 
 <pre lang="...">
-lab-user@myVnet1-vm1:~$ <b>ssh 10.1.1.5</b>
-Output omitted
+lab-user@myVnet1-vm2:~$ <b>ssh 10.1.1.4</b>
+<i>Output omitted</i>
+lab-user@myVnet1-vm1:~$
 </pre>
 
 
@@ -629,11 +668,13 @@ As a side remark, in order for these microsegmentation designs to work, the fire
 If all traffic is going through a single Network Virtual Appliance, chances are that it is not going to scale. Whereas you could scale it up by resizing the VM where it lives, not all VM sizes are supported by NVA vendors. Besides, scale out provides a more linear way of achieving additional performance, potentially even increasing and decreasing the number of NVAs automatically via scale sets.
 In this lab we will use two NVAs and will send the traffic over both of them by means of an Azure Load Balancer. Since return traffic must flow through the same NVA (since firewalling is a stateful operation and asymmetric routing would break it), the firewalls will source-NAT traffic to their individual addresses.
 
-![Architecture Image](https://github.com/erjosito/azure-networking-lab/blob/master/figure08.png "Load Balancer for NVA Scale Out")
+![Architecture Image](figure08.png "Load Balancer for NVA Scale Out")
 
 **Figure 7.** Load balancer for NVA scale out 
 
 Note that no clustering function is required in the firewalls, each firewall is completely unaware of the others.
+
+A different model that we are not going to explore in this lab is based on UDR (User-Defined Route) automatic modification. The concept is simple: if you have the setup from Lab 3, you have UDRs pointing to an NVA. If that NVA went down, you could have an automatic mechanism to change the UDRs so that they point to a second NVA. After the Azure Load Balancer supports the HA Ports feature, what we will explore later in this lab, most NVA vendors have moved away from the UDR-based HA model, that is why we will not explore it in this lab. However, not all Azure regions have standard Load Balancers (required for the HA Ports feature) at the time of this writing, so the UDR-based model might still be relevant in some situations.
 
 **Step 1.** First, go to your Windows command window to verify that both an internal and an external load balancer have been deployed:
 
@@ -645,21 +686,14 @@ westeurope  linuxnva-slb-ext  Succeeded            vnetTest
 westeurope  linuxnva-slb-int  Succeeded            vnetTest        
 </pre>
 
-**Step 2.** Now get information about the object names inside of the internal Load Balancer. The following command can be used in order to get the names for the objects inside of the load balancer. Specifically we will need the name of the backend farm, highlighted in green:
+**Step 2.** We will need the name of the backend farm of the load balancer for later steps:
 
 <pre lang="...">
-<b>az network lb show -n linuxnva-slb-int | findstr name</b>
-      "name": "linuxnva-slbBackend-int",
-      "name": "myFrontendConfig",
-        "name": null,
-      "name": "ssh",
-  "name": "linuxnva-slb-int",
-      "name": "myProbe",
+<b>az network lb show -n linuxnva-slb-int --query backendAddressPools[].name -o tsv</b>
+linuxnva-slbBackend-int
 </pre>
 
-**Note:** if you are running this step from a Linux system, please replace the command "findstr" with "grep"
-
-**Step 3.** Now we need to add the internal interfaces of both appliances to the backend address pool of the load balancer: 
+**Step 3.** Now that we now the backend pool where we want to add our NVAs, we can use this command to do so. Note that although intuitively you might think that this process is performed at the LB level, it is actually a NIC operation. In other words, you do not add the NIC to the LB backend pool, but the backend pool to the NIC: 
 
 <pre lang="...">
 <b>az network nic ip-config address-pool add --ip-config-name linuxnva-1-nic0-ipConfig --nic-name linuxnva-1-nic0 --address-pool linuxnva-slbBackend-int --lb-name linuxnva-slb-int</b>
@@ -669,7 +703,7 @@ Output omitted
 And a similar command for our second Linux-based NVA appliance:
 
 <pre lang="...">
-<b>az network nic ip-config address-pool add --ip-config-name linuxnva-<red>2</red>-nic0-ipConfig --nic-name linuxnva-<red>2</red>-nic0 --address-pool linuxnva-slbBackend-int --lb-name linuxnva-slb-int</b>
+<b>az network nic ip-config address-pool add --ip-config-name linuxnva-2-nic0-ipConfig --nic-name linuxnva-2-nic0 --address-pool linuxnva-slbBackend-int --lb-name linuxnva-slb-int</b>
 Output omitted
 </pre>
 
@@ -718,10 +752,20 @@ Output omitted
 }
 </pre>
 
+You can verify that the pool has been successfully added to the NICs with this command:
+
+<pre lang="...">
+<b>az network lb address-pool list --lb-name linuxnva-slb-int -o table --query [].backendIpConfigurations[].id</b>
+Result
+---------------------------------------------------
+/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/networkInterfaces/linuxnva-1-nic0/ipConfigurations/linuxnva-1-nic0-ipconfig0
+/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/networkInterfaces/linuxnva-2-nic0/ipConfigurations/linuxnva-2-nic0-ipconfig0
+</pre>
+
 **Note:** HA ports work only on standard Load Balancers. In order to verify which SKU the load balancers have, you can use issue this command:
 
 <pre lang="...">
-<b> az network lb list --query [].[name,sku.name] -o table</b>
+<b>az network lb list --query [].[name,sku.name] -o table</b>
 Column1           Column2
 ----------------  ---------
 linuxnva-slb-ext  Basic
@@ -744,24 +788,25 @@ myFrontendConfig  10.4.2.100          Static
 
 <pre lang="...">
 <b>az network route-table route update --route-table-name vnet1-subnet1 -n vnet1-subnet1 --next-hop-ip-address 10.4.2.100</b>
-Output omitted
+<i>Output omitted</i>
 </pre>
 
 At this point communication between the VMs should be possible, flowing through the NVA. Note that ICMP will still not work, but in this case, this is due to the fact that at this point in time, the Azure Load Balancer is not able to balance ICMP traffic, just TCP or UDP traffic (as configured by the load balancing rules, that require a TCP or a UDP port), so Pings do not even reach the NVAs.
 If you go back to the Putty window, you can verify that ping to the neighbor VM in the same subnet still does not work, but SSH does.
 
 <pre lang="...">
-lab-user@myVnet1-vm1:~$ <b>ping 10.1.1.5</b>
-PING 10.1.1.5 (10.1.1.5) 56(84) bytes of data.
+lab-user@myVnet1-vm2:~$ <b>ping 10.1.1.4</b>
+PING 10.1.1.4 (10.1.1.4) 56(84) bytes of data.
 ^C
---- 10.1.1.5 ping statistics ---
+--- 10.1.1.4 ping statistics ---
 4 packets transmitted, 0 received, <b>100% packet loss</b>, time 1006ms
 </pre>
 
 <pre lang="...">
-lab-user@myVnet1-vm1:~$ <b>ssh 10.1.1.5</b>
-lab-user@10.1.1.5's password:
+lab-user@myVnet1-vm2:~$ <b>ssh 10.1.1.4</b>
+lab-user@10.1.1.4's password:
 Welcome to Ubuntu 16.04.1 LTS (GNU/Linux 4.4.0-47-generic x86_64)
+lab-user@myVnet1-vm1:~$
 </pre>
 
 **Step 7.** Observe the source IP address that the destination machine sees. This is due to the source NAT that firewalls do, in order to make sure that return traffic from myVnet1-vm2 goes through the NVA as well:
@@ -771,10 +816,15 @@ lab-user@ myVnet1-vm2:~$ who
 lab-user pts/0        2017-03-23 23:41 (<b>10.4.2.101</b>)
 </pre>
 
-**Step 8.** This is expected, since firewalls are configured to source NAT the connections outgoing on that interface. Now open another Putty window, and connect over SSH to the public IP address of the firewall. Remember that you can retrieve the list of public IP address with the command "az network public-ip list -o table". Please go to the same firewall that you just saw in the previous step. That is, if in the `who` command you saw the IP address 10.4.2.101, connect with Putty to the public IP address &#39;nvaPip-1&#39;, if you saw 10.4.2.102, connect to &#39;nvaPip-2&#39;. In our example from the output above, we saw the &#39;10.4.2.101&#39;, so we will connect to the first NVA. Remember that the username is still &#39;lab-user&#39;, the password &#39;Microsoft123!&#39; (without the quotes).
-After connecting to the firewall, you can display the NAT configuration with the following command:
+**Note:** if you see multiple SSH sessions, you might want to kill them, so that you only have one. You can get the process IDs of the SSH sessions with the command ps -ef | grep sshd, and you can kill a specific process ID with the command kill -9 process_id_to_be_killed. Obviously, if you happen to kill the session over which you are currently connected, you will have to reconnect again.
+
+**Step 8.** This is expected, since firewalls are configured to source NAT the connections outgoing on that interface. Now open another SSH window/panel, and connect over the jump host to the NVA. If in the `who` command you saw the IP address 10.4.2.101. Remember that the username is still &#39;lab-user&#39;, the password &#39;Microsoft123!&#39; (without the quotes). After connecting to the firewall, you can display the NAT configuration with the following command:
 
 <pre lang="...">
+lab-user@myVnet1-vm2:~$ <b>ssh 10.4.2.101</b>
+lab-user@10.4.2.101's password:
+<i>...Output omitted...</li>
+lab-user@linuxnva-1:~$
 lab-user@linuxnva-1:~$ <b>sudo iptables -L -t nat</b>
 Chain PREROUTING (policy ACCEPT)
 target     prot opt source               destination
@@ -814,14 +864,46 @@ tcp6       0      0 :::80          :::*             LISTEN   11730/apache2
 tcp6       0      0 :::22          :::*             LISTEN   1587/sshd
 </pre>
 
-**Step 10.** We will shutdown interface eth0 in the firewall where the connection was going through (the address you saw in the "who" command):
-lab-user@linuxnva-1:~$ sudo ifconfig eth0 down
+**Step 10.** Now we want to take out the firewall out of the load balancer rotation. There are many ways to do that, but in this lab we will do it with NSGs, for multiple reasons. First, because it does not imply shutting down interfaces or virtual machines, since we control the NSG from outside of the VM. And second, because we can :)
 
-If you go back to the first Putty window, with the SSH connection to myVnet1-vm1, the SSH session should have become irresponsive, since the flow is now broken (we brought down the firewall's network interface where it was going through).
-Please open a new Putty window to the public IP address of myVnet1-vm1, and initiate another SSH connection to (10.1.1.5) (myVnet1-vm2). You will see that you are going now through the other NVA (in this example, nva-2). Note that it takes some time (defined by the probe frequency and number, per default two times 15 seconds) until the load balancer decides to take the NVA out of rotation.
+If you go back to the your Azure CLI terminal, you can see that there are some NSGs defined in the resource group:
 
 <pre lang="...">
-lab-user@myVnet1-vm1:~$ <b>ssh 10.1.1.5</b>
+<b>az network nsg list -o tableLocation    Name                 ProvisioningState    ResourceGroup    ResourceGuid</b>
+----------  -------------------  -------------------  ---------------  ------------------------------------
+westeurope  linuxnva-1-nic0-nsg  Succeeded            vnetTest         e506ae9b-156d-4dd0-977b-2678691031d4
+westeurope  linuxnva-2-nic0-nsg  Succeeded            vnetTest         14217c8a-c19e-4151-a79c-a6ca623b9ef2
+</pre>
+
+If you examine one of them, you will see that only the default rules are there. We can do it with linuxnva-1-nic0-nsg, for example (the other should be identical):
+
+<pre lang="...">
+<b>az network nsg rule list --nsg-name linuxnva-1-nic0-nsg -o table</b>
+Name         RscGroup  Prio  SourcePort  SourceAddress  SourceASG  Access  Prot  Direction  DestPort  DestAddres  DestASG
+-----------  --------  ----  ----------  -------------  ---------  ------  ----  ---------  --------  ----------  -------
+</pre>
+
+**Note:** the previous output has been formated for presentation reasons
+
+Now we can add a new rule that will prevent ALL traffic from entering the VM, including the Load Balancer probes. This effectively will have as consequence that all traffic will go through the other NVA:
+
+<pre lang="...">
+<b>az network nsg rule create --nsg-name linuxnva-1-nic0-nsg -n deny_all_in --priority 100 --access Deny --direction Inbound --protocol "*" --source-address-prefixes "*" --source-port-ranges "*" --destination-address-prefixes "*" --destination-port-ranges "*"</b>
+<i>Output omitted</i>
+</pre>
+
+Now the rules in your NSG should look like this:
+
+<b>az network nsg rule list --nsg-name linuxnva-1-nic0-nsg -o table</b>
+Name         RscGroup  Prio  SourcePort  SourceAddress  SourceASG  Access  Prot  Direction  DestPort  DestAddres  DestASG
+-----------  --------  ----  ----------  -------------  ---------  ------  ----  ---------  --------  ----------  -------
+deny_all_in  vnetTest  100   *           *              None       Deny    *     Inbound    *         *           None
+</pre>
+
+If you now initiate another SSH connection to myVnet1-vm1 from the jump host, you will see that you are going now through the other NVA (in this example, nva-2). Note that it takes some time (defined by the probe frequency and number, per default two times 15 seconds) until the load balancer decides to take the NVA out of rotation.
+
+<pre lang="...">
+lab-user@myVnet1-vm2:~$ <b>ssh 10.1.1.4</b>
 lab-user@10.1.1.5's password:
 ...
 lab-user@myVnet1-vm2:~$
@@ -831,21 +913,123 @@ lab-user pts/1        2017-06-29 21:39 (<b>10.4.2.102</b>)
 lab-user@myVnet1-vm2:~$
 </pre>
 
-**Step 11.** Bring eth0 interface back up, in the NVA where you shut it down (in the other Putty window):
+**Note:** you can still see the previous connection going through 10.4.2.101 in the system
 
-```
-lab-user@linuxnva-1:~$ sudo ifconfig eth0 up
-```
+**Step 11.** Let us confirm that the load balancer farm now only contains one NVA, following the process described in https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-standard-diagnostics. In the Azure Portal, navigate to the internal load balancer in the Resource Group vnetTest, and under Metrics (preview at the time of this writing) select Health Probe Status. You should be able to see something like the figure below, where only half of the probes are successful.
+
+![LB Monitoring](lb_monitoring.PNG "Load Balancer Monitoring in Azure Portal")
+
+**Screenshot.** Load balancer probe monitoring in Azure Portal 
+
+**Note:** The oscillations around 50% are because of the skew in the intervals of the probes for the NVAs: in some monitoring intervals there are more probes for nva-1, in others more probes for nva-2. Play with the filtering mechanism of the graph using the Backend IP Address as filtering dimension (as in the figure above) to verify that 0% of the probes to nva-1 are successful, but 100% of the probes to nva-2 are successful.
+
+**Step 12.** To be completely sure of our setup, let us bring the second firewall out of rotation too:
+
+<pre lang="...">
+<b>az network nsg rule create --nsg-name linuxnva-2-nic0-nsg -n deny_all_in --priority 100 --access Deny --direction Inbound --protocol "*" --source-address-prefixes "*" --source-port-ranges "*" --destination-address-prefixes "*" --destination-port-ranges "*"</b>
+<i>Output omitted</i>
+<b>az network nsg rule list --nsg-name linuxnva-2-nic0-nsg -o table</b>
+Name         RscGroup  Prio  SourcePort  SourceAddress  SourceASG  Access  Prot  Direction  DestPort  DestAddres  DestASG
+-----------  --------  ----  ----------  -------------  ---------  ------  ----  ---------  --------  ----------  -------
+deny_all_in  vnetTest  100   *           *              None       Deny    *     Inbound    *         *           None
+</pre>
+
+If you had any SSH sessions opened, they are now broken and you will have to restart another SSH connection to our jump host. If you try to SSH to vm1 (or to anything else going through the firewalls), it will fail (note that it takes a couple of seconds to program the NSGs into the NICs, wait like 30 seconds before trying the following command).
+
+<pre lang="...">
+lab-user@myVnet1-vm2:~$ <b>ssh 10.1.4.4</b>
+ssh: connect to host 10.1.4.4 port 22: Connection timed out
+</pre>
+
+**Step 12.** In order to repair our lab, we just need to remove the NSG rules, to allow the Azure Load Balancer to discover the firewalls again:
+
+<pre lang="...">
+az network nsg rule delete -n deny_all_in --nsg-name linuxnva-1-nic0-nsg
+az network nsg rule delete -n deny_all_in --nsg-name linuxnva-2-nic0-nsg
+</pre>
+
+After some seconds SSH should be working just fine once more.
+
 
 ### What we have learnt
 
 NVAs can be load balanced with the help of an Azure Load Balancer. UDRs configured in each subnet will essentially point not to the IP address of an NVA, but to a virtual IP address configured in the LB.
 
-Note that at the time of this writing no Layer3 load balancing rules can be configured in the load balancer, but only Layer4 rules. That means, that you need to configure a rule for each TCP or UDP port that requires going through the firewall.
+The HA Ports feature of the Azure **standard** load balancer allows configuring Layer3 load balancing rules, that is, rules that will forward all UDP/TCP ports to the NVA. This is today the way most modern HA designs work, superseeding designs based on automatic UDR modification.
 
 Another problem that needs to be solved is return traffic. With stateful network devices such as firewalls you need to prevent asymmetric routing. In other words, source-to-destination traffic needs to go through the same firewall as destination-to-source traffic (for any given TCP or UDP flow). This can be achieved by source-NATting the traffic at the NVAs, so that the destination will always send the return traffic the right way.
 
- 
+## Lab 5: Using the Azure LB for return traffic <a name="lab5"></a>
+
+As we saw in the previous lab, the NVAs was source-natting (masquerading, in iptables parlour) traffic so that return traffic would always go through the same firewall that inspected the first packet. However, in some situations source-NATting is not desirable, so this lab will have a look at a variation of the previous setup without source NAT.
+
+**Step 1.** If you go to the terminal window with your jump host, you can connect to the NVAs and disable source NAT (masquerade). Note that there are two masquerade entries, one for each interface in the NVA. The following example shows the process in nva-1, **please repeat the process for nva-2 (10.4.2.102)**. 
+
+<pre lang="">
+lab-user@myVnet1-vm2:~$ <b>ssh 10.4.2.101</b>
+lab-user@10.4.2.101's password:
+<i>...Output omitted...</i>
+lab-user@linuxnva-1:~$ 
+lab-user@linuxnva-1:~$ <b>sudo iptables -vL -t nat</b>
+Chain PREROUTING (policy ACCEPT 7655 packets, 547K bytes)
+ pkts bytes target     prot opt in     out     source               destination
+
+Chain INPUT (policy ACCEPT 204 packets, 10628 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+
+Chain OUTPUT (policy ACCEPT 8524 packets, 523K bytes)
+ pkts bytes target     prot opt in     out     source               destination
+
+Chain POSTROUTING (policy ACCEPT 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+10517  731K MASQUERADE  all  --  any    eth0    anywhere             anywhere
+ 5419  325K MASQUERADE  all  --  any    eth1    anywhere             anywhere
+lab-user@linuxnva-1:~$ 
+lab-user@linuxnva-1:~$ <b>sudo iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE</b>
+lab-user@linuxnva-1:~$ 
+lab-user@linuxnva-1:~$ <b>sudo iptables -t nat -D POSTROUTING -o eth1 -j MASQUERADE</b>
+lab-user@linuxnva-1:~$ 
+lab-user@linuxnva-1:~$ <b>sudo iptables -vL -t nat</b>
+Chain PREROUTING (policy ACCEPT 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+
+Chain INPUT (policy ACCEPT 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+
+Chain OUTPUT (policy ACCEPT 3 packets, 180 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+
+Chain POSTROUTING (policy ACCEPT 3 packets, 180 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+</pre>
+
+**Step 2:** Now you can go back to the jump host, connect to vm1, and verify that the source IP address has not been source-natted:
+
+<pre lang="...">
+lab-user@myVnet1-vm2:~$ <b>ssh 10.1.1.4</b>
+lab-user@10.1.1.4's password:
+<i>...Output omitted...</i>
+lab-user@myVnet1-vm1:~$
+lab-user@myVnet1-vm1:~$ who
+lab-user pts/0        2018-07-12 11:56 (<b>10.1.1.5</b>)
+</pre>
+
+**Step 3:** Why is this working? Because the load balancing algorith in the Azure LB distributes the load equally for the traffic in both directions. In other words, if traffic from VM1 to VM2 is load balanced to NVA1, return traffic from VM2 to VM1 will be load balanced to NVA1 as well. This is the case for the default load balancing algorithm, that leverages protocol, source/destination IPs and source/destination ports. This load balancing mode is often called 5-tuple hash.
+
+There are other load balancing algorithms, as you can see in https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-distribution-mode, such as IP Source affinity. This is actually not only based in the source IP address, but in the destination IP address too. You can change the load balancing algorithm like this:
+
+<pre lang="...">
+<b>az network lb rule show --lb-name linuxnva-slb-int -n HARule --query loadDistribution</b>
+"Default"
+<b>az network lb rule update --lb-name linuxnva-slb-int -n HARule --load-distribution SourceIP</b>
+<i>Output omitted</i>
+<b>az network lb rule show --lb-name linuxnva-slb-int -n HARule --query loadDistribution</b>
+"SourceIP"
+</pre>
+
+Now you can test SSH connections, they should still work.
+I
+
 ## Lab 5: Outgoing Internet traffic protected by an NVA <a name="lab5"></a>
 
 What if we want to send all traffic leaving the vnet towards the public Internet through the NVAs? We need to make sure that Internet traffic to/from all VMs flows through the NVAs via User-Defined Routes, and that NVAs source-NAT the outgoing traffic with their public IP address, so that they get the return traffic too.
