@@ -36,6 +36,11 @@
         "vmSize": {
             "defaultValue": "Standard_B1s",
             "type": "string"
+        },
+        "createPip": {
+            "defaultValue": "yes",
+            "type": "string",
+            "allowedValues": ["yes", "no"]
         }
     },
  
@@ -44,7 +49,11 @@
         "pipName": "[concat(parameters('vmName'),'-pip')]",
 		"diskName": "[concat(parameters('vmName'),'-disk')]",
 		"apiVersion": "2016-03-30",
-		"nicTemplateURI": "[uri(deployment().properties.templateLink.uri, 'nic_noNSG_noSLB_PIP_dynamic.json')]",
+        "nicTemplateUriHash": {
+            "yes": "[uri(deployment().properties.templateLink.uri, 'nic_noNSG_noSLB_PIP_dynamic.json')]",
+            "no": "[uri(deployment().properties.templateLink.uri, 'nic_noNSG_noSLB_noPIP_dynamic.json')]"
+        },
+        "nicTemplateURI": "[variables('nicTemplateUriHash')[parameters('createPip')]]",
         "skuDataTable": {
             "ubuntu": {
                 "sku": "16.04.0-LTS",

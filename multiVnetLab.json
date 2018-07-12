@@ -50,6 +50,11 @@
             "defaultValue": "Standard_B1s",
             "type": "string"
         },
+        "createPip": {
+            "defaultValue": "yes",
+            "type": "string",
+            "allowedValues": ["yes", "no"]
+        },
         "adminUsername": {
             "defaultValue": "lab-user",
             "type": "string",
@@ -105,6 +110,7 @@
                     "createVm": { "value": "[parameters('createVm')]"},
                     "vmType": { "value": "[parameters('vmType')]"},
                     "vmSize": { "value": "[parameters('vmSize')]"},
+                    "createPip": { "value": "[parameters('createPip')]"},
                     "adminUsername": { "value": "[parameters('adminUsername')]"},
                     "adminPassword": { "value": "[parameters('adminPassword')]"}
                 }

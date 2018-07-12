@@ -59,6 +59,7 @@
             "createVm": { "value": "yes" },            
             "vmType": { "value": "ubuntu" },            
             "vmSize": { "value": "[parameters('vmSize')]" },            
+            "createPip": { "value": "no" },            
             "adminUsername": { "value": "[parameters('adminUsername')]" },            
             "adminPassword": { "value": "[parameters('adminPassword')]" }
         },

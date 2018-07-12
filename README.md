@@ -734,7 +734,7 @@ myFrontendConfig  10.4.2.100          Static
 Output omitted
 </pre>
 
-At this point communication between the VMs should be possible, flowing through the NVA. Note that ICMP will still not work, but in this case, this is due to the fact that at this point in time, the Azure Load Balancer is not able to balance ICMP traffic, just TCP or UDP traffic (as configured by the load balancing rules, that require a TCP or a UDP port), so Pings do not even reach the NVAs. Check ping!!!!!
+At this point communication between the VMs should be possible, flowing through the NVA. Note that ICMP will still not work, but in this case, this is due to the fact that at this point in time, the Azure Load Balancer is not able to balance ICMP traffic, just TCP or UDP traffic (as configured by the load balancing rules, that require a TCP or a UDP port), so Pings do not even reach the NVAs.
 If you go back to the Putty window, you can verify that ping to the neighbor VM in the same subnet still does not work, but SSH does.
 
 <pre lang="...">
@@ -755,7 +755,7 @@ Welcome to Ubuntu 16.04.1 LTS (GNU/Linux 4.4.0-47-generic x86_64)
 
 <pre lang="...">
 lab-user@ myVnet1-vm2:~$ who
-lab-user pts/0        2017-03-23 23:41 (10.4.2.101)
+lab-user pts/0        2017-03-23 23:41 (<b>10.4.2.101</b>)
 </pre>
 
 **Step 8.** This is expected, since firewalls are configured to source NAT the connections outgoing on that interface. Now open another Putty window, and connect over SSH to the public IP address of the firewall. Remember that you can retrieve the list of public IP address with the command "az network public-ip list -o table". Please go to the same firewall that you just saw in the previous step. That is, if in the `who` command you saw the IP address 10.4.2.101, connect with Putty to the public IP address &#39;nvaPip-1&#39;, if you saw 10.4.2.102, connect to &#39;nvaPip-2&#39;. In our example from the output above, we saw the &#39;10.4.2.101&#39;, so we will connect to the first NVA. Remember that the username is still &#39;lab-user&#39;, the password &#39;Microsoft123!&#39; (without the quotes).

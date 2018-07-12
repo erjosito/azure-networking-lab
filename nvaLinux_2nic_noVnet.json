@@ -43,6 +43,11 @@
             "defaultValue": "nva-publicIP",
             "type": "string"
         },
+        "createPip": {
+            "defaultValue": "yes",
+            "type": "string",
+            "allowedValues": ["yes", "no"]
+        },
         "subnet0Name": {
             "defaultValue": "subnet1",
             "type": "string"
@@ -83,6 +88,9 @@
         }
     },
     "variables": {
+        "nicTemplatePipNoNsg": "[uri(deployment().properties.templateLink.uri, 'nic_noNSG_noSLB_PIP_static.json')]",
+        "nicTemplateNoPipNoNsg": "[uri(deployment().properties.templateLink.uri, 'nic_noNSG_noSLB_noPIP_static.json')]",
+        "nicTemplateNoPipNsg": "[uri(deployment().properties.templateLink.uri, 'nic_NSG_noSLB_noPIP_static.json')]",
         "defaultGw": {
             "nic0": "[concat(parameters('ip0'), '1')]",
             "nic1": "[concat(parameters('ip1'), '1')]"
@@ -290,13 +298,14 @@
                 "count": "[parameters('vmCount')]"
             },
             "dependsOn": [
-                "[concat(parameters('vmName'), '-nic0')]",
+                "[concat(parameters('vmName'), if(equals(parameters('createPip'), 'yes'), '-pnic0', '-nic0'))]",
                 "[concat(parameters('vmName'), '-nic1')]"
             ]
         },
 		{
-            "comments": "Create eth0",
-			"name": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic0')]",
+            "comments": "Create eth0 with or without PIP, depending on the template",
+            "condition": "[equals(parameters('createPip'), 'yes')]",
+			"name": "[concat(parameters('vmName'), '-', copyIndex(1), '-pnic0')]",
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2016-06-01",
 			"properties": {
@@ -317,7 +326,7 @@
             "dependsOn": [
             ],
             "copy": {
-                "name": "[concat(parameters('vmName'), '-nic0')]",
+                "name": "[concat(parameters('vmName'), '-pnic0')]",
                 "count": "[parameters('vmCount')]"
             }
         },
