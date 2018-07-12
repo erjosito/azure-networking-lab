@@ -91,6 +91,8 @@
         "nicTemplatePipNoNsg": "[uri(deployment().properties.templateLink.uri, 'nic_noNSG_noSLB_PIP_static.json')]",
         "nicTemplateNoPipNoNsg": "[uri(deployment().properties.templateLink.uri, 'nic_noNSG_noSLB_noPIP_static.json')]",
         "nicTemplateNoPipNsg": "[uri(deployment().properties.templateLink.uri, 'nic_NSG_noSLB_noPIP_static.json')]",
+        "nic0Template": "[if(equals(parameters('createPip'), 'yes'), variables('nicTemplatePipNoNsg'), variables('nicTemplateNoPipNoNsg'))]",
+        "nic1Template": "[variables('nicTemplateNoPipNoNsg')]",
         "defaultGw": {
             "nic0": "[concat(parameters('ip0'), '1')]",
             "nic1": "[concat(parameters('ip1'), '1')]"
@@ -298,7 +300,7 @@
                 "count": "[parameters('vmCount')]"
             },
             "dependsOn": [
-                "[concat(parameters('vmName'), if(equals(parameters('createPip'), 'yes'), '-pnic0', '-nic0'))]",
+                "[concat(parameters('vmName'), '-nic0')]",
                 "[concat(parameters('vmName'), '-nic1')]"
             ]
         },
@@ -311,7 +313,7 @@
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
-					"uri": "[uri(deployment().properties.templateLink.uri, 'nic_noNSG_noSLB_PIP_static.json')]",
+					"uri": "[variables('nic0Template')]",
 					"contentVersion": "1.0.0.0"
 				},
 				"parameters":  {
@@ -338,7 +340,7 @@
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
-					"uri": "[uri(deployment().properties.templateLink.uri, 'nic_noNSG_noSLB_noPIP_static.json')]",
+					"uri": "[variables('nic1Template')]",
 					"contentVersion": "1.0.0.0"
 				},
 				"parameters":  {
