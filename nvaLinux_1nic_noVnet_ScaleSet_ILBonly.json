@@ -216,6 +216,17 @@
                                                 "subnet": {
                                                     "id": "[variables('subnet0Id')]"
                                                 },
+                                                "publicIPAddressconfiguration": {
+                                                    "name": "nvavmsspip",
+                                                    "sku": {
+                                                        "name": "Standard",
+                                                        "tier": "Regional"
+                                                    },
+                                                    "properties": {
+                                                        "publicIPAllocationMethod": "Static",
+                                                        "idleTimeoutInMinutes": 4                                        
+                                                    }
+                                                },
                                                 "loadBalancerBackendAddressPools": [
                                                     {
                                                         "id": "[concat(resourceId('Microsoft.Network/loadBalancers', concat(variables('slbName'), '-int')), '/backendAddressPools/', concat(variables('slbBackendName'), '-int'))]"
