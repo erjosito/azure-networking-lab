@@ -2,16 +2,12 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "apiVersion": {
-            "defaultValue": "2015-06-15",
-            "type": "string"
-        },
         "vnetName": {
-            "defaultValue": "myVnet",
+            "defaultValue": "myVnet4",
             "type": "string"
         },
         "storageAccountName": {
-            "defaultValue": "[concat('storage',uniqueString(resourceGroup().id))]",
+            "defaultValue": "not used, kept for compatibility",
             "type": "string"
         },
         "vmType": {
@@ -20,19 +16,23 @@
             "allowedValues": ["ubuntu"]
         },
         "vmCount": {
-            "defaultValue": 1,
+            "defaultValue": 2,
             "type": "int"
         },
         "vmName": {
-            "defaultValue": "[concat('nva',uniqueString(resourceGroup().id))]",
+            "defaultValue": "linuxnva-vmss",
             "type": "string"
         },
         "vmSSName": {
             "defaultValue": "[concat('nvaSS',uniqueString(resourceGroup().id))]",
             "type": "string"
         },
+        "vmSize": {
+            "defaultValue": "Standard_B2ms",
+            "type": "string"
+        },
         "vmUsr": {
-            "defaultValue": "myadmin",
+            "defaultValue": "lab-user",
             "type": "string"
         },
         "vmPwd": {
@@ -40,29 +40,29 @@
             "type": "securestring"
         },
         "pipName": {
-            "defaultValue": "nva-publicIP",
+            "defaultValue": "[concat(parameters('vmName'), '-pip')]",
             "type": "string"
         },
         "subnet0Name": {
-            "defaultValue": "subnet1",
+            "defaultValue": "myVnet4subnet2",
             "type": "string"
         },
         "subnet1Name": {
-            "defaultValue": "subnet2",
+            "defaultValue": "myVnet4subnet3",
             "type": "string"
         },
         "ip0": {
-            "defaultValue": "10.0.0.10",
+            "defaultValue": "10.4.2.20",
             "type": "string",
             "metadata": { "description": "This string will be completed with the copyIndex: .101, .102, etc" }
         },
         "ip1": {
-            "defaultValue": "10.0.1.10",
+            "defaultValue": "10.4.3.20",
             "type": "string",
-            "metadata": { "description": "This string will be completed with the copyIndex: .101, .102, etc" }
+            "metadata": { "description": "Not used, this scale set uses single-NIC VMs" }
         },
         "scriptUri": {
-            "defaultValue": "https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/linuxNVAconfig.sh",
+            "defaultValue": "[uri(deployment().properties.templateLink.uri, 'linuxNVAconfig.sh')]",
             "type": "string",
             "metadata": { "description": "Script that will be executed" }            
         },
@@ -72,7 +72,7 @@
             "metadata": { "description": "Command to run the script" }            
         },
 		"deployLBYesNo": {
-			"defaultValue": "no",
+			"defaultValue": "yes",
 			"type": "string"
 		}
     },
@@ -85,7 +85,7 @@
                 "product": "UbuntuServer",
                 "publisher": "Canonical",
                 "sku": "16.04.0-LTS",
-                "vmSize": "Standard_D2_v2"
+                "vmSize": "[parameters('vmSize')]"
             }
         },
         "settings": "[variables('settingsTable')[parameters('vmType')]]",
