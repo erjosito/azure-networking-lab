@@ -77,6 +77,8 @@
 		}
     },
     "variables": {
+        "deploymentApiVersion": "2017-05-10",
+        "vmssApiVersion": "2017-12-01",
         "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
         "subnet0Id": "[concat(variables('vnetID'), '/subnets/', parameters('subnet0Name'))]",
         "subnet1Id": "[concat(variables('vnetID'), '/subnets/', parameters('subnet1Name'))]",
@@ -165,7 +167,7 @@
 			"comments": "Optionally, create an internal load balancer",
             "name": "slb-int",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2016-06-01",
+			"apiVersion": "[variables('deploymentApiVersion')]",
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
@@ -179,7 +181,7 @@
 			"comments": "Optionally, create an external load balancer",
             "name": "slb-ext",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2016-06-01",
+			"apiVersion": "[variables('deploymentApiVersion')]",
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
@@ -197,7 +199,7 @@
             "type": "Microsoft.Compute/virtualMachineScaleSets",
             "name": "[parameters('vmSSName')]",
             "location": "[resourceGroup().location]",
-            "apiVersion": "2016-04-30-preview",
+            "apiVersion": "[variables('vmssApiVersion')]",
             "dependsOn": [
                 "slb-int",
                 "slb-ext"
