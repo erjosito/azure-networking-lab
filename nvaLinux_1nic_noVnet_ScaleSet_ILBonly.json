@@ -76,7 +76,7 @@
             "metadata": { "description": "Command to run the script" }            
         },
 		"deployLBYesNo": {
-			"defaultValue": "no",
+			"defaultValue": "yes",
 			"type": "string"
 		}
     },
