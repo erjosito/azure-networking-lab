@@ -1615,7 +1615,7 @@ vnet5Gw        65505
 }
 </pre>
 
-Once you have provisioned the connections you can list them with this command.:
+Once you have provisioned the connections you can list them with this command. Wait until the Provisioning State for both connections transitions from `Updating` to `Succeeded`:
 
 <pre lang="...">
 <b>az network vpn-connection list -o table</b>
@@ -1625,23 +1625,26 @@ Vnet2Vnet         True         4to5    Succeeded            10
 Vnet2Vnet         True         5to4    Succeeded            10
 </pre>
 
-**Step 4.**	Get the connection status of the tunnels, and wait until they are connected:
+**Note:** The previous output has been reformatted for readability reasons
+
+
+**Step 4.**	After the tunnels are provisioned, the connection process starts. Get the connection status of the tunnels, and wait until they are connected:
 
 <pre lang="...">
 <b>az network vpn-connection show --name 4to5 --query connectionStatus</b>
-  "connectionStatus": "Connecting"
+"Connecting"
 </pre>
 
 Wait some seconds, and reissue the command until you get a "Connected" status, as the following ouputs show:
 
 <pre lang="...">
 <b>az network vpn-connection show --name 4to5 --query connectionStatus</b>
-  "connectionStatus": "Connected",
+"Connected",
 </pre>
 
 <pre lang="...">
 <b>az network vpn-connection show --name 5to4 --query connectionStatus</b>
-  "connectionStatus": "Connected",
+"Connected",
 </pre>
 
 **Step 5.**	If you now try to reach a VM in myVnet5 from any of the VMs in the other Vnets, it should work without any further configuration, following the topology found in the figure below. For example, from our jump host myVnet1-vm2 we will ping 10.5.1.4, which should be the private IP address from myVnet5-vm1:
@@ -1657,24 +1660,24 @@ PING 10.5.1.4 (10.5.1.4) 56(84) bytes of data.
 
 **Figure 10:** VPN connection through Vnet peering
 
-This is so because of how the Vnet peerings were configured, more specifically the parameters AllowForwardedTraffic and UseRemoteGateways (in the spokes),  and AllowGatewayTransit (in the hub). Back in your Azure CLI command prompt, you can issue this command to check the state and configuration of your vnet peerings:
+This is the case because of how the Vnet peerings were configured, more specifically the parameters AllowForwardedTraffic and UseRemoteGateways (in the spokes), and AllowGatewayTransit (in the hub). You can read more about these attributes here: https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-manage-peering. Back in your Azure CLI command prompt, you can issue this command to check the state and configuration of your vnet peerings:
 
 <pre lang="...">
-az network vnet peering list --vnet-name myVnet1 -o table
-AllowForwardedTraffic    Name           PeeringState    UseRemoteGateways
------------------------  -------------  --------------  -------------------
-True                     LinkTomyVnet4  Connected       True
+<b>az network vnet peering list --vnet-name myVnet1 -o table</b>
+AllowForwardedTraffic    AllowGatewayTransit    AllowVirtualNetworkAccess    Name           PeeringState    ProvisioningState    UseRemoteGateways
+-----------------------  ---------------------  ---------------------------  -------------  --------------  -------------------  -------------------
+True                     False                  True                         LinkTomyVnet4  Connected       Succeeded            True
 </pre>
 
 **Note:** some of the columns have been removed from the output above for clarity purposes
 
 <pre lang="...">
 <b>az network vnet peering list --vnet-name myVnet4 -o table</b>
-AllowGatewayTransit    Name           PeeringState    
----------------------  -------------  --------------  
-True                   LinkTomyVnet2  Connected       
-True                   LinkTomyVnet1  Connected      
-True                   LinkTomyVnet3  Connected       
+AllowForwardedTraffic    AllowGatewayTransit    AllowVirtualNetworkAccess    Name           PeeringState    ProvisioningState    UseRemoteGateways
+-----------------------  ---------------------  ---------------------------  -------------  --------------  -------------------  -------------------
+False                    True                   True                         LinkTomyVnet1  Connected       Succeeded            False
+False                    True                   True                         LinkTomyVnet2  Connected       Succeeded            False
+False                    True                   True                         LinkTomyVnet3  Connected       Succeeded            False
 </pre>
 
 **Note:** some of the columns have been removed from the output above for clarity purposes
@@ -1683,23 +1686,23 @@ True                   LinkTomyVnet3  Connected
 
 <pre lang="...">
 <b>az network nic show-effective-route-table -n myVnet1-vm1-nic</b>
-...
+<i>...Output omitted...</i>
    {
       "addressPrefix": [
         "10.5.0.0/16"
       ],
       "name": null,
       "nextHopIpAddress": [
-        "13.81.113.28"
+        "13.14.15.16"
       ],
       "nextHopType": "VirtualNetworkGateway",
       "source": "VirtualNetworkGateway",
       "state": "Active"
     },
-...
+<i>...Output omitted...</i>
 </pre>
 
-**Note:** the previous command will take some seconds to execute, since it needs to access the routes programmed in the NIC and that takes some time.
+**Note:** the previous command will take some seconds to execute, since it needs to access the routes programmed in the NIC and that takes some time. You will see a different public IP address in your output, the one corresponding to your own VPN gateway.
 
 However, you might want to push this traffic through the Network Virtual Appliances too. For example, if you wish to firewall the traffic that leaves your hub and spoke environment. The process that we have seen in previous labs with UDR manipulation is valid for the GatewaySubnet of Vnet4 as well (where the hub VPN gateway is located), as the following figure depicts:
 
@@ -1772,7 +1775,7 @@ And now we associate the new routing table to the gateway subnet:
 </pre>
 
 
-**Step 9.**	Now you can verify that VMs in myVnet1Subnet1 can still connect over SSH to VMs in myVnet5, but not any more over ICMP (since we have a rule for dropping ICMP traffic in the NVA):
+**Step 9.**	After some seconds you can verify that VMs in myVnet1Subnet1 can still connect over SSH to VMs in myVnet5, but not any more over ICMP (since we have a rule for dropping ICMP traffic in the NVA):
 
 <pre lang="...">
 lab-user@myVnet1-vm2:~$ <b>ping 10.5.1.4</b>
@@ -1781,7 +1784,7 @@ PING 10.5.1.4 (10.5.1.4) 56(84) bytes of data.
 --- 10.5.1.4 ping statistics ---
 3 packets transmitted, 0 received, 100% packet loss, time 1999ms
 
-lab-user@myVnet1-vm2:~$ ssh 10.5.1.4
+lab-user@myVnet1-vm2:~$ <b>ssh 10.5.1.4</b>
 ...
 Welcome to Ubuntu 16.04.1 LTS (GNU/Linux 4.4.0-47-generic x86_64)
 </pre>
