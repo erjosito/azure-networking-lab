@@ -62,8 +62,8 @@ ipaddext=`ip a | grep 10.4.3 | awk '{print $2}' | awk -F '/' '{print $1}'`   # e
 
 # Deny forwarded ICMP
 sudo iptables -A FORWARD -p icmp -j DROP
-# Deny specific IP address (ifconfig.co)
-sudo iptables -A FORWARD -d 188.113.88.193 -j DROP
+# Deny specific IP address (ifconfig.co, but the IP address keeps changing anyway)
+#sudo iptables -A FORWARD -d 188.113.88.193 -j DROP
 
 # Allow forwarded outgoing traffic (port 80)
 sudo iptables -A FORWARD -i eth0 -o eth1 -p tcp --dport 80 -j ACCEPT 
@@ -71,14 +71,7 @@ sudo iptables -A FORWARD -i eth1 -o eth0 -m conntrack --ctstate ESTABLISHED,RELA
 
 # Allow SSH traffic on eth0
 sudo iptables -A FORWARD -i eth0 -p tcp --dport ssh -j ACCEPT 
-sudo iptables -A FORWARD -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT 
-# Deny every other forwarded traffic on eth0
-sudo iptables -A FORWARD -i eth0 -j DROP
-
-# SNAT for traffic going to the vnets
-sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
-# SNAT for traffic going to the Internet
-sudo iptables -t nat -A POSTROUTING -o eth1 -j MASQUERADE
+sudo iptables -A FORWARD -i eth0 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT 
 
 # Allow forwarded traffic on eth1
 #sudo iptables -A FORWARD -i eth1 -j ACCEPT
@@ -86,3 +79,9 @@ sudo iptables -t nat -A POSTROUTING -o eth1 -j MASQUERADE
 
 # Default deny
 sudo iptables -A FORWARD -j DROP
+
+# SNAT for traffic going to the vnets
+sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+# SNAT for traffic going to the Internet
+sudo iptables -t nat -A POSTROUTING -o eth1 -j MASQUERADE
+

@@ -286,7 +286,7 @@ vnet5gwPip
 
 As you see, we have a single public IP address allocated to myVnet1-vm2. We will use this VM as jump host for the lab.
 
-**Step 2.** Using the public IP address from the previous step open an SSH terminal (putty on windows, terminal on Mac/Linux, tmux panel in the cloud shell, etc) and connect to the jump host. If you did not modified the ARM templates used to provision the environment, the user is lab-user, and the password Microsoft123!
+**Step 2.** Using the public IP address from the previous step open an SSH terminal (putty on windows, an additional terminal on Mac/Linux, a new tmux panel in the cloud shell, etc) and connect to the jump host. If you did not modified the ARM templates used to provision the environment, the user is lab-user, and the password Microsoft123!
 
 <pre lang="...">
 <b>ssh lab-user@1.2.3.4</b>
@@ -332,7 +332,7 @@ AutoUpgradeMinorVersion    Location    Name                 ProvisioningState
 True                       westeurope  installcustomscript  Succeeded        
 </pre>
 
-**Step 2.** From your jump host ssh session connect to myVnet1-vm1 using the credentials that you specified when deploying the template, and verify that you don’t have connectivity to the VM in vnet2. You can open an SSH session from the Linux bash shell in Windows if you have installed the Linux subsystem, or you can use an application such as Putty (https://putty.org).
+**Step 2.** From your jump host ssh session connect to myVnet1-vm1 using the credentials that you specified when deploying the template, and verify that you have connectivity to the second VM in vnet1.
 
 <pre lang="...">
 lab-user@myVnet1-vm2:~$ <b>ssh 10.1.1.4</b>
@@ -457,7 +457,7 @@ westeurope  vnet2-subnet1  Succeeded            vnetTest
   "type": null
 }</pre>
 
-**Step 9.** Now we can tell Azure to send traffic from subnet 1 to subnet 2 over the hub vnet. Normally you would do this by sending traffic to the vnet router (that is, the L3 functionality inherent to every Azure vnet). Let’s see what happens if we try this with vnet1. In order to do so, we need to add a new route to our custom routing table:
+**Step 9.** Now we can tell Azure to send traffic from subnet 1 to subnet 2 over the hub vnet. Normally you would do this by sending traffic to the vnet router (that is, the L3 functionality inherent to every Azure vnet). Let’s see what happens if we try this with vnet1. In order to do so, we need to add a new route to our custom routing table with a next hop of type ´VnetLocal´:
 
 <pre lang="...">
 <b>az network route-table route create --address-prefix 10.2.0.0/16 --next-hop-type vnetLocal --route-table-name vnet1-subnet1 -n vnet2</b>
@@ -561,7 +561,7 @@ AddressPrefix    Name     NextHopIpAddress    NextHopType       ProvisioningStat
 
 **Note:** the previous command takes some seconds to run, since it accesses the routing programmed into the NIC. If you cannot find the route with the addressPrefix 10.2.0.0/16 (at the bottom of the output), please wait a few seconds and issue the command again, sometimes it takes some time to program the NICs in Azure
 
-**Step 13.** And now VM1 should be able to connect to VM2 over SSH (it is normal if you are asked to confirm the identity of the VM):
+**Step 13.** And now VM1 should be able to connect to VM2 over SSH (it is normal if you are asked to confirm the identity of the VM). Note that Ping between Vnets does not work, because as we will see later, the firewall is dropping ICMP traffic:
 
 <pre lang="...">
 lab-user@myVnet1vm:~$ <b>ssh 10.2.1.4</b>
@@ -624,9 +624,7 @@ lab-user@myVnet1-vm2:~$
 }
 </pre>
 
-**Note:** this command needs to be issued from your machine, outside of the putty window
-
-**Step 3.** If you go back to the SSH window and restart the ping, you will notice that after some seconds (the time it takes Azure to program the routes you just configured in the NICs of the VMs) ping will stop working, because traffic is going through the firewalls now, configured to drop ICMP packets.
+**Step 3.** If you go back to the terminal with the SSH connection to the  jump host and restart the ping, you will notice that after some seconds (the time it takes Azure to program the routes you just configured in the NICs of the VMs) ping will stop working, because traffic is going through the firewalls now, configured to drop ICMP packets.
 
 <pre lang="...">
 lab-user@myVnet1-vm2:~$ <b>ping 10.1.1.4</b>
@@ -676,7 +674,7 @@ Note that no clustering function is required in the firewalls, each firewall is 
 
 A different model that we are not going to explore in this lab is based on UDR (User-Defined Route) automatic modification. The concept is simple: if you have the setup from Lab 3, you have UDRs pointing to an NVA. If that NVA went down, you could have an automatic mechanism to change the UDRs so that they point to a second NVA. After the Azure Load Balancer supports the HA Ports feature, what we will explore later in this lab, most NVA vendors have moved away from the UDR-based HA model, that is why we will not explore it in this lab. However, not all Azure regions have standard Load Balancers (required for the HA Ports feature) at the time of this writing, so the UDR-based model might still be relevant in some situations.
 
-**Step 1.** First, go to your Windows command window to verify that both an internal and an external load balancer have been deployed:
+**Step 1.** First, go to your Windows command window to verify that both an internal and an external load balancer have been deployed. In this lab we will only use the internal load balancer:
 
 <pre lang="...">
 <b>az network lb list -o table</b>
@@ -697,15 +695,28 @@ linuxnva-slbBackend-int
 
 <pre lang="...">
 <b>az network nic ip-config address-pool add --ip-config-name linuxnva-1-nic0-ipConfig --nic-name linuxnva-1-nic0 --address-pool linuxnva-slbBackend-int --lb-name linuxnva-slb-int</b>
-Output omitted
+<i>Output omitted</i>
 </pre>
 
 And a similar command for our second Linux-based NVA appliance:
 
 <pre lang="...">
 <b>az network nic ip-config address-pool add --ip-config-name linuxnva-2-nic0-ipConfig --nic-name linuxnva-2-nic0 --address-pool linuxnva-slbBackend-int --lb-name linuxnva-slb-int</b>
-Output omitted
+<i>Output omitted</i>
 </pre>
+
+**Note:** the previous commands will require some minutes to run
+
+You can verify that the pool has been successfully added to both NICs with this command:
+
+<pre lang="...">
+<b>az network lb address-pool list --lb-name linuxnva-slb-int -o table --query [].backendIpConfigurations[].id</b>
+Result
+---------------------------------------------------
+/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/networkInterfaces/linuxnva-1-nic0/ipConfigurations/linuxnva-1-nic0-ipconfig0
+/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/networkInterfaces/linuxnva-2-nic0/ipConfigurations/linuxnva-2-nic0-ipconfig0
+</pre>
+
 
 **Step 4.** Let us verify the LB's rules. In this case, we need to remove the existing one (that was created by default by the ARM template in the very first lab) and replace it with another one, where we will enable the HA Ports feature. This feature essentially configures a load balancing rule for ALL TCP/UDP ports, so it will not be specific for SSH (as in this example) or any other application:
 
@@ -750,16 +761,6 @@ Output omitted
   "provisioningState": "Succeeded",
   "resourceGroup": "vnetTest"
 }
-</pre>
-
-You can verify that the pool has been successfully added to the NICs with this command:
-
-<pre lang="...">
-<b>az network lb address-pool list --lb-name linuxnva-slb-int -o table --query [].backendIpConfigurations[].id</b>
-Result
----------------------------------------------------
-/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/networkInterfaces/linuxnva-1-nic0/ipConfigurations/linuxnva-1-nic0-ipconfig0
-/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/networkInterfaces/linuxnva-2-nic0/ipConfigurations/linuxnva-2-nic0-ipconfig0
 </pre>
 
 **Note:** HA ports work only on standard Load Balancers. In order to verify which SKU the load balancers have, you can use issue this command:
@@ -841,7 +842,7 @@ target     prot opt source               destination
 <b>MASQUERADE </b> all  --  anywhere             anywhere
 </pre>
 
-**Note:** the Linux machines that we use as firewalls in this lab have the Linux package "iptables" installed to work as firewall. A tutorial of iptables is out of the scope of this lab guide. Suffice to say here that the word "MASQUERADE" means to translate the source IP address of packets and replace it with its own interface address. In other words, source-NAT. There are two MASQUERADE entries, one per each interface of the NVA. You can see to which interface the entries refer to with the command sudo iptables -vL -t nat
+**Note:** the Linux machines that we use as firewalls in this lab have the Linux package "iptables" installed to work as firewall. A tutorial of iptables is out of the scope of this lab guide. Suffice to say here that the word "MASQUERADE" means to translate the source IP address of packets and replace it with its own interface address. In other words, source-NAT. There are two MASQUERADE entries, one per each interface of the NVA. You can see to which interface the entries refer to with the command `sudo iptables -vL -t nat`
 
 **Step 9.** We will simulate a failure of the NVA where the connection is going through (in this case 10.4.2.101, linuxnva-1). First of all, verify that both ports 1138 (used by the internal load balancer of this lab scenario) and 1139 (used by the external load balancer of a lab scenario later in this guide) are open:
 
@@ -865,12 +866,22 @@ tcp6       0      0 :::80          :::*             LISTEN   11730/apache2
 tcp6       0      0 :::22          :::*             LISTEN   1587/sshd
 </pre>
 
+Verify that the internal load balancer is actually using a TCP probe on port 1138:
+
+<pre lang="...">
+<b>az network lb probe list --lb-name linuxnva-slb-int -o table</b>
+ IntervalInSeconds  Name       NumberOfProbes    Port  Protocol    ProvisioningState    ResourceGroup
+-------------------  -------  ----------------  ------  ----------  -------------------  ---------------
+                 15  myProbe                 2    <b>1138  Tcp</b>         Succeeded            vnetTest
+</pre>
+
 **Step 10.** Now we want to take out the firewall out of the load balancer rotation. There are many ways to do that, but in this lab we will do it with NSGs, for multiple reasons. First, because it does not imply shutting down interfaces or virtual machines, since we control the NSG from outside of the VM. And second, because we can :)
 
 If you go back to the your Azure CLI terminal, you can see that there are some NSGs defined in the resource group:
 
 <pre lang="...">
-<b>az network nsg list -o tableLocation    Name                 ProvisioningState    ResourceGroup    ResourceGuid</b>
+<b>az network nsg list -o table</b>
+Location    Name                 ProvisioningState    ResourceGroup    ResourceGuid
 ----------  -------------------  -------------------  ---------------  ------------------------------------
 westeurope  linuxnva-1-nic0-nsg  Succeeded            vnetTest         e506ae9b-156d-4dd0-977b-2678691031d4
 westeurope  linuxnva-2-nic0-nsg  Succeeded            vnetTest         14217c8a-c19e-4151-a79c-a6ca623b9ef2
@@ -895,6 +906,7 @@ Now we can add a new rule that will prevent ALL traffic from entering the VM, in
 
 Now the rules in your NSG should look like this:
 
+<pre lang="...">
 <b>az network nsg rule list --nsg-name linuxnva-1-nic0-nsg -o table</b>
 Name         RscGroup  Prio  SourcePort  SourceAddress  SourceASG  Access  Prot  Direction  DestPort  DestAddres  DestASG
 -----------  --------  ----  ----------  -------------  ---------  ------  ----  ---------  --------  ----------  -------
@@ -909,12 +921,12 @@ lab-user@10.1.1.5's password:
 ...
 lab-user@myVnet1-vm2:~$
 lab-user@myVnet1-vm2:~$ <b>who</b>
-lab-user pts/0        2017-06-29 21:21 (<b>10.4.2.101</b>)
+lab-user pts/0        2017-06-29 21:21 (10.4.2.101)
 lab-user pts/1        2017-06-29 21:39 (<b>10.4.2.102</b>)
 lab-user@myVnet1-vm2:~$
 </pre>
 
-**Note:** you can still see the previous connection going through 10.4.2.101 in the system
+**Note:** you might still see the previous connection going through 10.4.2.101, as in the previous example
 
 **Step 11.** Let us confirm that the load balancer farm now only contains one NVA, following the process described in https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-standard-diagnostics. In the Azure Portal, navigate to the internal load balancer in the Resource Group vnetTest, and under Metrics (preview at the time of this writing) select Health Probe Status. You should be able to see something like the figure below, where only half of the probes are successful.
 
@@ -935,7 +947,7 @@ Name         RscGroup  Prio  SourcePort  SourceAddress  SourceASG  Access  Prot 
 deny_all_in  vnetTest  100   *           *              None       Deny    *     Inbound    *         *           None
 </pre>
 
-If you had any SSH sessions opened, they are now broken and you will have to restart another SSH connection to our jump host. If you try to SSH to vm1 (or to anything else going through the firewalls), it will fail (note that it takes a couple of seconds to program the NSGs into the NICs, wait like 30 seconds before trying the following command).
+If you had any SSH sessions opened from the jump host to any other VM, they are now broken and will have to timeout. You may want to start another SSH connection to your jump host in that case. If you try to SSH to vm1 (or to anything else going through the firewalls), it should fail (note that it takes a couple of seconds to program the NSGs into the NICs, wait like 30 seconds before trying the following command).
 
 <pre lang="...">
 lab-user@myVnet1-vm2:~$ <b>ssh 10.1.4.4</b>
@@ -949,7 +961,7 @@ az network nsg rule delete -n deny_all_in --nsg-name linuxnva-1-nic0-nsg
 az network nsg rule delete -n deny_all_in --nsg-name linuxnva-2-nic0-nsg
 </pre>
 
-After some seconds SSH should be working just fine once more.
+After some seconds SSH should be working just fine once more. You can verify that the probe health is back to 100% in the Azure Portal.
 
 
 ### What we have learnt
@@ -1027,6 +1039,16 @@ There are other load balancing algorithms, as you can see in https://docs.micros
 "SourceIP"
 </pre>
 
+You can bring the load balancing algorithm back to the default:
+
+<pre lang="...">
+<b>az network lb rule update --lb-name linuxnva-slb-int -n HARule --load-distribution Default</b>
+<i>Output omitted</i>
+<b>az network lb rule show --lb-name linuxnva-slb-int -n HARule --query loadDistribution</b>
+"Default"
+</pre>
+
+
 Now you can test SSH connections, they should still work. Why?
 
 ### What we have learnt
@@ -1064,9 +1086,8 @@ bnet1",
 **Step 2.** Associate the route table to the subnet myVnet3Subnet1:
 
 <pre lang="">
-<b>az network vnet subnet update -n myVnet3Subnet1 --vnet-name myVnet3
---route-table vnet3-subnet1</b>
-Output omitted
+<b>az network vnet subnet update -n myVnet3Subnet1 --vnet-name myVnet3 --route-table vnet3-subnet1</b>
+<i>Output omitted</i>
 </pre>
 
 **Step 3.** We want to configure connectivity from Vnet3 to our other spoke Vnets (Vnet1 and Vnet2). Add another default route for Vnet1Subnet1 pointing to the internal load balancer's VIP in Vnet3Subnet1, and the reciprocal route in the custom routing table for Vnet1Subnet1, and verify that you have SSH connectivity between the VM in Vnet1 and the VM in Vnet3.
@@ -1099,7 +1120,7 @@ Output omitted
 }
 </pre>
 
-At this point you should be able to connect to the VM in Vnet 3 from our jump host, and verify that you have connectivity to internet. I like using the Internet URL ifconfig.co, that returns your public IP address as seen by the Web server:
+At this point you should be able to connect to the VM in Vnet 3 from our jump host, going through the NVAs (as in this example, the first attempts might fail, due to the time it takes Azure to program the routes from the previous step), and verify that you have connectivity to internet. I like using the Internet URL ifconfig.co, that returns your public IP address as seen by the Web server:
 
 <pre lang="">
 lab-user@myVnet1-vm2:~$ <b>ssh 10.3.1.4</b>
@@ -1112,11 +1133,11 @@ Warning: Permanently added '10.3.1.4' (ECDSA) to the list of known hosts.
 lab-user@10.3.1.4's password:
 Welcome to Ubuntu 16.04.1 LTS (GNU/Linux 4.4.0-47-generic x86_64)
 ...
-lab-user@myVnet3-vm1:~$ curl ifconfig.co
+lab-user@myVnet3-vm1:~$ <b>curl ifconfig.co</b>
 1.2.3.4
 </pre>
 
-**Note:** in your own environment you will see a public IP address other than 1.2.3.4
+**Note:** in your own environment you will see a public IP address other than 1.2.3.4. This IP address is not any one of the existing public IP address in our vnet (as you can see with the command `az network public-ip list --query [].[name,ipAddress]`). This IP address is the one that the virtual network uses to source-NAT VMs without their own public IP address or external load balancer, and is unique for each vnet.
 
 **Step 4.** Now we can redirect traffic to our NVAs, by adding an additional entry to the routing table for Vnet3-Subnet3:
 
@@ -1234,7 +1255,7 @@ Chain POSTROUTING (policy ACCEPT 29 packets, 1740 bytes)
     "zones": null
   }
 }
-<b>az network nic ip-config update --nic-name linuxnva-2-nic1 -n linuxnva-1-nic1-ipConfig --public-ip-address nva1-pip</b>
+<b>az network nic ip-config update --nic-name linuxnva-1-nic1 -n linuxnva-1-nic1-ipConfig --public-ip-address nva1-pip</b>
 <i>Output omitted</i>
 </pre>
 
@@ -1345,7 +1366,7 @@ Content-Type: text/html; charset=UTF-8
 </html>
 ```
 
-**Step 3.**	Verify the logic of the "/var/www/html/index.php" file in each NVA VM. Connect to one of the NVAs from the jump host, and have a look at the file `/var/www/html/index.php`. As you can see, it returns the HTTP code 200 only if a list of IP addresses or DNS names is reachable. For example, if the firewall has lost internet connectivity for some reason, or connectivity to its management server, you might want to failover to the other one:
+**Step 3.**	Verify the logic of the `/var/www/html/index.php` file in each NVA VM. Connect to one of the NVAs from the jump host, and have a look at the file `/var/www/html/index.php`. As you can see, it returns the HTTP code 200 only if a list of IP addresses or DNS names is reachable. For example, if the firewall has lost internet connectivity for some reason, or connectivity to its management server, you might want to failover to the other one:
 
 ```
 lab-user@myVnet1-vm2:~$ ssh 10.4.2.101
@@ -1407,114 +1428,22 @@ For this lab you will need to have set up virtual network gateways in vnets 4 an
 **Step 1.**	No gateway exists in either Vnet, you can create them with these commands. It is recommended to run these commands in separate terminals so that they run in parallel, since they take a long time to complete (up to 45 minutes):
 
 <pre lang="...">
-<b>az network vnet-gateway create --name vnet4Gw --vnet myVnet4 --public-ip-addresses vnet4gwPip --sku standard --asn 65504</b>
-{
-  "vnetGateway": {
-    "activeActive": false,
-    "bgpSettings": {
-      "asn": <b>65504</b>,
-      "bgpPeeringAddress": "10.4.0.254",
-      "peerWeight": 0
-    },
-    "enableBgp": <b>true</b>,
-    "etag": "W/\"...\"",
-    "gatewayDefaultSite": null,
-    "gatewayType": "Vpn",
-    "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/virtualNetworkGateways/vnet4Gw",
-    "ipConfigurations": [
-      {
-        "etag": "W/\"...\"",
-        "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/virtualNetworkGateways/vnet4Gw/ipConfigurations/vnetGatewayConfig0",
-        "name": "vnetGatewayConfig0",
-        "privateIpAllocationMethod": "Dynamic",
-        "provisioningState": "Succeeded",
-        "publicIpAddress": {
-          "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/publicIPAddresses/vnet4gwPip",
-          "resourceGroup": "vnetTest"
-        },
-        "resourceGroup": "vnetTest",
-        "subnet": {
-          "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/virtualNetworks/myVnet4/subnets/GatewaySubnet",
-          "resourceGroup": "vnetTest"
-        }
-      }
-    ],
-    "location": "westeurope",
-    "name": "vnet4Gw",
-    "provisioningState": "Succeeded",
-    "resourceGroup": "vnetTest",
-    "resourceGuid": "...",
-    "sku": {
-      "capacity": 2,
-      "name": "Standard",
-      "tier": "Standard"
-    },
-    "tags": null,
-    "type": "Microsoft.Network/virtualNetworkGateways",
-    "vpnClientConfiguration": null,
-    "vpnType": "RouteBased"
-  }
-} 
+<b>az network vnet-gateway create --name vnet4Gw --vnet myVnet4 --public-ip-addresses vnet4gwPip --sku VpnGw1 --asn 65504</b>
+<i>...Output omitted...</i>
 </pre>
 
 <pre lang="...">
-<b>az network vnet-gateway create --name vnet5Gw --vnet myVnet5 --public-ip-addresses vnet5gwPip --sku standard --asn 65505</b>
-{
-  "vnetGateway": {
-    "activeActive": false,
-    "bgpSettings": {
-      "asn": <b>65505</b>,
-      "bgpPeeringAddress": "10.5.0.254",
-      "peerWeight": 0
-    },
-    "enableBgp": <b>true</b>,
-    "etag": "W/\"...\"",
-    "gatewayDefaultSite": null,
-    "gatewayType": "Vpn",
-    "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/virtualNetworkGateways/vnet5Gw",
-    "ipConfigurations": [
-      {
-        "etag": "W/\"...\"",
-        "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/virtualNetworkGateways/vnet5Gw/ipConfigurations/vnetGatewayConfig0",
-        "name": "vnetGatewayConfig0",
-        "privateIpAllocationMethod": "Dynamic",
-        "provisioningState": "Succeeded",
-        "publicIpAddress": {
-          "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/publicIPAddresses/vnet5gwPip",
-          "resourceGroup": "vnetTest"
-        },
-        "resourceGroup": "vnetTest",
-        "subnet": {
-          "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/virtualNetworks/myVnet5/subnets/GatewaySubnet",
-          "resourceGroup": "vnetTest"
-        }
-      }
-    ],
-    "location": "westeurope",
-    "name": "vnet5Gw",
-    "provisioningState": "Succeeded",
-    "resourceGroup": "vnetTest",
-    "resourceGuid": "...",
-    "sku": {
-      "capacity": 2,
-      "name": "Standard",
-      "tier": "Standard"
-    },
-    "tags": null,
-    "type": "Microsoft.Network/virtualNetworkGateways",
-    "vpnClientConfiguration": null,
-    "vpnType": "RouteBased"
-  }
-} 
+<b>az network vnet-gateway create --name vnet5Gw --vnet myVnet5 --public-ip-addresses vnet5gwPip --sku VpnGw1 --asn 65505</b>
+<i>...Output omitted...</i>
 </pre>
 
-Spokes can speak to other spokes by redirecting traffic to a vnet gateway or an NVA in the hub vnet by means of UDRs. The following diagram illustrates what we are trying to achieve in this lab:
+So far we have configured spoke-to-spoke communication over a cluster of NVAs, but we can leverage VPN gateways for that purpose too. The following diagram illustrates what we are trying to achieve in this lab:
 
 ![Architecture Image](figure03.png "Spoke to spoke communication")
 
 **Figure 9.** Spoke-to-spoke communication over vnet gateway
 
-**Step 2.**	We need to replace the route we installed in Vnet1-Subnet1 and Vnet2-Subnet1 pointing to Vnet4’s NVA, with another one pointing to the VPN gateway. You will not be able to find out on the GUI or the CLI the IP address assigned to the VPN gateway, but you can guess it. Since the first 3 addresses in every subnet are reserved for the vnet router, the gateway should have got the IP address 10.4.0.4 (remember that we allocated the prefix 10.4.0.0 to the Gateway Subnet in myVnet4). You can verify it pinging this IP address from any VM. For example, from myVnet1-vm1:
+**Step 2.**	We need to replace the route we installed in Vnet1-Subnet1 and Vnet2-Subnet1 pointing to Vnet4’s NVA, with another one pointing to the VPN gateway. You will not be able to find out on the GUI or the CLI the IP address assigned to the VPN gateway, but you can guess it. Since the first 3 addresses in every subnet are reserved for the vnet router, the gateway should have got the IP address 10.4.0.4 (remember that we allocated the prefix 10.4.0.0 to the Gateway Subnet in myVnet4). You can verify it pinging this IP address from any VM. For example, from our jump host myVnet1-vm2:
 
 <pre lang="...">
 lab-user@myVnet1-vm1:~$ <b>ping 10.4.0.4</b>
@@ -1530,7 +1459,7 @@ rtt min/avg/max/mdev = 0.794/1.291/2.271/0.582 ms
 lab-user@myVnet1-vm1:~$  
 </pre>
 
-**Step 3.**	Modify the routes in vnets 1 and 2 with these commands, back in your Windows command prompt:
+**Step 3.**	Modify the routes in vnets 1 and 2 with these commands, back in your Azure CLI command prompt. Note that we specify a next-hop type of VirtualAppliance, even if it is actually an Azure VPN Gateway:
 
 <pre lang="...">
 <b>az network route-table route update --next-hop-ip-address 10.4.0.4 --route-table-name vnet1-subnet1 -n vnet2</b>
@@ -1575,7 +1504,7 @@ AddressPrefix    Name          NextHopIpAddress    NextHopType       Provisionin
 
 <pre lang="...">
 <b>az network nic show-effective-route-table -n myVnet1-vm1-nic</b>
-...
+<i>...Output omitted...</i>
     {
       "addressPrefix": [
         "10.2.0.0/16"
@@ -1592,18 +1521,17 @@ AddressPrefix    Name          NextHopIpAddress    NextHopType       Provisionin
 
 **Note:** the command above will take some seconds to execute, since it needs to access to low-level routing tables programmed in the VM's NIC
 
-**Optionally:** find out and execute the commands in order to change the next hop for the other routes in the routing table for myVnet1.
-
-**Step 4.**	And now VM1 should be able to reach VM2, this time not over the NVA, but over the VPN gateway. Note that ping now is working, since the VPN gateway is not filtering out ICMP as the NVA did:
+**Step 4.**	And now our jump host should still be able to reach other VMs. Not over the NVA, but over the VPN gateway. Note that ping now is working, since the VPN gateway is not filtering out ICMP traffic, as our iptables NVA did:
 
 <pre lang="...">
-lab-user@myVnet1-vm1:~$ <b>ping 10.2.1.4</b>
+lab-user@myVnet1-vm2:~$ <b>ping 10.2.1.4</b>
 PING 10.2.1.4 (10.2.1.4) 56(84) bytes of data.
 64 bytes from 10.2.1.4: icmp_seq=4 ttl=63 time=7.59 ms
 64 bytes from 10.2.1.4: icmp_seq=5 ttl=63 time=5.79 ms
 64 bytes from 10.2.1.4: icmp_seq=6 ttl=63 time=4.90 ms
 </pre>
 
+**Optional:** find out and execute the commands to change the next hop for other routes in other routing tables.
 
 ### What we have learnt
 
@@ -1614,91 +1542,32 @@ VPN gateways can also be used for spoke-to-spoke communications, instead of NVAs
 ## Lab 9: VPN connection to the Hub Vnet (optional) <a name="lab9"></a>
 
 
-**Step 1.**	Make sure that the VPN gateways have different Autonomous System Numbers (ASN) configured. You can check the ASN with this command, back in your Windows command prompt:
+**Step 1.**	Make sure that the VPN gateways have different Autonomous System Numbers (ASN) configured. You can check the ASN with this command, back in your Azure CLI command prompt:
 
 <pre lang="...">
-<b>az network vnet-gateway show -n vnet4gw | findstr asn</b>
-    "asn": 65504,
+<b> az network vnet-gateway list --query [].[name,bgpSettings.asn] -o table</p>
+Column1      Column2
+---------  ---------
+vnet4Gw        65504
+vnet5Gw        65505
 </pre>
 
-<pre lang="...">
-<b>az network vnet-gateway show -n vnet5gw | findstr asn</b>
-    "asn": 65505,
-</pre>
-
-**Note:** if you are running this step in a Linux machine, make sure to replace "findstr" with "grep"
 
 
-**Step 2.**	Change peerings to use the gateways we created in the previous lab. The &#39;useRemoteGateways&#39; property of the network peering will allow the vnet to use any VPN or ExpressRoute gateway in the destination vnet. Note that this option cannot be set if the destination vnet does not have any VPN or ExpressRoute gateway configured (which is the reason why the initial ARM template did not configure it, since we did not have our VPN gateways yet).
+**Step 2.**	Modify the vnet peerings to use the gateways we created in the previous lab. The &#39;useRemoteGateways&#39; property of the network peering will allow the vnet to use any VPN or ExpressRoute gateway in the destination vnet. Note that this option cannot be set if the destination vnet does not have any VPN or ExpressRoute gateway configured (which is the reason why the initial ARM template did not configure it, since we did not have our VPN gateways yet).
 
 <pre lang="...">
 <b>az network vnet peering update --vnet-name myVnet1 --name LinkTomyVnet4 --set useRemoteGateways=true</b>
-{
-  "allowForwardedTraffic": true,
-  "allowGatewayTransit": false,
-  "allowVirtualNetworkAccess": true,
-  "etag": "W/\"...\"",
-  "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/virtualNetworks/myVnet1/virtualNetworkPeerings/LinkTomyVnet4",
-  "name": "LinkTomyVnet4",
-  "peeringState": "<b>Connected</b>",
-  "provisioningState": "<b>Succeeded</b>",
-  "remoteVirtualNetwork": {
-    "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/virtualNetworks/myVnet4",
-    "resourceGroup": "vnetTest"
-  },
-  "resourceGroup": "vnetTest",
-  "useRemoteGateways": true
-}
-</pre>
-
-**Note:** should you receive an error message like "An error occurred", just retry the command.
-
-
-<pre lang="...">
+<i>Output omitted</i>
 <b>az network vnet peering update --vnet-name myVnet2 --name LinkTomyVnet4 --set useRemoteGateways=true</b>
-{
-  "allowForwardedTraffic": true,
-  "allowGatewayTransit": false,
-  "allowVirtualNetworkAccess": true,
-  "etag": "W/\"...\"",
-  "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/virtualNetworks/myVnet2/virtualNetworkPeerings/LinkTomyVnet4",
-  "name": "LinkTomyVnet4",
-  "peeringState": "Connected",
-  "provisioningState": "Succeeded",
-  "remoteVirtualNetwork": {
-    "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/virtualNetworks/myVnet4",
-    "resourceGroup": "vnetTest"
-  },
-  "resourceGroup": "vnetTest",
-  "useRemoteGateways": true
-}
-</pre>
-
-**Note:** should you receive an error message like "An error occurred", just retry the command.
-
-<pre lang="...">
+<i>Output omitted</i>
 <b>az network vnet peering update --vnet-name myVnet3 --name LinkTomyVnet4 --set useRemoteGateways=true</b>
-{
-  "allowForwardedTraffic": true,
-  "allowGatewayTransit": false,
-  "allowVirtualNetworkAccess": true,
-  "etag": "W/\"...\"",
-  "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/virtualNetworks/myVnet3/virtualNetworkPeerings/LinkTomyVnet4",
-  "name": "LinkTomyVnet4",
-  "peeringState": "Connected",
-  "provisioningState": "Succeeded",
-  "remoteVirtualNetwork": {
-    "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/virtualNetworks/myVnet4",
-    "resourceGroup": "vnetTest"
-  },
-  "resourceGroup": "vnetTest",
-  "useRemoteGateways": true
-}
+<i>Output omitted</i>
 </pre>
 
 **Note:** should you receive an error message like &#39;An error occurred&#39;, just retry the command.
 
-**Step 3.**	Now we can establish a VPN tunnel between them. Note that tunnels are bidirectional, so you will need to establish a tunnel from vnet4gw to vnet5gw, and another one in the opposite direction (note that it is normal for these commands to take some time to run):
+**Step 3.**	Now we can establish a VPN tunnel between them. Note that tunnels are unidirectional, so you will need to establish a tunnel from vnet4gw to vnet5gw, and another one in the opposite direction (note that it is normal for these commands to take some time to run):
 
 <pre lang="...">
 <b>az network vpn-connection create -n 4to5 --vnet-gateway1 vnet4gw --enable-bgp --shared-key Microsoft123 --vnet-gateway2 vnet5gw</b>
@@ -1759,28 +1628,26 @@ Vnet2Vnet         True         5to4    Succeeded            10
 **Step 4.**	Get the connection status of the tunnels, and wait until they are connected:
 
 <pre lang="...">
-<b>az network vpn-connection show --name 4to5 | findstr connectionStatus</b>
-  "connectionStatus": "Connecting",
+<b>az network vpn-connection show --name 4to5 --query connectionStatus</b>
+  "connectionStatus": "Connecting"
 </pre>
 
 Wait some seconds, and reissue the command until you get a "Connected" status, as the following ouputs show:
 
 <pre lang="...">
-az network vpn-connection show --name 4to5 | findstr connectionStatus
+<b>az network vpn-connection show --name 4to5 --query connectionStatus</b>
   "connectionStatus": "Connected",
 </pre>
 
 <pre lang="...">
-az network vpn-connection show --name 5to4 | findstr connectionStatus
+<b>az network vpn-connection show --name 5to4 --query connectionStatus</b>
   "connectionStatus": "Connected",
 </pre>
 
-**Note:** if you are running the previous steps on a Linux platform, please replace the `findstr` command with `gre`.  
-
-**Step 5.**	If you now try to reach a VM in myVnet5 from any of the VMs in the other Vnets, it should work without any further configuration, following the topology found in the figure below. For example, from our myVnet1-vm1 we will ping 10.5.1.4, which should be the private IP address from myVnet5-vm1:
+**Step 5.**	If you now try to reach a VM in myVnet5 from any of the VMs in the other Vnets, it should work without any further configuration, following the topology found in the figure below. For example, from our jump host myVnet1-vm2 we will ping 10.5.1.4, which should be the private IP address from myVnet5-vm1:
 
 <pre lang="...">
-lab-user@myVnet1-vm1:~$ <b>ping 10.5.1.4</b>
+lab-user@myVnet1-vm2:~$ <b>ping 10.5.1.4</b>
 PING 10.5.1.4 (10.5.1.4) 56(84) bytes of data.
 64 bytes from 10.5.1.4: icmp_seq=1 ttl=62 time=10.9 ms
 64 bytes from 10.5.1.4: icmp_seq=2 ttl=62 time=9.92 ms
@@ -1790,7 +1657,7 @@ PING 10.5.1.4 (10.5.1.4) 56(84) bytes of data.
 
 **Figure 10:** VPN connection through Vnet peering
 
-This is so because of how the Vnet peerings were configured, more specifically the parameters AllowForwardedTraffic and UseRemoteGateways (in the spokes),  and AllowGatewayTransit (in the hub). Back in your Windows command prompt, you can issue this command to check the state and configuration of your vnet peerings:
+This is so because of how the Vnet peerings were configured, more specifically the parameters AllowForwardedTraffic and UseRemoteGateways (in the spokes),  and AllowGatewayTransit (in the hub). Back in your Azure CLI command prompt, you can issue this command to check the state and configuration of your vnet peerings:
 
 <pre lang="...">
 az network vnet peering list --vnet-name myVnet1 -o table
@@ -1859,7 +1726,7 @@ However, you might want to push this traffic through the Network Virtual Applian
 </pre>
 
 <pre lang="...">
-<b>az network route-table route create --address-prefix 10.1.1.0/24 --next-hop-ip-address 10.4.2.101 --next-hop-type VirtualAppliance --route-table-name vnet4-gw -n vnet1-subnet1</b>
+<b>az network route-table route create --address-prefix 10.1.1.0/24 --next-hop-ip-address 10.4.2.100 --next-hop-type VirtualAppliance --route-table-name vnet4-gw -n vnet1-subnet1</b>
 {
   "addressPrefix": "10.1.1.0/24",
   "etag": "W/\"...\"",
@@ -1876,62 +1743,28 @@ However, you might want to push this traffic through the Network Virtual Applian
 <b>az network route-table route list --route-table-name vnet4-gw -o table</b>
 AddressPrefix    Name           NextHopIpAddress    NextHopType       
 ---------------  -------------  ------------------  ----------------  
-10.1.1.0/24      vnet1-subnet1  10.4.2.101          VirtualAppliance 
+10.1.1.0/24      vnet1-subnet1  10.4.2.100          VirtualAppliance 
 </pre>
 
-**Note:** for simplicity we use as next-hop the individual IP address of one of our firewalls, we could have use the load balancer as next hop too for NVA HA.
+**Note:** if you have not completed the setup of the NVA load balancer in previous labs, you can use the IP address of one of the firewalls. That is, instead of 10.4.2.100 you could use 10.4.2.101 as gateway.
 
 And now we associate the new routing table to the gateway subnet:
 
 <pre lang="...">
 <b>az network vnet subnet update -n GatewaySubnet --vnet-name myVnet4 --route-table vnet4-gw</b>
-{
-  "addressPrefix": "10.4.0.0/24",
-  "etag": "W/\"...\"",
-  "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/virtualNetworks/myVnet4/subnets/GatewaySubnet",
-  "ipConfigurations": [
-    {
-      "etag": null,
-      "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/virtualNetworkGateways/vnet4Gw/ipConfigurations/vnetGatewayConfig0",
-      "name": null,
-      "privateIpAddress": null,
-      "privateIpAllocationMethod": null,
-      "provisioningState": null,
-      "publicIpAddress": null,
-      "resourceGroup": "vnetTest",
-      "subnet": null
-    }
-  ],
-  "name": "GatewaySubnet",
-  "networkSecurityGroup": null,
-  "provisioningState": "Succeeded",
-  "resourceGroup": "vnetTest",
-  "resourceNavigationLinks": null,
-  "routeTable": {
-    "etag": null,
-    "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/routeTables/vnet4-gw",
-    "location": null,
-    "name": null,
-    "provisioningState": null,
-    "resourceGroup": "vnetTest",
-    "routes": null,
-    "subnets": null,
-    "tags": null,
-    "type": null
-  }
-}
+<i>Output omitted</i>
 </pre>
 
 **Step 8.**	We need to add an additional route to the spoke vnets, to let them know that they can reach the remote site (in our lab simulated by myVnet5, with an IP prefix of 10.5.0.0/16) over the NVA. Here we do it for myVnet1, you can do it for the other spoke Vnets too optionally (myVnet2 and myVnet3):
 
 <pre lang="...">
-<b>az network route-table route create --address-prefix 10.5.0.0/16 --next-hop-ip-address 10.4.2.101 --next-hop-type VirtualAppliance --route-table-name vnet1-subnet1 -n vnet5</b>
+<b>az network route-table route create --address-prefix 10.5.0.0/16 --next-hop-ip-address 10.4.2.100 --next-hop-type VirtualAppliance --route-table-name vnet1-subnet1 -n vnet5</b>
 {
   "addressPrefix": "10.5.0.0/16",
   "etag": "W/\"...\"",                                                                                                   
   "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/routeTables/vnet1-subnet1/routes/vnet5", 
   "name": "vnet5",             
-  "nextHopIpAddress": "10.4.2.101",
+  "nextHopIpAddress": "10.4.2.100",
   "nextHopType": "VirtualAppliance",
   "provisioningState": <b>"Succeeded"</b>,
   "resourceGroup": "vnetTest"  
@@ -1942,13 +1775,13 @@ And now we associate the new routing table to the gateway subnet:
 **Step 9.**	Now you can verify that VMs in myVnet1Subnet1 can still connect over SSH to VMs in myVnet5, but not any more over ICMP (since we have a rule for dropping ICMP traffic in the NVA):
 
 <pre lang="...">
-lab-user@myVnet1-vm1:~$ <b>ping 10.5.1.4</b>
+lab-user@myVnet1-vm2:~$ <b>ping 10.5.1.4</b>
 PING 10.5.1.4 (10.5.1.4) 56(84) bytes of data.
 ^C
 --- 10.5.1.4 ping statistics ---
 3 packets transmitted, 0 received, 100% packet loss, time 1999ms
 
-lab-user@myVnet1-vm1:~$ ssh 10.5.1.4
+lab-user@myVnet1-vm2:~$ ssh 10.5.1.4
 ...
 Welcome to Ubuntu 16.04.1 LTS (GNU/Linux 4.4.0-47-generic x86_64)
 </pre>
@@ -1972,7 +1805,8 @@ az group delete --name vnetTest
  
 # Conclusion
 
-I hope you have had fun running through this lab, and that you learnt something that you did not know before. We ran through multiple Azure networking topics like IPSec VPN, vnet peering, hub & spoke vnet topologies and advanced NVA integration, but we covered as well other non-Azure topics such as Linux custom routing or advanced probes programming with PHP.
+I hope you have had fun running through this lab, and that you learnt something that you did not know before. We ran through multiple Azure networking topics like IPSec VPN, vnet peering, NSGs, Load Balancing, Hub & Spoke vnet topologies and advanced NVA HA concepts, but we covered as well other non-Azure topics such as basic iptables or advanced probes programming with PHP.
+
 If you have any suggestion to improve this lab, please open an issue in Github in this repository.
 
  
