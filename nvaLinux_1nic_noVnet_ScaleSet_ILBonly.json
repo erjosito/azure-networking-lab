@@ -2,16 +2,12 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "apiVersion": {
-            "defaultValue": "2018-06-01",
-            "type": "string"
-        },
         "vnetName": {
             "defaultValue": "myVnet4",
             "type": "string"
         },
         "storageAccountName": {
-            "defaultValue": "[concat('storage',uniqueString(resourceGroup().id))]",
+            "defaultValue": "not used",
             "type": "string"
         },
         "vmType": {
@@ -28,7 +24,7 @@
             "type": "string"
         },
         "vmSSName": {
-            "defaultValue": "[concat('nvaVMSS',uniqueString(resourceGroup().id))]",
+            "defaultValue": "nva-vmss",
             "type": "string"
         },
         "vmSize": {
@@ -122,6 +118,9 @@
                 },
                 "slbName": {
                     "value": "[concat(variables('slbName'), '-int')]"
+                },
+                "lbSku": {
+                    "value": "standard"
                 },
                 "backendConfigName": {
                     "value": "[concat(variables('slbBackendName'), '-int')]"

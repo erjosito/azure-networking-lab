@@ -1415,6 +1415,65 @@ Now the probe for the internal load balancer will fail even if the internal inte
 Advanced HTTP probes can be used to verify additional information, so that firewalls are taken out of rotation whenever complex failure scenarios occur, such as the failure of an upstream interface, or a certain process not being running in the system (for example if the firewall daemon is not running).
 
 
+# Part 3: NVAs with a Virtual Machine Scale Set (VMSS)</a>
+
+You might be wondering how to scale the NVA cluster beyond 2 appliances. Using the LB schema from previous labs, you can do it easily. But how to scale out (and back in) the NVA cluster automatically, whenever the load requires it? In this lab we are going to explore placing the NVAs in Azure Virtual Machine Scale Sets (VMSS), so that autoscaling can be accomplished.
+
+
+
+## Lab 8: NVAs in a VMSS cluster <a name="lab8"></a>
+
+In this lab we will deploy a VMSS containing Linux appliances as the ones we saw in the previous labs.
+
+**Step 1.** The first thing we are going to do is to deploy a VMSS and an additional Load Balancer to our lab. You can use the ARM template in this Github repository to do so, where all values are predetermined and you only need to supply the password for the VMs:
+
+<pre lang="...">
+<b>az group deployment create --name vmssDeployment --template-uri https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/nvaLinux_1nic_noVnet_ScaleSet_ILBonly.json --parameters '{"vmPwd":{"value":"Microsoft123!"}}'</b>
+<i>Output omitted</i>
+</pre>
+
+Alternatively, if you are using the Azure CLI in a Windows OS, you can use this syntax:
+
+<pre lang="...">
+<b>az group deployment create --name vmssDeployment --template-uri https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/nvaLinux_1nic_noVnet_ScaleSet_ILBonly.json --parameters "{\"vmPwd\":{\"value\":\"Microsoft123!\"}}"</b>
+<i>Output omitted</i>
+</pre>
+
+**Step 2.** Let us have a look at the scale set that has been created:
+
+<pre lang="...">
+<b>az vmss list -o table</b>
+Name       ResourceGroup    Location    Zones      Capacity  Overprovision    UpgradePolicy
+---------- ---------------  ----------  -------  ----------  ---------------  ---------------
+nva-vmss   vnetTest         westeurope                    2  True             Manual
+</pre>
+
+
+<pre lang="...">
+<b>az vmss list-instances -n nva-vmss -o table</b>
+  InstanceId  LatestModelApplied    Location    Name                    ProvisioningState    ResourceGroup    VmId
+------------  --------------------  ----------  ----------------------  -------------------  ---------------  ------------------------------------
+           1  True                  westeurope  nva-vmss_1  Succeeded            VNETTEST         178e1865-9cbe-422f-9fda-624f2852dd00
+           3  True                  westeurope  nva-vmss_3  Succeeded            VNETTEST         c2c239b2-ae11-456e-958a-ff26b5b05858
+</pre>
+
+**Step 3.** Let us focus now on the new load balancer:
+
+
+<pre lang="...">
+<b>az network lb list -o table</b>
+Location    Name                   ProvisioningState    ResourceGroup    ResourceGuid
+----------  ---------------------  -------------------  ---------------  ------------------------------------
+westeurope  linuxnva-slb-ext       Succeeded            vnetTest         0f7bf1f9-8656-4ec9-8e1e-a4595b918e30
+westeurope  linuxnva-slb-int       Succeeded            vnetTest         b8be7efc-2eaa-4eb8-b314-49c2ce1f1f42
+<b>westeurope  linuxnva-vmss-slb-int  Succeeded            vnetTest         8056b7bc-ea82-4911-94a7-2c37634ad757</b>
+</pre>
+
+
+### What we have learnt
+
+
+
 # Part 3: VPN to external site <a name="part3"></a>
 
  
