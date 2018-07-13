@@ -78,7 +78,7 @@
     },
     "variables": {
         "deploymentApiVersion": "2017-05-10",
-        "vmssApiVersion": "2016-04-30-preview",
+        "vmssApiVersion": "2016-04-30-previewx",
         "vmssApiVersionOld": "2017-12-01",
         "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
         "subnet0Id": "[concat(variables('vnetID'), '/subnets/', parameters('subnet0Name'))]",
