@@ -1446,7 +1446,7 @@ So far we have configured spoke-to-spoke communication over a cluster of NVAs, b
 **Step 2.**	We need to replace the route we installed in Vnet1-Subnet1 and Vnet2-Subnet1 pointing to Vnet4’s NVA, with another one pointing to the VPN gateway. You will not be able to find out on the GUI or the CLI the IP address assigned to the VPN gateway, but you can guess it. Since the first 3 addresses in every subnet are reserved for the vnet router, the gateway should have got the IP address 10.4.0.4 (remember that we allocated the prefix 10.4.0.0 to the Gateway Subnet in myVnet4). You can verify it pinging this IP address from any VM. For example, from our jump host myVnet1-vm2:
 
 <pre lang="...">
-lab-user@myVnet1-vm1:~$ <b>ping 10.4.0.4</b>
+lab-user@myVnet1-vm2:~$ <b>ping 10.4.0.4</b>
 PING 10.4.0.4 (10.4.0.4) 56(84) bytes of data.
 64 bytes from 10.4.0.4: icmp_seq=1 ttl=128 time=2.27 ms
 64 bytes from 10.4.0.4: icmp_seq=2 ttl=128 time=0.794 ms
@@ -1521,7 +1521,7 @@ AddressPrefix    Name          NextHopIpAddress    NextHopType       Provisionin
 
 **Note:** the command above will take some seconds to execute, since it needs to access to low-level routing tables programmed in the VM's NIC
 
-**Step 4.**	And now our jump host should still be able to reach other VMs. Not over the NVA, but over the VPN gateway. Note that ping now is working, since the VPN gateway is not filtering out ICMP traffic, as our iptables NVA did:
+**Step 4.**	After a couple of seconds our jump host should still be able to reach other VMs. Not over the NVA, but over the VPN gateway. Note that ping now is working, since the VPN gateway is not filtering out ICMP traffic, as our iptables NVA did:
 
 <pre lang="...">
 lab-user@myVnet1-vm2:~$ <b>ping 10.2.1.4</b>
@@ -1545,7 +1545,7 @@ VPN gateways can also be used for spoke-to-spoke communications, instead of NVAs
 **Step 1.**	Make sure that the VPN gateways have different Autonomous System Numbers (ASN) configured. You can check the ASN with this command, back in your Azure CLI command prompt:
 
 <pre lang="...">
-<b> az network vnet-gateway list --query [].[name,bgpSettings.asn] -o table</p>
+<b>az network vnet-gateway list --query [].[name,bgpSettings.asn] -o table</b>
 Column1      Column2
 ---------  ---------
 vnet4Gw        65504
