@@ -78,7 +78,8 @@
     },
     "variables": {
         "deploymentApiVersion": "2017-05-10",
-        "vmssApiVersion": "2017-12-01",
+        "vmssApiVersion": "2016-04-30-preview",
+        "vmssApiVersionOld": "2017-12-01",
         "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
         "subnet0Id": "[concat(variables('vnetID'), '/subnets/', parameters('subnet0Name'))]",
         "subnet1Id": "[concat(variables('vnetID'), '/subnets/', parameters('subnet1Name'))]",
@@ -177,23 +178,6 @@
 				"parameters":  "[variables('deployLBintParameters')]"
 			}
 		},
-		{
-			"comments": "Optionally, create an external load balancer",
-            "name": "slb-ext",
-			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "[variables('deploymentApiVersion')]",
-			"properties": {
-				"mode": "Incremental",
-				"templateLink": {
-					"uri": "[variables('LBTemplateUri')]",
-					"contentVersion": "1.0.0.0"
-				},
-				"parameters":  "[variables('deployLBextParameters')]"
-			},
-            "dependsOn": [
-                "slb-int"
-            ]
-		},
         {
             "comments": "Create Scale Set for NVAs",
             "type": "Microsoft.Compute/virtualMachineScaleSets",
@@ -201,8 +185,7 @@
             "location": "[resourceGroup().location]",
             "apiVersion": "[variables('vmssApiVersion')]",
             "dependsOn": [
-                "slb-int",
-                "slb-ext"
+                "slb-int"
             ],
             "sku": {
                 "name": "[variables('settings')['vmSize']]",
