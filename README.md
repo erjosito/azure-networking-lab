@@ -1550,7 +1550,7 @@ The reason why this lab in particular is not working yet is because when the VMs
 # Part 3: VPN to external site <a name="part3"></a>
 
  
-## Lab 9: Spoke-to-Spoke communication over VPN gateway (optional) <a name="lab"></a>
+## Lab 9: Spoke-to-Spoke communication over VPN gateway (optional) <a name="lab9"></a>
 
 **Important Note:** provisioning of the VPN gateways will take up to 45 minutes to complete
 
