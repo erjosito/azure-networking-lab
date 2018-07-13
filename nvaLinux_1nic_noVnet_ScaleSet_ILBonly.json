@@ -218,10 +218,6 @@
                                                 },
                                                 "publicIPAddressconfiguration": {
                                                     "name": "nvavmsspip",
-                                                    "sku": {
-                                                        "name": "Standard",
-                                                        "tier": "Regional"
-                                                    },
                                                     "properties": {
                                                         "publicIPAllocationMethod": "Static",
                                                         "idleTimeoutInMinutes": 4                                        
