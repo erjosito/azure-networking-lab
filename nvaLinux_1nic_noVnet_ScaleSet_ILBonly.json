@@ -3,11 +3,11 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "apiVersion": {
-            "defaultValue": "2015-06-15",
+            "defaultValue": "2018-06-01",
             "type": "string"
         },
         "vnetName": {
-            "defaultValue": "myVnet",
+            "defaultValue": "myVnet4",
             "type": "string"
         },
         "storageAccountName": {
@@ -20,15 +20,19 @@
             "allowedValues": ["ubuntu"]
         },
         "vmCount": {
-            "defaultValue": 1,
+            "defaultValue": 2,
             "type": "int"
         },
         "vmName": {
-            "defaultValue": "[concat('nva',uniqueString(resourceGroup().id))]",
+            "defaultValue": "linuxnva-vmss",
             "type": "string"
         },
         "vmSSName": {
             "defaultValue": "[concat('nvaVMSS',uniqueString(resourceGroup().id))]",
+            "type": "string"
+        },
+        "vmSize": {
+            "defaultValue": "Standard_B2ms",
             "type": "string"
         },
         "scaleSettingsName": {
@@ -36,7 +40,7 @@
             "type": "string"
         },
         "vmUsr": {
-            "defaultValue": "myadmin",
+            "defaultValue": "lab-user",
             "type": "string"
         },
         "vmPwd": {
@@ -48,11 +52,11 @@
             "type": "string"
         },
         "subnet0Name": {
-            "defaultValue": "subnet1",
+            "defaultValue": "myVnet4subnet2",
             "type": "string"
         },
         "subnet1Name": {
-            "defaultValue": "subnet2",
+            "defaultValue": "myVnet4subnet3",
             "type": "string"
         },
         "ip0": {
@@ -66,7 +70,7 @@
             "metadata": { "description": "This string will be completed with the copyIndex: .101, .102, etc" }
         },
         "scriptUri": {
-            "defaultValue": "https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/linuxNVAconfig.sh",
+            "defaultValue": "[uri(deployment().properties.templateLink.uri, 'linuxNVAconfig.sh')]",
             "type": "string",
             "metadata": { "description": "Script that will be executed" }            
         },
@@ -81,6 +85,8 @@
 		}
     },
     "variables": {
+        "deploymentApiVersion": "2017-05-10",
+        "vmssApiVersion": "2018-06-01",
         "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
         "subnet0Id": "[concat(variables('vnetID'), '/subnets/', parameters('subnet0Name'))]",
         "subnet1Id": "[concat(variables('vnetID'), '/subnets/', parameters('subnet1Name'))]",
@@ -89,15 +95,14 @@
                 "product": "UbuntuServer",
                 "publisher": "Canonical",
                 "sku": "16.04.0-LTS",
-                "vmSize": "Standard_D2_v2"
+                "vmSize": "[parameters('vmSize')]"
             }
         },
         "settings": "[variables('settingsTable')[parameters('vmType')]]",
         "slbName": "[concat(parameters('vmName'), '-slb')]",
         "slbBackendName": "[concat(parameters('vmName'), '-slbBackend')]",
-        "slbPipName": "[concat(parameters('vmName'), '-slbPip')]",
         "ipPrefix": "10.4.2",
-        "vipSuffix": "100",
+        "vipSuffix": "200",
         "slbSubnet": "[parameters('subnet0Name')]",
 		"deployLBTemplate": {
 			"yes": "[uri(deployment().properties.templateLink.uri, 'slb.json')]",
@@ -146,54 +151,14 @@
             "no": {
             }
         },
-        "deployLBintParameters": "[variables('deployLBintParametersHash')[parameters('deployLBYesNo')]]",
-        "deployLBextParametersHash": {
-            "yes": {
-                "externalInternal": {
-                    "value": "external"
-                },
-                "vnetName": {
-                    "value": "[parameters('vnetName')]"
-                },
-                "subnetName": {
-                    "value": "[variables('slbSubnet')]"
-                },
-                "slbName": {
-                    "value": "[concat(variables('slbName'), '-ext')]"
-                },
-                "backendConfigName": {
-                    "value": "[concat(variables('slbBackendName'), '-ext')]"
-                },
-                "pipName": {
-                    "value": "[concat(variables('slbPipName'), '-ext')]"
-                },
-                "probePort": {
-                    "value": 1139
-                },
-                "frontendPort": {
-                    "value": 1022
-                },
-                "backendPort": {
-                    "value": 1022
-                },
-                "ruleName": {
-                    "value": "ssh"
-                },
-                "dsr": {
-                    "value": "true"
-                }
-            },
-            "no": {
-            }
-        },
-        "deployLBextParameters": "[variables('deployLBextParametersHash')[parameters('deployLBYesNo')]]"
+        "deployLBintParameters": "[variables('deployLBintParametersHash')[parameters('deployLBYesNo')]]"
     },
     "resources": [
 		{
 			"comments": "Optionally, create an internal load balancer",
             "name": "slb-int",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2016-06-01",
+			"apiVersion": "[variables('deploymentApiVersion')]",
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
@@ -203,32 +168,14 @@
 				"parameters":  "[variables('deployLBintParameters')]"
 			}
 		},
-		{
-			"comments": "Optionally, create an external load balancer",
-            "name": "slb-ext",
-			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2016-06-01",
-			"properties": {
-				"mode": "Incremental",
-				"templateLink": {
-					"uri": "[variables('LBTemplateUri')]",
-					"contentVersion": "1.0.0.0"
-				},
-				"parameters":  "[variables('deployLBextParameters')]"
-			},
-            "dependsOn": [
-                "slb-int"
-            ]
-		},
         {
             "comments": "Create Scale Set for NVAs",
             "type": "Microsoft.Compute/virtualMachineScaleSets",
             "name": "[parameters('vmSSName')]",
             "location": "[resourceGroup().location]",
-            "apiVersion": "2016-04-30-preview",
+			"apiVersion": "[variables('vmssApiVersion')]",
             "dependsOn": [
-                "slb-int",
-                "slb-ext"
+                "slb-int"
             ],
             "sku": {
                 "name": "[variables('settings')['vmSize']]",
