@@ -103,7 +103,7 @@
             "resources": [],
             "dependsOn": [
                 "[parameters('nsgName')]"
-            ],
+            ]
         }
     ]
 }

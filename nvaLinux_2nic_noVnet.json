@@ -11,7 +11,7 @@
             "type": "string"
         },
         "storageAccountName": {
-            "defaultValue": "asatestjoselito",
+            "defaultValue": "put here an unique name for your storage account",
             "type": "string"
         },
         "vmType": {
@@ -31,6 +31,10 @@
             "defaultValue": "myadmin",
             "type": "string"
         },
+        "vmSize": {
+            "defaultValue": "Standard_B2ms",
+            "type": "string"
+        },
         "vmPwd": {
             "defaultValue": null,
             "type": "securestring"
@@ -38,6 +42,11 @@
         "pipName": {
             "defaultValue": "nva-publicIP",
             "type": "string"
+        },
+        "createPip": {
+            "defaultValue": "no",
+            "type": "string",
+            "allowedValues": ["yes", "no"]
         },
         "subnet0Name": {
             "defaultValue": "subnet1",
@@ -58,7 +67,7 @@
             "metadata": { "description": "This string will be completed with the copyIndex: .101, .102, etc" }
         },
         "scriptUri": {
-            "defaultValue": "https://raw.githubusercontent.com/erjosito/azure-network-lab/master/linuxNVAconfig.sh",
+            "defaultValue": "[uri(deployment().properties.templateLink.uri, 'linuxNVAconfig.sh')]",
             "type": "string",
             "metadata": { "description": "Script that will be executed" }            
         },
@@ -67,13 +76,23 @@
             "type": "string",
             "metadata": { "description": "Command to run the script" }            
         },
-		"deployLBYesNo": {
-			"defaultValue": "no",
-			"type": "string"
-		}
+        "deployLBYesNo": {
+            "defaultValue": "no",
+            "type": "string"
+        },
+        "lbSku": {
+            "defaultValue": "basic",
+            "type": "string",
+            "allowedValues": [ "basic","standard" ],
+            "metadata": { "description": "Whether Load Balancers should be Basic or Standard (preview)" }
+        }
     },
     "variables": {
-        "baseRepoURL": "https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/",
+        "nicTemplatePipNsg": "[uri(deployment().properties.templateLink.uri, 'nic_NSG_noSLB_PIP_static.json')]",
+        "nicTemplateNoPipNsg": "[uri(deployment().properties.templateLink.uri, 'nic_NSG_noSLB_noPIP_static.json')]",
+        "nicTemplateNoPipNoNsg": "[uri(deployment().properties.templateLink.uri, 'nic_noNSG_noSLB_noPIP_static.json')]",
+        "nic0Template": "[if(equals(parameters('createPip'), 'yes'), variables('nicTemplatePipNsg'), variables('nicTemplateNoPipNsg'))]",
+        "nic1Template": "[variables('nicTemplateNoPipNoNsg')]",
         "defaultGw": {
             "nic0": "[concat(parameters('ip0'), '1')]",
             "nic1": "[concat(parameters('ip1'), '1')]"
@@ -83,7 +102,7 @@
                 "product": "UbuntuServer",
                 "publisher": "Canonical",
                 "sku": "16.04.0-LTS",
-                "vmSize": "Standard_D2_v2"
+                "vmSize": "[parameters('vmSize')]"
             }
         },
         "settings": "[variables('settingsTable')[parameters('vmType')]]",
@@ -95,8 +114,8 @@
         "vipSuffix": "100",
         "slbSubnet": "[parameters('subnet0Name')]",
 		"deployLBTemplate": {
-			"yes": "[concat(variables('baseRepoURL'), 'slb.json')]",
-			"no": "[concat(variables('baseRepoURL'), 'nothing.json')]"
+			"yes": "[uri(deployment().properties.templateLink.uri, 'slb.json')]",
+			"no": "[uri(deployment().properties.templateLink.uri, 'nothing.json')]"
 		},
 		"LBTemplateURI": "[variables('deployLBTemplate')[parameters('deployLBYesNo')]]",
         "deployLBintParametersHash": {
@@ -112,6 +131,9 @@
                 },
                 "slbName": {
                     "value": "[concat(variables('slbName'), '-int')]"
+                },
+                "lbSku": {
+                    "value": "[parameters('lbSku')]"
                 },
                 "backendConfigName": {
                     "value": "[concat(variables('slbBackendName'), '-int')]"
@@ -189,7 +211,7 @@
 			"comments": "Optionally, create an internal load balancer",
             "name": "nva-slb-int",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2016-06-01",
+			"apiVersion": "2017-05-10",
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
@@ -203,7 +225,7 @@
 			"comments": "Optionally, create an external load balancer. Wait until the internal has been created, there seems to be some conflict when creating both at the same time",
             "name": "nva-slb-ext",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2016-06-01",
+			"apiVersion": "2017-05-10",
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
@@ -283,24 +305,26 @@
             ]
         },
 		{
-			"comments": "Create eth0",
-            "name": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic0')]",
+            "comments": "Create eth0 with or without PIP, depending on the template",
+			"name": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic0')]",
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2016-06-01",
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
-					"uri": "[concat(variables('baseRepoURL'),'nic_noNSG_noSLB_noPIP_static.json')]",
+					"uri": "[variables('nic0Template')]",
 					"contentVersion": "1.0.0.0"
 				},
 				"parameters":  {
                     "nicName": {"value": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic0')]"},
                     "ipAddress": { "value": "[concat(parameters('ip0'), copyIndex(1))]" },                    
                     "vnetName": { "value": "[parameters('vnetName')]" },
-                    "subnetName": { "value": "[parameters('subnet0Name')]"}
+                    "subnetName": { "value": "[parameters('subnet0Name')]"},
+                    "pipSku": { "value": "[parameters('lbSku')]"},
+                    "pipName": { "value": "[concat(parameters('pipName'), '-', copyIndex(1))]" }
                 }
             },
-            "dependsOn": [  
+            "dependsOn": [
             ],
             "copy": {
                 "name": "[concat(parameters('vmName'), '-nic0')]",
@@ -308,25 +332,25 @@
             }
         },
 		{
-            "comments": "Create eth1",
-			"name": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic1')]",
+			"comments": "Create eth1",
+            "name": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic1')]",
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2016-06-01",
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
-					"uri": "[concat(variables('baseRepoURL'),'nic_noNSG_noSLB_PIP_static.json')]",
+					"uri": "[variables('nic1Template')]",
 					"contentVersion": "1.0.0.0"
 				},
 				"parameters":  {
                     "nicName": {"value": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic1')]"},
                     "ipAddress": { "value": "[concat(parameters('ip1'), copyIndex(1))]" },                    
                     "vnetName": { "value": "[parameters('vnetName')]" },
-                    "subnetName": { "value": "[parameters('subnet1Name')]"},
-                    "pipName": { "value": "[concat(parameters('pipName'), '-', copyIndex(1))]" }
+                    "subnetName": { "value": "[parameters('subnet1Name')]"}
                 }
             },
-            "dependsOn": [
+            "dependsOn": [  
+                "[concat(parameters('vmName'), '-nic0')]"
             ],
             "copy": {
                 "name": "[concat(parameters('vmName'), '-nic1')]",

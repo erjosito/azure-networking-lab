@@ -81,7 +81,6 @@
 		}
     },
     "variables": {
-        "baseRepoURL": "https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/",
         "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
         "subnet0Id": "[concat(variables('vnetID'), '/subnets/', parameters('subnet0Name'))]",
         "subnet1Id": "[concat(variables('vnetID'), '/subnets/', parameters('subnet1Name'))]",
@@ -101,8 +100,8 @@
         "vipSuffix": "100",
         "slbSubnet": "[parameters('subnet0Name')]",
 		"deployLBTemplate": {
-			"yes": "[concat(variables('baseRepoURL'), 'slb.json')]",
-			"no": "[concat(variables('baseRepoURL'), 'nothing.json')]"
+			"yes": "[uri(deployment().properties.templateLink.uri, 'slb.json')]",
+			"no": "[uri(deployment().properties.templateLink.uri, 'nothing.json')]"
 		},
 		"LBTemplateURI": "[variables('deployLBTemplate')[parameters('deployLBYesNo')]]",
         "deployLBintParametersHash": {
@@ -226,7 +225,7 @@
             "type": "Microsoft.Compute/virtualMachineScaleSets",
             "name": "[parameters('vmSSName')]",
             "location": "[resourceGroup().location]",
-            "apiVersion": "2016-04-30-preview",
+            "apiVersion": "2017-12-01",
             "dependsOn": [
                 "slb-int",
                 "slb-ext"
@@ -313,7 +312,7 @@
         {
             "comments": "Create the autoscale settings for the VM scale set",
             "type": "Microsoft.Insights/autoscaleSettings",
-            "apiVersion": "2015-04-01",
+            "apiVersion": "2017-12-01",
             "name": "[parameters('scaleSettingsName')]",
             "location": "[resourceGroup().location]",
             "dependsOn": [

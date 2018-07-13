@@ -35,11 +35,21 @@
             "type": "string",
             "allowedValues": [ "yes","no" ],
             "metadata": { "description": "Whether VPN gateways should be deployed at all or not" }
+        },
+        "lbSku": {
+            "defaultValue": "standard",
+            "type": "string",
+            "allowedValues": [ "basic","standard" ],
+            "metadata": { "description": "Whether internal Load Balancers should be Basic or Standard" }
+        },
+        "vmSize": {
+            "defaultValue": "Standard_B1s",
+            "type": "string",
+            "metadata": { "description": "Size with which VMs (not the NVAs) will be created. Might be useful to modify if hitting quota limits" }
         }
     },
     "variables": {
-        "baseRepoURL": "https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/",
-        "linuxVmTemplateURI": "[concat(variables('baseRepoURL'), 'linuxVM.json')]",
+        "linuxVmTemplateURI": "[uri(deployment().properties.templateLink.uri, 'linuxVM.json')]",
         "storageAccountName": "[concat('storage', uniqueString(resourceGroup().id))]",
         "multiVnetParams": {
             "storageAccountName": { "value": "[variables('storageAccountName')]" },            
@@ -48,16 +58,18 @@
             "enableBgp": { "value": "true" },
             "createVm": { "value": "yes" },            
             "vmType": { "value": "ubuntu" },            
+            "vmSize": { "value": "[parameters('vmSize')]" },            
+            "createPip": { "value": "no" },            
             "adminUsername": { "value": "[parameters('adminUsername')]" },            
             "adminPassword": { "value": "[parameters('adminPassword')]" }
         },
-        "multiVnetTemplateUri": "[concat(variables('baseRepoURL'), 'multiVnetLab.json')]",
+        "multiVnetTemplateUri": "[uri(deployment().properties.templateLink.uri, 'multiVnetLab.json')]",
         "customScriptHash": {
             "ubuntu": "linuxNVAconfig.sh",
             "ubuntuScaleSet": "linuxNVAconfig-1nic.sh"
         },
         "customScript": "[variables('customScriptHash')[parameters('nvaType')]]",
-        "customScriptUri": "[concat(variables('baseRepoURL'), variables('customScript'))]",
+        "customScriptUri": "[uri(deployment().properties.templateLink.uri, variables('customScript'))]",
         "customScriptCmd": "[concat('chmod 666 ', variables('customScript'), ' && /bin/sh ./', variables('customScript'))]",
         "nvaParams": {
             "vmType": { "value": "ubuntu" },
@@ -73,6 +85,7 @@
             "ip0": { "value": "10.4.2.10" },
             "ip1": { "value": "10.4.3.10" },
             "deployLBYesNo": { "value": "yes" },
+            "lbSku": { "value": "[parameters('lbSku')]" },
             "scriptUri": { "value": "[variables('customScriptUri')]" },
             "scriptCmd": { "value": "[variables('customScriptCmd')]" }
         },
@@ -80,9 +93,19 @@
             "yes": "[variables('nvaParams')]",
             "no": {}
         },
+        "NVATemplateUri": {
+            "csr": "[uri(deployment().properties.templateLink.uri, 'nva_2nic_noVnet.json')]",
+            "asa": "[uri(deployment().properties.templateLink.uri, 'nva_2nic_noVnet.json')]",
+            "ubuntu": "[uri(deployment().properties.templateLink.uri, 'nvaLinux_2nic_noVnet.json')]",
+            "ubuntuScaleSet": "[uri(deployment().properties.templateLink.uri, 'nvaLinux_1nic_noVnet_ScaleSet_ILBonly.json')]"
+        },
+        "NVATemplateUriYesNo": {
+            "yes": "[variables('NVATemplateUri')[parameters('nvaType')]]",
+            "no": "[uri(deployment().properties.templateLink.uri, 'nothing.json')]"
+        },
         "vpnGwTemplateUriHash": {
-            "yes": "[concat(variables('baseRepoURL'), 'vpnGw.json')]",
-            "no": "[concat(variables('baseRepoURL'), 'nothing.json')]"
+            "yes": "[uri(deployment().properties.templateLink.uri, 'vpnGw.json')]",
+            "no": "[uri(deployment().properties.templateLink.uri, 'nothing.json')]"
         },
         "vpnGwTemplateUri": "[variables('vpnGwTemplateUriHash')[parameters('createVPNgw')]]",
         "vpnGwTemplateParamsHash1": {
@@ -110,19 +133,9 @@
             "no": false
         },
         "PeeringUseRemoteGateways": "[variables('PeeringUseRemoteGatewaysHash')[parameters('createVPNgw')]]",
-        "NVATemplateUri": {
-            "csr": "[concat(variables('baseRepoURL'), 'nva_2nic_noVnet.json')]",
-            "asa": "[concat(variables('baseRepoURL'), 'nva_2nic_noVnet.json')]",
-            "ubuntu": "[concat(variables('baseRepoURL'), 'nvaLinux_2nic_noVnet.json')]",
-            "ubuntuScaleSet": "[concat(variables('baseRepoURL'), 'nvaLinux_1nic_noVnet_ScaleSet_ILBonly.json')]"
-        },
-        "NVATemplateUriYesNo": {
-            "yes": "[variables('NVATemplateUri')[parameters('nvaType')]]",
-            "no": "[concat(variables('baseRepoURL'), 'nothing.json')]"
-        },
         "UDRTemplateUriYesNo": {
-            "yes": "[concat(variables('baseRepoURL'), 'UDR_Lab.json')]",
-            "no": "[concat(variables('baseRepoURL'), 'nothing.json')]"
+            "yes": "[uri(deployment().properties.templateLink.uri, 'UDR_Lab.json')]",
+            "no": "[uri(deployment().properties.templateLink.uri, 'nothing.json')]"
         },
         "UDRTemplateUri": "[variables('UDRTemplateUriYesNo')[parameters('createUDR')]]"
     },
@@ -157,6 +170,7 @@
                     "adminPassword": {"value": "[parameters('adminPassword')]"},
                     "vmName": { "value": "myVnet1-vm2" },
                     "vmType": {"value": "ubuntu"},
+                    "vmSize": { "value": "[parameters('vmSize')]" },            
                     "vnetName": { "value": "myVnet1" },
                     "subnetName": { "value": "myVnet1Subnet1" },
                     "storageAccountName": { "value": "[variables('storageAccountName')]"}
@@ -170,7 +184,7 @@
 			"comments": "Create NVAs in vnet4, if createNVA=yes",
             "name": "nva",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2016-06-01",
+			"apiVersion": "2017-05-10",
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
@@ -191,7 +205,7 @@
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
-					"uri": "[concat(variables('baseRepoURL'), 'vnetPeeringHubNSpoke.json')]",
+					"uri": "[uri(deployment().properties.templateLink.uri, 'vnetPeeringHubNSpoke.json')]",
 					"contentVersion": "1.0.0.0"
 				},
 				"parameters": {
@@ -212,7 +226,7 @@
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
-					"uri": "[concat(variables('baseRepoURL'), 'vnetPeeringHubNSpoke.json')]",
+					"uri": "[uri(deployment().properties.templateLink.uri, 'vnetPeeringHubNSpoke.json')]",
 					"contentVersion": "1.0.0.0"
 				},
 				"parameters": {
@@ -233,7 +247,7 @@
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
-					"uri": "[concat(variables('baseRepoURL'), 'vnetPeeringHubNSpoke.json')]",
+					"uri": "[uri(deployment().properties.templateLink.uri, 'vnetPeeringHubNSpoke.json')]",
 					"contentVersion": "1.0.0.0"
 				},
 				"parameters": {

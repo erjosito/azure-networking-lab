@@ -40,6 +40,23 @@
             "type": "string",
             "allowedValues": ["yes", "no"]
         },
+        "vmType": {
+            "defaultValue": "ubuntu",
+            "type": "string",
+            "allowedValues": [
+                "ubuntu"
+            ],
+            "metadata": { "description": "Type of VM to optionally create in the first subnet in every vnet"}
+		},
+        "vmSize": {
+            "defaultValue": "Standard_B1s",
+            "type": "string"
+        },
+        "createPip": {
+            "defaultValue": "yes",
+            "type": "string",
+            "allowedValues": ["yes", "no"]
+        },
         "adminUsername": {
             "defaultValue": null,
             "type": "string"
@@ -50,12 +67,11 @@
         }
     },
     "variables": {
-        "baseRepoURL": "https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/",
         "apiVersion": "2016-03-30",
         "vnetSpace": "[concat(parameters('vnetOctets12'), '0.0/16')]",
         "gwTemplateUriTable": {
-            "yes": "[concat(variables('baseRepoURL'), 'vpnGw.json')]",
-            "no": "[concat(variables('baseRepoURL'), 'nothing.json')]"
+            "yes": "[uri(deployment().properties.templateLink.uri, 'vpnGw.json')]",
+            "no": "[uri(deployment().properties.templateLink.uri, 'nothing.json')]"
         },
         "gwTemplateUri": "[variables('gwTemplateUriTable')[parameters('createGw')]]",
         "gwTemplateParamTable": {
@@ -70,8 +86,8 @@
         },
         "gwTemplateParam": "[variables('gwTemplateParamTable')[parameters('createGw')]]",
         "gwPipUriTable": {
-            "yes": "[concat(variables('baseRepoURL'), 'pipDynamic.json')]",
-            "no": "[concat(variables('baseRepoURL'), 'nothing.json')]"
+            "yes": "[uri(deployment().properties.templateLink.uri, 'pipDynamic.json')]",
+            "no": "[uri(deployment().properties.templateLink.uri, 'nothing.json')]"
         },
         "gwPipUri": "[variables('gwPipUriTable')[parameters('createGw')]]",
         "gwPipParamTable": {
@@ -83,8 +99,8 @@
         },
         "gwPipParam": "[variables('gwPipParamTable')[parameters('createGw')]]",
         "vmTemplateUriTable": {
-            "yes": "[concat(variables('baseRepoURL'), 'linuxVM.json')]",
-            "no": "[concat(variables('baseRepoURL'), 'nothing.json')]"
+            "yes": "[uri(deployment().properties.templateLink.uri, 'linuxVM.json')]",
+            "no": "[uri(deployment().properties.templateLink.uri, 'nothing.json')]"
         },
         "vmName": "[concat(parameters('vnetName'), '-vm')]",
         "vmTemplateUri": "[variables('vmTemplateUriTable')[parameters('createVm')]]",
@@ -93,7 +109,9 @@
                 "vmName": { "value": "[concat(variables('vmName'), '1')]" },
                 "vnetName": { "value": "[parameters('vnetName')]" },
                 "subnetName": { "value": "[concat(parameters('subnetNamePrefix'), '1')]" },
-                "vmType": { "value": "ubuntu" },
+                "vmType": { "value": "[parameters('vmType')]"},
+                "vmSize": { "value": "[parameters('vmSize')]"},
+                "createPip": { "value": "[parameters('createPip')]"},
                 "adminUsername": { "value": "[parameters('adminUsername')]" },
                 "adminPassword": { "value": "[parameters('adminPassword')]" }
             },

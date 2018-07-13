@@ -19,25 +19,21 @@
             "type": "string"
         },
         "ipPrefix": {
-            "defaultValue": "not used",
+            "defaultValue": "10.0.1",
             "type": "string"
         },
         "vipSuffix": {
-            "defaultValue": "not used",
+            "defaultValue": "100",
             "type": "string"
         },
         "pipName": {
             "defaultValue": "myPublicIp",
             "type": "string"
         },
-        "pipSku": {
-            "defaultValue": "basic",
-            "type": "string"
-        },
         "frontendPort": {
             "defaultValue": 1022,
             "type": "int",
-            "metadata": { "description": "Port that will configured in the TCP-based probe" }
+            "metadata": { "description": "Frontend TCP port" }
         },
         "backendPort": {
             "defaultValue": 22,
@@ -60,6 +56,7 @@
         }
     },
     "variables": {
+		"vip": "[concat(parameters('ipPrefix'), '.', parameters('vipSuffix'))]",
 		"frontendConfigName": "myFrontendConfig",
 		"probeName": "myProbe",
         "dsrBoolHash": {
@@ -68,38 +65,26 @@
         },
         "dsrBool": "[variables('dsrBoolHash')[parameters('dsr')]]"
     },
+
     "resources": [
         {
-            "comments": "Public IP address",
-            "type": "Microsoft.Network/publicIPAddresses",
-            "name": "[parameters('pipName')]",
-            "sku": {
-                "name": "[parameters('pipSku')]",
-                "tier": "Regional"
-            },
-            "apiVersion": "2018-02-01",
-            "location": "[resourceGroup().location]",
-            "properties": {
-                "publicIPAllocationMethod": "[if(equals(parameters('pipSku'), 'basic'), 'Dynamic', 'Static')]",
-                "idleTimeoutInMinutes": 4
-            },
-            "resources": [],
-            "dependsOn": []
-        },
-        {
-            "comments": "External Load Balancer",
+            "comments": "Internal Load Balancer",
             "type": "Microsoft.Network/loadBalancers",
             "name": "[parameters('slbName')]",
-            "apiVersion": "2016-03-30",
+            "apiVersion": "2017-08-01",
             "location": "[resourceGroup().location]",
+            "sku": {
+                    "name": "Standard"
+            },
             "properties": {
                 "frontendIPConfigurations": [
                     {
                         "name": "[variables('frontendConfigName')]",
                         "properties": {
-                            "privateIPAllocationMethod": "Dynamic",
-                            "publicIpAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('pipName'))]"
+                            "privateIPAddress": "[variables('vip')]",
+                            "privateIPAllocationMethod": "Static",
+                            "subnet": {
+                                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')), '/subnets/', parameters('subnetName'))]"
                             }
                         }
                     }
@@ -116,8 +101,8 @@
                             "frontendIPConfiguration": {
                                 "id": "[concat( resourceId('Microsoft.Network/loadBalancers', parameters('slbName')), '/frontendIPConfigurations/', variables('frontendConfigName'))]"
                             },
-                            "frontendPort": "[parameters('frontendport')]",
-                            "backendPort": "[parameters('backendport')]",
+                            "frontendPort": "[parameters('frontendPort')]",
+                            "backendPort": "[parameters('backendPort')]",
                             "enableFloatingIP": "[variables('dsrBool')]",
                             "idleTimeoutInMinutes": 4,
                             "protocol": "Tcp",
@@ -148,7 +133,6 @@
             },
             "resources": [],
             "dependsOn": [
-                "[parameters('pipName')]"
             ]
         }
     ]

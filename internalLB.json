@@ -27,7 +27,11 @@
             "type": "string"
         },
         "pipName": {
-            "defaultValue": "myPublicIp",
+            "defaultValue": "not used",
+            "type": "string"
+        },
+        "pipSku": {
+            "defaultValue": "not used",
             "type": "string"
         },
         "frontendPort": {

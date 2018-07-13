@@ -14,43 +14,18 @@
             "defaultValue": "serverSubnet",
             "type": "string"
         },
-        "ipAddress": {
-            "defaultValue": "10.0.0.1",
-            "type": "string"
-        },
         "pipName": {
-            "defaultValue": "myPIP",
-            "type": "string"
-        },
-        "pipSku": {
-            "defaultValue": "basic",
+            "defaultValue": "not used, mantained for compatibility",
             "type": "string"
         }
     },
     "variables": {
         "ipConfigName": "[concat(parameters('nicName'),'-ipConfig')]",
-		"apiVersion": "2016-03-30"
+		"apiVersion": "2016-03-30"      
     },
     "resources": [
         {
-            "comments": "Public IP address",
-            "type": "Microsoft.Network/publicIPAddresses",
-            "sku": {
-                "name": "[parameters('pipSku')]",
-                "tier": "Regional"
-            },
-            "name": "[parameters('pipName')]",
-            "apiVersion": "2018-02-01",
-            "location": "[resourceGroup().location]",
-            "properties": {
-                "publicIPAllocationMethod": "[if(equals(parameters('pipSku'), 'basic'), 'Dynamic', 'Static')]",
-                "idleTimeoutInMinutes": 4
-            },
-            "resources": [],
-            "dependsOn": []
-        },
-        {
-			"comments": "NIC created with static IP address",
+			"comments": "NIC created with dynamic IP addresses",
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[parameters('nicName')]",
             "apiVersion": "[variables('apiVersion')]",
@@ -60,11 +35,7 @@
                     {
                         "name": "[variables('ipConfigName')]",
                         "properties": {
-                            "privateIPAddress": "[parameters('ipAddress')]",
-                            "privateIPAllocationMethod": "Static",
-                            "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('pipName'))]"
-                            },
+                            "privateIPAllocationMethod": "dynamic",
                             "subnet": {
                                 "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')), '/subnets/', parameters('subnetName'))]"
                             }
@@ -74,12 +45,10 @@
                 "dnsSettings": {
                     "dnsServers": []
                 },
-                "enableIPForwarding": true
+                "enableIPForwarding": false
             },
             "resources": [],
-            "dependsOn": [
-                "[parameters('pipName')]"
-            ]
+            "dependsOn": []
         }
     ]
 }

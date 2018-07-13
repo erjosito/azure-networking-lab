@@ -28,8 +28,7 @@
         }
     },
     "variables": {
-        "ipConfigName": "[concat(parameters('nicName'),'-ipConfig')]",
-		"apiVersion": "2016-03-30"
+		"networkApiVersion": "2016-03-30"
     },
     "resources": [
         {
@@ -50,15 +49,27 @@
             "dependsOn": []
         },
         {
-			"comments": "NIC created with static IP address",
+			"comments": "NSG with no custom rules, only the default rules",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[concat(parameters('nicName'), '-nsg')]",
+            "apiVersion": "[variables('networkApiVersion')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": []
+            },
+            "resources": [],
+            "dependsOn": []
+        },
+        {
+			"comments": "NIC created with static IP address, no public IP and IP Forwarding",
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[parameters('nicName')]",
-            "apiVersion": "[variables('apiVersion')]",
+            "apiVersion": "[variables('networkApiVersion')]",
             "location": "[resourceGroup().location]",
             "properties": {
                 "ipConfigurations": [
                     {
-                        "name": "[variables('ipConfigName')]",
+                        "name": "[concat(parameters('nicName'), '-ipConfig')]",
                         "properties": {
                             "privateIPAddress": "[parameters('ipAddress')]",
                             "privateIPAllocationMethod": "Static",
@@ -74,11 +85,14 @@
                 "dnsSettings": {
                     "dnsServers": []
                 },
-                "enableIPForwarding": true
+                "enableIPForwarding": true,
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('nicName'), '-nsg'))]"
+                }
             },
             "resources": [],
             "dependsOn": [
-                "[parameters('pipName')]"
+                "[concat(parameters('nicName'), '-nsg')]"
             ]
         }
     ]

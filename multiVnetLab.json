@@ -46,8 +46,17 @@
             ],
             "metadata": { "description": "Type of VM to optionally create in the first subnet in every vnet"}
 		},
+        "vmSize": {
+            "defaultValue": "Standard_B1s",
+            "type": "string"
+        },
+        "createPip": {
+            "defaultValue": "yes",
+            "type": "string",
+            "allowedValues": ["yes", "no"]
+        },
         "adminUsername": {
-            "defaultValue": "jose",
+            "defaultValue": "lab-user",
             "type": "string",
             "metadata": { "description": "Username for the VMs"}
 		},
@@ -59,7 +68,6 @@
     },
  
     "variables": {
-        "baseRepoURL": "https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/",
 		"apiVersion": "2016-03-30"
 	},
 
@@ -88,7 +96,7 @@
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
-					"uri": "[concat(variables('baseRepoURL'), 'vnet3Subnets.json')]",
+					"uri": "[uri(deployment().properties.templateLink.uri, 'vnet3Subnets.json')]",
 					"contentVersion": "1.0.0.0"
 				},
 				"parameters":  {
@@ -100,6 +108,9 @@
                     "createGw": { "value": "[parameters('createGw')]"},
                     "enableBgp": { "value": "[parameters('enableBgp')]"},
                     "createVm": { "value": "[parameters('createVm')]"},
+                    "vmType": { "value": "[parameters('vmType')]"},
+                    "vmSize": { "value": "[parameters('vmSize')]"},
+                    "createPip": { "value": "[parameters('createPip')]"},
                     "adminUsername": { "value": "[parameters('adminUsername')]"},
                     "adminPassword": { "value": "[parameters('adminPassword')]"}
                 }
