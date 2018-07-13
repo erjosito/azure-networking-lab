@@ -28,11 +28,13 @@
 
 - [Lab 7: Advanced HTTP-based probes](#lab7)
 
+- [Lab 8: NVAs in a VMSS (work in progress)](#lab8)
+
 **[Part 3: VPN gateway](#part3)**
 
-- [Lab 8: Spoke-to-Spoke communication over the VPN gateway](#lab8)
+- [Lab 9: Spoke-to-Spoke communication over the VPN gateway](#lab9)
 
-- [Lab 9: VPN connection to the Hub Vnet](#lab9)
+- [Lab 10: VPN connection to the Hub Vnet](#lab10)
 
 [End the lab](#end)
 
@@ -76,7 +78,7 @@ Along this lab some variables will be used, that might (and probably should) loo
 | Azure region | westeuropa |
 
 
-As tip, if you want to do the VPN lab, it might be beneficial to run the commands in Lab8 Step1 as you are doing the previous labs, so that you don’t need to wait for 45 minutes (that is more or less the time it takes to provision VPN gateways) when you arrive to Lab8.
+As tip, if you want to do the VPN lab, it might be beneficial to run the commands in [Lab9](#lab9) Step1 as you are doing the previous labs, so that you don’t need to wait for 45 minutes (that is more or less the time it takes to provision VPN gateways) when you arrive to [Lab9](#lab9).
  
 ## Introduction to Azure Networking <a name="intro"></a>
 
@@ -429,7 +431,7 @@ westeurope  vnet2-subnet1  Succeeded            vnetTest
 {
   "disableBgpRoutePropagation": null,
   "etag": null,
-  "id": "/subscriptions/e7da9914-9b05-4891-893c-546cb7b0422e/resourceGroups/vnetTest/providers/Microsoft.Network/routeTables/vnet1-subnet1",
+  "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/routeTables/vnet1-subnet1",
   "location": null,
   "name": null,
   "provisioningState": null,
@@ -446,7 +448,7 @@ westeurope  vnet2-subnet1  Succeeded            vnetTest
 {
   "disableBgpRoutePropagation": null,
   "etag": null,
-  "id": "/subscriptions/e7da9914-9b05-4891-893c-546cb7b0422e/resourceGroups/vnetTest/providers/Microsoft.Network/routeTables/vnet2-subnet1",
+  "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/routeTables/vnet2-subnet1",
   "location": null,
   "name": null,
   "provisioningState": null,
@@ -1111,7 +1113,7 @@ bnet1",
 {
   "addressPrefix": "10.3.1.0/24",
   "etag": "W/\"6174bb9f-38cc-46c9-94c7-c9edf4752dbc\"",
-  "id": "/subscriptions/e7da9914-9b05-4891-893c-546cb7b0422e/resourceGroups/vnetTest/providers/Microsoft.Network/routeTables/vnet1-subnet1/routes/vnet3subnet1",
+  "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/routeTables/vnet1-subnet1/routes/vnet3subnet1",
   "name": "vnet3subnet1",
   "nextHopIpAddress": "10.4.2.100",
   "nextHopType": "VirtualAppliance",
@@ -1146,7 +1148,7 @@ lab-user@myVnet3-vm1:~$ <b>curl ifconfig.co</b>
 {
   "addressPrefix": "0.0.0.0/0",
   "etag": "W/\"13f07168-d40f-473d-9cd1-1d67464fcaf2\"",
-  "id": "/subscriptions/e7da9914-9b05-4891-893c-546cb7b0422e/resourceGroups/vnetTest/providers/Microsoft.Network/routeTables/vnet3-subnet1/routes/default",
+  "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/routeTables/vnet3-subnet1/routes/default",
   "name": "default",
   "nextHopIpAddress": "10.4.2.100",
   "nextHopType": "VirtualAppliance",
@@ -1415,13 +1417,11 @@ Now the probe for the internal load balancer will fail even if the internal inte
 Advanced HTTP probes can be used to verify additional information, so that firewalls are taken out of rotation whenever complex failure scenarios occur, such as the failure of an upstream interface, or a certain process not being running in the system (for example if the firewall daemon is not running).
 
 
-# Part 3: NVAs with a Virtual Machine Scale Set (VMSS)</a>
+## Lab 8: NVAs in a VMSS cluster (work in progress!) <a name="lab8"></a>
+
+**Important note**: Lab 8 is not fully working yet, so you might want to skip to [Lab9](#lab9).
 
 You might be wondering how to scale the NVA cluster beyond 2 appliances. Using the LB schema from previous labs, you can do it easily. But how to scale out (and back in) the NVA cluster automatically, whenever the load requires it? In this lab we are going to explore placing the NVAs in Azure Virtual Machine Scale Sets (VMSS), so that autoscaling can be accomplished.
-
-
-
-## Lab 8: NVAs in a VMSS cluster <a name="lab8"></a>
 
 In this lab we will deploy a VMSS containing Linux appliances as the ones we saw in the previous labs.
 
@@ -1457,7 +1457,7 @@ nva-vmss   vnetTest         westeurope                    2  True             Ma
            3  True                  westeurope  nva-vmss_3  Succeeded            VNETTEST         c2c239b2-ae11-456e-958a-ff26b5b05858
 </pre>
 
-**Step 3.** Let us focus now on the new load balancer:
+**Step 3.** Let us focus now on the new load balancer. Make sure that there is an address pool associated to the internal load balancer, and that the VMs in our scale set are associated with it:
 
 
 <pre lang="...">
@@ -1469,15 +1469,88 @@ westeurope  linuxnva-slb-int       Succeeded            vnetTest         b8be7ef
 <b>westeurope  linuxnva-vmss-slb-int  Succeeded            vnetTest         8056b7bc-ea82-4911-94a7-2c37634ad757</b>
 </pre>
 
+<pre lang="...">
+<b>az network lb address-pool list --lb-name linuxnva-vmss-slb-int -o table</b>
+Name                          ProvisioningState    ResourceGroup
+----------------------------  -------------------  ---------------
+linuxnva-vmss-slbBackend-int  Succeeded            vnetTest
+<b>az network lb address-pool show --lb-name linuxnva-vmss-slb-int --name linuxnva-vmss-slbBackend-int --query backendIpConfigurations[].id</b>
+[
+  "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Compute/virtualMachineScaleSets/nva-vmss/virtualMachines/0/networkInterfaces/nic0/ipConfigurations/ipconfig0",
+  "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Compute/virtualMachineScaleSets/nva-vmss/virtualMachines/1/networkInterfaces/nic0/ipConfigurations/ipconfig0"
+]
+</pre>
+
+**Step 4.** A very important piece of information that we still need about the load balancer is its virtual IP address, since this is going to be the next-hop for our routes:
+
+<pre lang="...">
+<b>az network lb frontend-ip list --lb-name linuxnva-vmss-slb-int -o table</b>
+Name              PrivateIpAddress    PrivateIpAllocationMethod    ProvisioningState    ResourceGroup
+----------------  ------------------  ---------------------------  -------------------  ---------------
+myFrontendConfig  <b>10.4.2.200</b>          Static                       Succeeded            vnetTest
+</pre>
+
+
+**Step 5.** Lastly, let us have a look at the rules configured. As you can see, the ARM template preconfigured a DSR SSH rule. DSR does not make a difference here. The reason is because traffic will not be addressed at the rule, but the rule will only be used as a next-hop in UDRs. Therefore, there is no IP address in the packet to NAT or not NAT.
+
+<pre lang="...">
+<b>az network lb rule list --lb-name linuxnva-vmss-slb-int -o table</b>
+  BackendPort  EnableFloatingIp      FrontendPort    IdleTimeoutInMinutes  LoadDistribution    Name    Protocol    ProvisioningState    ResourceGroup
+-------------  ------------------  --------------  ----------------------  ------------------  ------  ----------  -------------------  ---------------
+           22  True                            <b>22</b>                       4  Default             <b>ssh</b>     Tcp         Succeeded            vnetTest
+</pre>
+
+**Step 6.** Now let us update the routes in Vnet1 and Vnet2 so that they point to the VMSS VIP. The next hop for both will be the virtual IP address of the load balancer, that we verified in Step 7.
+
+<pre lang="...">
+<b>az network route-table route update --route-table-name vnet1-subnet1 -n vnet2 --next-hop-ip-address 10.4.2.200</b>
+{
+  "addressPrefix": "10.2.0.0/16",
+  "etag": "W/\"dabc15c9-3a7e-4e8b-bc7f-c8bba239bb6e\"",
+  "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/routeTables/vnet1-subnet1/routes/vnet2",
+  "name": "vnet2",
+  "nextHopIpAddress": "10.4.2.100",
+  "nextHopType": "VirtualAppliance",
+  "provisioningState": "Succeeded",
+  "resourceGroup": "vnetTest"
+}
+</pre>
+
+<pre lang="...">
+<b>az network route-table route update --route-table-name vnet2-subnet1 -n vnet1 --next-hop-ip-address 10.4.2.200</b>
+{
+  "addressPrefix": "10.1.0.0/16",
+  "etag": "W/\"f7a2d8ed-4588-496f-9e25-3bafbb3ba7ee\"",
+  "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/routeTables/vnet2-subnet1/routes/vnet1",
+  "name": "vnet1",
+  "nextHopIpAddress": "10.4.2.100",
+  "nextHopType": "VirtualAppliance",
+  "provisioningState": "Succeeded",
+  "resourceGroup": "vnetTest"
+}
+</pre>
+
+**Step 14.** At this point connectivity between the VMs in vnet1 and vnet2 should flow through the VMSS. Try to connect from our jump host (in vnet1) to the VM in vnet2, 10.2.1.4. The SSH traffic should be intercepted by the UDRs and sent over to the LB. The LB would then load balance it over the NVAs in the VMSS, that would source NAT it (to make sure to attract the return traffic) and send it forward to the VM in myVnet2.
+
+<pre lang="...">
+lab-user@myVnet1-vm2:~$ <b>ssh 10.2.1.4</b>
+ssh: connect to host 10.2.1.4 port 22: Connection timed out
+lab-user@myVnet1-vm1:~$
+</pre> 
+
 
 ### What we have learnt
+
+In previous labs we saw that NVAs can be clustered in a farm behind a load balancer. This lab has taken this concept a step further, converting that farm into a Virtual Machine Scale Set, that has the properties of autoscaling up and down.
+
+The reason why this lab in particular is not working yet is because when the VMs are deployed, they are automatically associated to the standard LB, and therefore have no Internet connectivity any more. As a consequence they cannot download the script that configures the VM to perform as NVA.
 
 
 
 # Part 3: VPN to external site <a name="part3"></a>
 
  
-## Lab 8: Spoke-to-Spoke communication over VPN gateway (optional) <a name="lab8"></a>
+## Lab 9: Spoke-to-Spoke communication over VPN gateway (optional) <a name="lab"></a>
 
 **Important Note:** provisioning of the VPN gateways will take up to 45 minutes to complete
 
@@ -1598,7 +1671,7 @@ VPN gateways can also be used for spoke-to-spoke communications, instead of NVAs
 
 
  
-## Lab 9: VPN connection to the Hub Vnet (optional) <a name="lab9"></a>
+## Lab 10: VPN connection to the Hub Vnet (optional) <a name="lab10"></a>
 
 
 **Step 1.**	Make sure that the VPN gateways have different Autonomous System Numbers (ASN) configured. You can check the ASN with this command, back in your Azure CLI command prompt:
