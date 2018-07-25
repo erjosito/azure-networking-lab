@@ -1299,7 +1299,7 @@ Lastly, standard public IP addresses will be required in the NVAs, since otherwi
 
 
  
-## Lab 7: Advanced HTTP-based probes (optional)
+## Lab 7: Advanced HTTP-based probes (optional)  <a name="lab7"></a>
 
 Standard TCP probes only verify that the interface being probed answers to TCP sessions. But what if it is the other interface that has an issue? What good does it make if VMs send all traffic to a Network Virtual Appliance with a perfectly working internal interface (eth0 in our lab), but eth1 is down, and therefore that NVA has no Internet access whatsoever?
 
