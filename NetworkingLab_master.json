@@ -75,6 +75,7 @@
             "vmType": { "value": "ubuntu" },
             "vmCount": { "value": 2 },
             "vmName": { "value": "linuxnva" },
+            "vmSize": { "value": "[parameters('vmSize')]" },
             "vnetName": { "value": "myVnet4" },
             "storageAccountName": { "value": "[variables('storageAccountName')]" },
             "subnet0Name": { "value": "myVnet4subnet2" },
