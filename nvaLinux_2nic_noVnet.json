@@ -84,7 +84,7 @@
             "defaultValue": "basic",
             "type": "string",
             "allowedValues": [ "basic","standard" ],
-            "metadata": { "description": "Whether Load Balancers should be Basic or Standard (preview)" }
+            "metadata": { "description": "Whether Load Balancers should be Basic or Standard" }
         }
     },
     "variables": {

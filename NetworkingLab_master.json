@@ -97,7 +97,7 @@
             "csr": "[uri(deployment().properties.templateLink.uri, 'nva_2nic_noVnet.json')]",
             "asa": "[uri(deployment().properties.templateLink.uri, 'nva_2nic_noVnet.json')]",
             "ubuntu": "[uri(deployment().properties.templateLink.uri, 'nvaLinux_2nic_noVnet.json')]",
-            "ubuntuScaleSet": "[uri(deployment().properties.templateLink.uri, 'nvaLinux_1nic_noVnet_ScaleSet_ILBonly.json')]"
+            "ubuntuScaleSet": "[uri(deployment().properties.templateLink.uri, 'nvaLinux_1nic_noVnet_ScaleSet.json')]"
         },
         "NVATemplateUriYesNo": {
             "yes": "[variables('NVATemplateUri')[parameters('nvaType')]]",
