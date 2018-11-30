@@ -7,11 +7,11 @@
             "type": "string"
         },
         "vnetName": {
-            "defaultValue": "myVnet",
+            "defaultValue": "myVnet4",
             "type": "string"
         },
         "storageAccountName": {
-            "defaultValue": "[concat('storage',uniqueString(resourceGroup().id))]",
+            "defaultValue": "not used",
             "type": "string"
         },
         "vmType": {
@@ -24,11 +24,15 @@
             "type": "int"
         },
         "vmName": {
-            "defaultValue": "[concat('nva',uniqueString(resourceGroup().id))]",
+            "defaultValue": "linuxnva-vmss",
             "type": "string"
         },
         "vmSSName": {
-            "defaultValue": "[concat('nvaVMSS',uniqueString(resourceGroup().id))]",
+            "defaultValue": "nva-vmss",
+            "type": "string"
+        },
+        "vmSize": {
+            "defaultValue": "Standard_B2ms",
             "type": "string"
         },
         "scaleSettingsName": {
@@ -36,7 +40,7 @@
             "type": "string"
         },
         "vmUsr": {
-            "defaultValue": "myadmin",
+            "defaultValue": "lab-user",
             "type": "string"
         },
         "vmPwd": {
@@ -48,11 +52,11 @@
             "type": "string"
         },
         "subnet0Name": {
-            "defaultValue": "subnet1",
+            "defaultValue": "myVnet4subnet2",
             "type": "string"
         },
         "subnet1Name": {
-            "defaultValue": "subnet2",
+            "defaultValue": "myVnet4subnet3",
             "type": "string"
         },
         "ip0": {
@@ -76,7 +80,7 @@
             "metadata": { "description": "Command to run the script" }            
         },
 		"deployLBYesNo": {
-			"defaultValue": "no",
+			"defaultValue": "yes",
 			"type": "string"
 		},
         "lbSku": {
@@ -95,7 +99,7 @@
                 "product": "UbuntuServer",
                 "publisher": "Canonical",
                 "sku": "16.04.0-LTS",
-                "vmSize": "Standard_D2_v2"
+                "vmSize": "[parameters('vmSize')]"
             }
         },
         "settings": "[variables('settingsTable')[parameters('vmType')]]",
@@ -103,7 +107,7 @@
         "slbBackendName": "[concat(parameters('vmName'), '-slbBackend')]",
         "slbPipName": "[concat(parameters('vmName'), '-slbPip')]",
         "ipPrefix": "10.4.2",
-        "vipSuffix": "100",
+        "vipSuffix": "200",
         "slbSubnet": "[parameters('subnet0Name')]",
 		"deployLBTemplate": {
 			"yes": "[uri(deployment().properties.templateLink.uri, 'slb.json')]",

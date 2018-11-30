@@ -7,7 +7,7 @@
             "type": "string"
         },
         "vnetName": {
-            "defaultValue": "myVnet",
+            "defaultValue": "myVnet4",
             "type": "string"
         },
         "storageAccountName": {
