@@ -107,7 +107,7 @@
         },
 		{
             "comments": "Azure Load Balancer, Standard SKU, internal",
-            "condition": "[and(equals(parameters('lbSku'), 'standard'), equals(parameters('externalInternal'), 'internal'))]",
+            "condition": "[equals(parameters('lbSku'), 'standard'))]",
 			"name": "AzureLBstandard",
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2017-05-10",

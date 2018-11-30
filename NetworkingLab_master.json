@@ -40,7 +40,7 @@
             "defaultValue": "standard",
             "type": "string",
             "allowedValues": [ "basic","standard" ],
-            "metadata": { "description": "Whether internal Load Balancers should be Basic or Standard" }
+            "metadata": { "description": "Whether Load Balancers should be Basic or Standard" }
         },
         "vmSize": {
             "defaultValue": "Standard_B1s",
