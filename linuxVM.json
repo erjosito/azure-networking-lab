@@ -97,10 +97,8 @@
                     "osDisk": {
                         "osType": "Linux",
                         "createOption": "FromImage",
-                        "diskSizeGB": 31,
-                        "managedDisk": {
-                            "storageAccountType": "Standard_LRS"
-                        }                    },
+                        "diskSizeGB": 31
+                    },
                     "dataDisks": []
                 },
                 "osProfile": {
