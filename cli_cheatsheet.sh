@@ -41,5 +41,5 @@ az network lb outbound-rule create --lb-name linuxnva-vmss-slb-ext -n myoutbound
 # Verify LB
 az network lb address-pool list --lb-name linuxnva-vmss-slb-int -o table --query [].backendIpConfigurations[].id
 az network lb address-pool list --lb-name linuxnva-vmss-slb-ext -o table --query [].backendIpConfigurations[].id
-az network lb rule list --lb-name linuxnva-vmss-slb-ext -o table
+az network lb rule list --lb-name linuxnva-vmss-slb-int -o table
 az network lb outbound-rule list --lb-name linuxnva-vmss-slb-ext -o table

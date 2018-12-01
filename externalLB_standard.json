@@ -86,7 +86,7 @@
             "comments": "External Load Balancer",
             "type": "Microsoft.Network/loadBalancers",
             "name": "[parameters('slbName')]",
-            "apiVersion": "2017-08-01",
+            "apiVersion": "2018-08-01",
             "location": "[resourceGroup().location]",
             "sku": {
                 "name": "Standard"
@@ -115,7 +115,7 @@
                 "inboundNatRules": [],
                 "outboundNatRules": [
                     {
-                        "name": "myoutboundnat",
+                        "name": "myrule",
                         "properties": {
                             "allocatedOutboundPorts": 10000,
                             "protocol": "All",
