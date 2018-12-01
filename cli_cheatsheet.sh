@@ -3,7 +3,7 @@
 # Lab initialization
 az group create -n vnetTest -l westeurope
 az configure --defaults group=vnetTest
-url=https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/NetworkingLab_master.json
+url='https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/NetworkingLab_master.json'
 # Option 1: default
 az group deployment create -n netLabDeployment --template-uri $url -g vnetTest --parameters '{"adminPassword":{"value":"Microsoft123!"}}'
 # Option 2: with Vnet 3 in a separate location
@@ -35,6 +35,7 @@ az network lb rule create --backend-pool-name linuxnva-slbBackend-int --protocol
 # az network lb outbound-rule create --lb-name linuxnva-slb-ext -n myoutboundnat --frontend-ip-configs myFrontendConfig --protocol All --idle-timeout 15 --outbound-ports 10000 --address-pool inuxnva-slbBackend-ext
 
 # VMSS
-az group deployment create -n vmssDeployment --template-uri https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/nvaLinux_1nic_noVnet_ScaleSet.json --parameters '{"vmPwd":{"value":"Microsoft123!"}}'
+vmss_url='https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/nvaLinux_1nic_noVnet_ScaleSet.json'
+az group deployment create -n vmssDeployment --template-uri $vmss_url --parameters '{"vmPwd":{"value":"Microsoft123!"}}'
 az network lb outbound-rule create --lb-name linuxnva-vmss-slb-ext -n myoutboundnat --frontend-ip-configs myFrontendConfig --protocol All --idle-timeout 15 --outbound-ports 10000 --address-pool linuxnva-vmss-slbBackend-ext
 

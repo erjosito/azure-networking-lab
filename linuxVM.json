@@ -125,8 +125,7 @@
             ]
         },
 		{
-            "comments": "Create NIC for the VM with public IP",
-            "condition": "[equals(parameters('createPip'), 'yes')]",
+            "comments": "Create NIC for the VM with or without public IP",
 			"name": "[variables('nicName')]",
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2016-06-01",
