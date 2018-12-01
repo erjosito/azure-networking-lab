@@ -95,12 +95,8 @@
                         "version": "latest"
                     },
                     "osDisk": {
-                        "name": "[parameters('vmName')]",
                         "createOption": "FromImage",
-                        "vhd": {
-                            "uri": "[concat('https', '://', parameters('storageAccountName'), '.blob.core.windows.net', '/vhds/', variables('diskName'), uniqueString(resourceGroup().id),'.vhd')]"
-                        },
-                        "caching": "ReadWrite"
+                        "diskSizeGB": 31
                     },
                     "dataDisks": []
                 },
