@@ -59,7 +59,7 @@
             "metadata": { "description": "whether Direct Server Return, aka Floating IP, is enabled or not" }
         },
         "lbSku": {
-            "defaultValue": "basic",
+            "defaultValue": "standard",
             "type": "string",
             "allowedValues": [ "basic","standard" ],
             "metadata": { "description": "Whether Load Balancers should be Basic or Standard" }
@@ -72,7 +72,11 @@
 			"external": "[uri(deployment().properties.templateLink.uri, 'externalLB.json')]"
 		},
 		"BasicLBTemplateUri": "[variables('deployBasicLBTemplate')[parameters('externalInternal')]]",
-		"LBStandardTemplateUri": "[uri(deployment().properties.templateLink.uri, 'internalLB_standard.json')]"
+		"deployStandardLBTemplate": {
+			"internal": "[uri(deployment().properties.templateLink.uri, 'internalLB_standard.json')]",
+			"external": "[uri(deployment().properties.templateLink.uri, 'externalLB.json')]"
+		},
+        "StandardLBTemplateUri": "[variables('deployStandardLBTemplate')[parameters('externalInternal')]]",
     },
 
 
@@ -106,7 +110,7 @@
 			}
         },
 		{
-            "comments": "Azure Load Balancer, Standard SKU, internal",
+            "comments": "Azure Load Balancer, Standard SKU, internal or external",
             "condition": "[equals(parameters('lbSku'), 'standard')]",
 			"name": "AzureLBstandard",
 			"type": "Microsoft.Resources/deployments",
@@ -114,7 +118,7 @@
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
-					"uri": "[variables('LBStandardTemplateUri')]",
+					"uri": "[variables('StandardLBTemplateUri')]",
 					"contentVersion": "1.0.0.0"
 				},
 				"parameters":  {
