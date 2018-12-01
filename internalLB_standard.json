@@ -96,17 +96,19 @@
                 ],
                 "loadBalancingRules": [
                     {
-                        "name": "[parameters('ruleName')]",
+                        "name": "HARule",
                         "properties": {
                             "frontendIPConfiguration": {
                                 "id": "[concat( resourceId('Microsoft.Network/loadBalancers', parameters('slbName')), '/frontendIPConfigurations/', variables('frontendConfigName'))]"
                             },
-                            "frontendPort": "[parameters('frontendPort')]",
-                            "backendPort": "[parameters('backendPort')]",
-                            "enableFloatingIP": "[variables('dsrBool')]",
+                            "frontendPort": 0,
+                            "backendPort": 0,
+                            "enableFloatingIP": true,
                             "idleTimeoutInMinutes": 4,
-                            "protocol": "Tcp",
+                            "protocol": "All",
+                            "enableTcpReset": false,
                             "loadDistribution": "Default",
+                            "disableOutboundSnat": false,
                             "backendAddressPool": {
                                 "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('slbName')), '/backendAddressPools/', parameters('backendConfigName'))]"
                             },

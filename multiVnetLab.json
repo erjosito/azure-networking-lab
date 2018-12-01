@@ -64,6 +64,16 @@
             "defaultValue": null,
             "type": "securestring",
             "metadata": { "description": "Password for the VMs"}
+        },
+        "location2ary": {
+            "defaultValue": "westus2",
+            "type": "string",
+            "metadata": { "description": "Secondary location for some of the subnets" }
+        },
+        "location2aryVnets": {
+            "defaultValue": [],
+            "type": "array",
+            "metadata": { "description": "Array with Vnets to be deployed in the 2ary location" }
         }
     },
  
@@ -112,7 +122,8 @@
                     "vmSize": { "value": "[parameters('vmSize')]"},
                     "createPip": { "value": "[parameters('createPip')]"},
                     "adminUsername": { "value": "[parameters('adminUsername')]"},
-                    "adminPassword": { "value": "[parameters('adminPassword')]"}
+                    "adminPassword": { "value": "[parameters('adminPassword')]"},
+                    "location": {"value": "[if(contains(parameters('location2aryVnets'), copyIndex(1)), parameters('location2ary'), resourceGroup().location)]"}
                 }
             },
             "dependsOn": [

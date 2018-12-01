@@ -3,7 +3,12 @@
 # Lab initialization
 az group create -n vnetTest -l westeurope
 az configure --defaults group=vnetTest
-az group deployment create -n netLabDeployment --template-uri https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/NetworkingLab_master.json -g vnetTest --parameters '{"createVPNgw":{"value":"no"}, "adminUsername":{"value":"lab-user"}, "adminPassword":{"value":"Microsoft123!"}}'
+url=https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/NetworkingLab_master.json
+# Option 1: default
+az group deployment create -n netLabDeployment --template-uri $url -g vnetTest --parameters '{"adminPassword":{"value":"Microsoft123!"}}'
+# Option 2: with Vnet 3 in a separate location
+az group deployment create -n netLabDeployment --template-uri $url -g vnetTest --parameters '{"adminPassword":{"value":"Microsoft123!"}, "location2ary":{"value": "westus2"}, "location2aryVnets":{"value": [3]}}'
+
 
 # Verify LB SKUs
 az network lb list --query [].[name,sku.name] -o table
@@ -25,9 +30,11 @@ az network lb rule delete --lb-name linuxnva-slb-int -n ssh
 az network lb rule create --backend-pool-name linuxnva-slbBackend-int --protocol all --backend-port 0 --frontend-port 0 --frontend-ip-name myFrontendConfig --lb-name linuxnva-slb-int --name HARule --floating-ip true --probe-name myProbe
 
 # Configure ELB (outbound NAT)
-az network nic ip-config address-pool add --ip-config-name linuxnva-1-nic0-ipConfig --nic-name linuxnva-1-nic0 --address-pool linuxnva-slbBackend-ext --lb-name linuxnva-slb-ext
-az network nic ip-config address-pool add --ip-config-name linuxnva-2-nic0-ipConfig --nic-name linuxnva-2-nic0 --address-pool linuxnva-slbBackend-ext --lb-name linuxnva-slb-ext
-az network lb outbound-rule create --lb-name linuxnva-slb-ext -n myoutboundnat --frontend-ip-configs myFrontendConfig --protocol All --idle-timeout 15 --outbound-ports 10000 --address-pool inuxnva-slbBackend-ext
+# az network nic ip-config address-pool add --ip-config-name linuxnva-1-nic0-ipConfig --nic-name linuxnva-1-nic1 --address-pool linuxnva-slbBackend-ext --lb-name linuxnva-slb-ext
+# az network nic ip-config address-pool add --ip-config-name linuxnva-2-nic0-ipConfig --nic-name linuxnva-2-nic1 --address-pool linuxnva-slbBackend-ext --lb-name linuxnva-slb-ext
+# az network lb outbound-rule create --lb-name linuxnva-slb-ext -n myoutboundnat --frontend-ip-configs myFrontendConfig --protocol All --idle-timeout 15 --outbound-ports 10000 --address-pool inuxnva-slbBackend-ext
 
 # VMSS
 az group deployment create -n vmssDeployment --template-uri https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/nvaLinux_1nic_noVnet_ScaleSet.json --parameters '{"vmPwd":{"value":"Microsoft123!"}}'
+az network lb outbound-rule create --lb-name linuxnva-vmss-slb-ext -n myoutboundnat --frontend-ip-configs myFrontendConfig --protocol All --idle-timeout 15 --outbound-ports 10000 --address-pool linuxnva-vmss-slbBackend-ext
+

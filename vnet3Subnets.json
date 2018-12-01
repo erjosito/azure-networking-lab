@@ -2,6 +2,10 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "location": {
+            "defaultValue": "[resourceGroup().location]",
+            "type": "string"
+        },
         "vnetName": {
             "defaultValue": "myVnet",
             "type": "string"
@@ -67,66 +71,43 @@
         }
     },
     "variables": {
-        "apiVersion": "2016-03-30",
+        "networkApiVersion": "2016-03-30",
+        "deploymentApiVersion": "2016-09-01",
         "vnetSpace": "[concat(parameters('vnetOctets12'), '0.0/16')]",
-        "gwTemplateUriTable": {
-            "yes": "[uri(deployment().properties.templateLink.uri, 'vpnGw.json')]",
-            "no": "[uri(deployment().properties.templateLink.uri, 'nothing.json')]"
+        "gwTemplateUri": "[uri(deployment().properties.templateLink.uri, 'vpnGw.json')]",
+        "gwTemplateParam": {
+            "vnetName": { "value": "[parameters('vnetName')]" },
+            "location": { "value": "[parameters('location')]" },            
+            "gwName": { "value": "[parameters('gwName')]" },
+            "PIPName": { "value": "[parameters('gwPIPName')]" },
+            "enableBgp": { "value": "[parameters('enableBgp')]" }                
         },
-        "gwTemplateUri": "[variables('gwTemplateUriTable')[parameters('createGw')]]",
-        "gwTemplateParamTable": {
-            "yes": {
-                "vnetName": { "value": "[parameters('vnetName')]" },
-                "gwName": { "value": "[parameters('gwName')]" },
-                "PIPName": { "value": "[parameters('gwPIPName')]" },
-                "enableBgp": { "value": "[parameters('enableBgp')]" }                
-            },
-            "no": {
-            }
+        "gwPipUri": "[uri(deployment().properties.templateLink.uri, 'pipDynamic.json')]",
+        "gwPipParam": {
+            "pipName": { "value": "[parameters('gwPIPName')]" },
+            "location": { "value": "[parameters('location')]" }            
         },
-        "gwTemplateParam": "[variables('gwTemplateParamTable')[parameters('createGw')]]",
-        "gwPipUriTable": {
-            "yes": "[uri(deployment().properties.templateLink.uri, 'pipDynamic.json')]",
-            "no": "[uri(deployment().properties.templateLink.uri, 'nothing.json')]"
-        },
-        "gwPipUri": "[variables('gwPipUriTable')[parameters('createGw')]]",
-        "gwPipParamTable": {
-            "yes": {
-                "pipName": { "value": "[parameters('gwPIPName')]" }
-            },
-            "no": {
-            }
-        },
-        "gwPipParam": "[variables('gwPipParamTable')[parameters('createGw')]]",
-        "vmTemplateUriTable": {
-            "yes": "[uri(deployment().properties.templateLink.uri, 'linuxVM.json')]",
-            "no": "[uri(deployment().properties.templateLink.uri, 'nothing.json')]"
-        },
+        "vmTemplateUri": "[uri(deployment().properties.templateLink.uri, 'linuxVM.json')]",
         "vmName": "[concat(parameters('vnetName'), '-vm')]",
-        "vmTemplateUri": "[variables('vmTemplateUriTable')[parameters('createVm')]]",
-        "vmTemplateParamTable": {
-            "yes": {
-                "vmName": { "value": "[concat(variables('vmName'), '1')]" },
-                "vnetName": { "value": "[parameters('vnetName')]" },
-                "subnetName": { "value": "[concat(parameters('subnetNamePrefix'), '1')]" },
-                "vmType": { "value": "[parameters('vmType')]"},
-                "vmSize": { "value": "[parameters('vmSize')]"},
-                "createPip": { "value": "[parameters('createPip')]"},
-                "adminUsername": { "value": "[parameters('adminUsername')]" },
-                "adminPassword": { "value": "[parameters('adminPassword')]" }
-            },
-            "no": {
-            }
-        },
-        "vmTemplateParam": "[variables('vmTemplateParamTable')[parameters('createVm')]]"
+        "vmTemplateParam": {
+            "vmName": { "value": "[concat(variables('vmName'), '1')]" },
+            "location": { "value": "[parameters('location')]" },            
+            "vnetName": { "value": "[parameters('vnetName')]" },
+            "subnetName": { "value": "[concat(parameters('subnetNamePrefix'), '1')]" },
+            "vmType": { "value": "[parameters('vmType')]"},
+            "vmSize": { "value": "[parameters('vmSize')]"},
+            "createPip": { "value": "[parameters('createPip')]"},
+            "adminUsername": { "value": "[parameters('adminUsername')]" },
+            "adminPassword": { "value": "[parameters('adminPassword')]" }
+        }
     },
     "resources": [
         {
             "comments": "Create Vnet with three subnets and one gateway subnet",
             "type": "Microsoft.Network/virtualNetworks",
             "name": "[parameters('vnetName')]",
-            "apiVersion": "[variables('apiVersion')]",
-            "location": "[resourceGroup().location]",
+            "apiVersion": "[variables('networkApiVersion')]",
+            "location": "[parameters('location')]",
             "properties": {
                 "addressSpace": {
                     "addressPrefixes": [
@@ -165,9 +146,10 @@
         },
 		{
 			"comments": "Optionally create a public IP address, if createGw equals 'yes'",
+            "condition": "[equals(parameters('createGw'), 'yes')]",
 			"name": "[parameters('gwPIPName')]",
             "type": "Microsoft.Resources/deployments",
-			"apiVersion": "2016-09-01",
+			"apiVersion": "[variables('deploymentApiVersion')]",
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
@@ -181,10 +163,11 @@
             ]
         },
 		{
-			"comments": "Optionally create VPN gateway, if createGw equals 'yes'",
+            "comments": "Optionally create VPN gateway, if createGw equals 'yes'",
+            "condition": "[equals(parameters('createGw'), 'yes')]",
 			"name": "[concat(parameters('vnetName'), 'VpnGw')]",
             "type": "Microsoft.Resources/deployments",
-			"apiVersion": "2016-09-01",
+			"apiVersion": "[variables('deploymentApiVersion')]",
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
@@ -199,10 +182,11 @@
             ]
         },
 		{
-			"comments": "Optionally create a VM in first subnet, if createVm equals 'yes'",
+            "comments": "Optionally create a VM in first subnet, if createVm equals 'yes'",
+            "condition": "[equals(parameters('createVm'), 'yes')]",
 			"name": "[variables('vmName')]",
             "type": "Microsoft.Resources/deployments",
-			"apiVersion": "2016-09-01",
+			"apiVersion": "[variables('deploymentApiVersion')]",
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {

@@ -6,6 +6,10 @@
             "defaultValue": "myVnet",
             "type": "string"
         },
+        "location": {
+            "defaultValue": "[resourceGroup().location]",
+            "type": "string"
+        },
         "gwName": {
             "defaultValue": "myGw",
             "type": "string",
@@ -24,7 +28,7 @@
         }
     },
     "variables": {
-        "apiVersion": "2016-03-30",
+        "networkApiVersion": "2016-09-01",
         "string2bool": {
             "true": true,
             "false": false
@@ -33,10 +37,10 @@
     "resources": [
         {
             "comments": "Create VPN gateway",
-            "apiVersion": "2016-09-01",
+            "apiVersion": "[variables('networkApiVersion')]",
             "type": "Microsoft.Network/virtualNetworkGateways",
             "name": "[parameters('gwName')]",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "properties": {
                 "ipConfigurations": [
                     {

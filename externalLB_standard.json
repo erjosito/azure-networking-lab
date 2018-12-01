@@ -113,7 +113,25 @@
                 "probes": [
                 ],
                 "inboundNatRules": [],
-                "outboundNatRules": [],
+                "outboundNatRules": [
+                    {
+                        "name": "myoutboundnat",
+                        "properties": {
+                            "allocatedOutboundPorts": 10000,
+                            "protocol": "All",
+                            "enableTcpReset": false,
+                            "idleTimeoutInMinutes": 15,
+                            "backendAddressPool": {
+                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('slbName')), '/backendAddressPools/', parameters('backendConfigName'))]"
+                            },
+                            "frontendIPConfigurations": [
+                                {
+                                    "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('slbName')), '/frontendIPConfigurations/', variables('frontendConfigName'))]"
+                                }
+                            ]
+                        }
+                    }
+                ],
                 "inboundNatPools": []
             },
             "resources": [],

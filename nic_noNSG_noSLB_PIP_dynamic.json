@@ -6,6 +6,10 @@
             "defaultValue": "myNic",
             "type": "string"
         },
+        "location": {
+            "defaultValue": "[resourceGroup().location]",
+            "type": "string"
+        },
         "vnetName": {
             "defaultValue": "myVnet",
             "type": "string"
@@ -29,7 +33,7 @@
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "[parameters('pipName')]",
             "apiVersion": "[variables('apiVersion')]",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "properties": {
                 "publicIPAllocationMethod": "Dynamic",
                 "idleTimeoutInMinutes": 4
@@ -42,7 +46,7 @@
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[parameters('nicName')]",
             "apiVersion": "[variables('apiVersion')]",
-            "location": "[resourceGroup().location]",
+            "location": "[parameters('location')]",
             "properties": {
                 "ipConfigurations": [
                     {
