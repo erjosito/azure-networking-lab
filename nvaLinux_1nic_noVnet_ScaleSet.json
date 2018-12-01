@@ -176,6 +176,9 @@
                 "slbName": {
                     "value": "[concat(variables('slbName'), '-ext')]"
                 },
+                "lbSku": {
+                    "value": "[parameters('lbSku')]"
+                },
                 "backendConfigName": {
                     "value": "[concat(variables('slbBackendName'), '-ext')]"
                 },
