@@ -74,7 +74,7 @@
 		"BasicLBTemplateUri": "[variables('deployBasicLBTemplate')[parameters('externalInternal')]]",
 		"deployStandardLBTemplate": {
 			"internal": "[uri(deployment().properties.templateLink.uri, 'internalLB_standard.json')]",
-			"external": "[uri(deployment().properties.templateLink.uri, 'externalLB.json')]"
+			"external": "[uri(deployment().properties.templateLink.uri, 'externalLB_standard.json')]"
 		},
         "StandardLBTemplateUri": "[variables('deployStandardLBTemplate')[parameters('externalInternal')]]",
     },

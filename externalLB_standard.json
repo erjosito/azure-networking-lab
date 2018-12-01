@@ -30,11 +30,6 @@
             "defaultValue": "myPublicIp",
             "type": "string"
         },
-        "pipSku": {
-            "defaultValue": "basic",
-            "type": "string",
-            "allowedValues": ["basic", "standard"]
-        },
         "frontendPort": {
             "defaultValue": 1022,
             "type": "int",
@@ -75,13 +70,13 @@
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "[parameters('pipName')]",
             "sku": {
-                "name": "[parameters('pipSku')]",
+                "name": "Standard",
                 "tier": "Regional"
             },
             "apiVersion": "2018-02-01",
             "location": "[resourceGroup().location]",
             "properties": {
-                "publicIPAllocationMethod": "[if(equals(parameters('pipSku'), 'basic'), 'Dynamic', 'Static')]",
+                "publicIPAllocationMethod": "Static",
                 "idleTimeoutInMinutes": 4
             },
             "resources": [],
@@ -93,6 +88,9 @@
             "name": "[parameters('slbName')]",
             "apiVersion": "2017-08-01",
             "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard"
+            },
             "properties": {
                 "frontendIPConfigurations": [
                     {
@@ -111,37 +109,8 @@
                     }
                 ],
                 "loadBalancingRules": [
-                    {
-                        "name": "[parameters('ruleName')]",
-                        "properties": {
-                            "frontendIPConfiguration": {
-                                "id": "[concat( resourceId('Microsoft.Network/loadBalancers', parameters('slbName')), '/frontendIPConfigurations/', variables('frontendConfigName'))]"
-                            },
-                            "frontendPort": "[parameters('frontendport')]",
-                            "backendPort": "[parameters('backendport')]",
-                            "enableFloatingIP": "[variables('dsrBool')]",
-                            "idleTimeoutInMinutes": 4,
-                            "protocol": "Tcp",
-                            "loadDistribution": "Default",
-                            "backendAddressPool": {
-                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('slbName')), '/backendAddressPools/', parameters('backendConfigName'))]"
-                            },
-                            "probe": {
-                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('slbName')), '/probes/', variables('probeName'))]"
-                            }
-                        }
-                    }
                 ],
                 "probes": [
-                    {
-                        "name": "[variables('probeName')]",
-                        "properties": {
-                            "protocol": "Tcp",
-                            "port": "[parameters('probePort')]",
-                            "intervalInSeconds": 15,
-                            "numberOfProbes": 2
-                        }
-                    }
                 ],
                 "inboundNatRules": [],
                 "outboundNatRules": [],
