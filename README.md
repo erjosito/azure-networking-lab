@@ -132,23 +132,26 @@ The `az login` command will provide you a code, that you need to introduce (over
 az group create --name vnetTest --location westeurope
 </pre>
 
-You might get an error message in the previous message if you have multiple subscriptions. If that is the case, you can select the subscription where you want to deploy the lab with the command "az account set --subscription <your subscription GUID>. If you did not get any error message, you can safely ignore this paragraph.
+You might get an error message in the previous message if you have multiple subscriptions. If that is the case, you can select the subscription where you want to deploy the lab with the command `az account set --subscription <your subscription GUID>`. If you did not get any error message, you can safely ignore this paragraph.
 
 <pre lang="...">
 az configure --defaults group=vnetTest
 </pre>
 
-**Step 5.** Deploy the master template that will create our initial network configuration. The syntax here depends on the operating system you are using. For example, for Windows use this command:
+**Step 5.** Deploy the master template that will create our initial network configuration. The syntax here depends on the operating system you are using. For example, for **Windows** use this command:
 
 <pre lang="...">
-az group deployment create --name netLabDeployment --template-uri https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/NetworkingLab_master.json --resource-group vnetTest --parameters "{\"createVPNgw\":{\"value\":\"no\"}, \"adminUsername\":{\"value\":\"lab-user\"}, \"adminPassword\":{\"value\":\"Microsoft123!\"}}" 
+az group deployment create --name netLabDeployment --template-uri https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/NetworkingLab_master.json --resource-group vnetTest --parameters "{\"adminPassword\":{\"value\":\"Microsoft123!\"}, \"location2ary\":{\"value\": \"westus2\"}, \"location2aryVnets\":{\"value\": [3]}}" 
 </pre>
 
-Or alternatively use the following command if you are using a Linux operative system:
+Or alternatively use the following command if you are using a **Linux** operative system:
 
 <pre lang="...">
-az group deployment create --name netLabDeployment --template-uri https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/NetworkingLab_master.json --resource-group vnetTest --parameters '{"createVPNgw":{"value":"no"}, "adminUsername":{"value":"lab-user"}, "adminPassword":{"value":"Microsoft123!"}}'
+az group deployment create --name netLabDeployment --template-uri https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/NetworkingLab_master.json --resource-group vnetTest --parameters '{"adminPassword":{"value":"Microsoft123!"}, "location2ary":{"value": "westus2"}, "location2aryVnets":{"value": [3]}}'
 </pre>
+
+**Note**: the previous command will deploy 5 vnets, one of them in an alternate location. The goal of deploying this single vnet in a different location is to include **global vnet peering** in this lab. Should you not have access to locations where global vnet peering is available (such as West Europe and West US 2 used in the examples), you can just deploy the previous templates without the parameters `location2ary` and `location2aryVnets`, which will deploy or vnets into the same location as the resource group.
+
 
 **Step 6.** Since the previous command will take a while (around 15 minutes), open another command window (see Step 3 for detailed instructions) to monitor the deployment progress. Note you might have to login in this second window too:
 
@@ -224,7 +227,7 @@ Location    Name     ProvisioningState    ResourceGroup    ResourceGuid
 ----------  -------  -------------------  ---------------  -------------
 westeurope  myVnet1  Succeeded            vnetTest         1d20ba9a... 
 westeurope  myVnet2  Succeeded            vnetTest         43ca80d0...
-westeurope  myVnet3  Succeeded            vnetTest         4837a481...
+westus2     myVnet3  Succeeded            vnetTest         4837a481...
 westeurope  myVnet4  Succeeded            vnetTest         72a82a72...
 westeurope  myVnet5  Succeeded            vnetTest         96e5f9c5...      
 </pre>
@@ -266,7 +269,7 @@ True                  westeurope  00-0D-3A-28-2A-28  linuxnva-2-nic1
                       westeurope  00-0D-3A-2A-48-AF  myVnet1-vm1-nic
                       westeurope  00-0D-3A-28-2C-8C  myVnet1-vm2-nic
                       westeurope  00-0D-3A-2A-4A-DE  myVnet2-vm1-nic
-                      westeurope  00-0D-3A-2A-46-DE  myVnet3-vm1-nic
+                      westus2     00-0D-3A-2A-46-DE  myVnet3-vm1-nic
                       westeurope  00-0D-3A-2A-4F-EA  myVnet4-vm1-nic
                       westeurope  00-0D-3A-2A-47-BC  myVnet5-vm1-nic      
 </pre>

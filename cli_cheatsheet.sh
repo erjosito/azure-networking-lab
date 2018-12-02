@@ -4,7 +4,7 @@
 az group create -n vnetTest -l westeurope
 az configure --defaults group=vnetTest
 url='https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/NetworkingLab_master.json'
-# Option 1: default
+# Option 1: default (all vnets in one location)
 az group deployment create -n netLabDeployment --template-uri $url -g vnetTest --parameters '{"adminPassword":{"value":"Microsoft123!"}}'
 # Option 2: with Vnet 3 in a separate location
 az group deployment create -n netLabDeployment --template-uri $url -g vnetTest --parameters '{"adminPassword":{"value":"Microsoft123!"}, "location2ary":{"value": "westus2"}, "location2aryVnets":{"value": [3]}}'
