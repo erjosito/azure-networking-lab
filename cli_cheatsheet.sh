@@ -34,7 +34,9 @@ az network lb rule create --backend-pool-name linuxnva-slbBackend-int --protocol
 # az network nic ip-config address-pool add --ip-config-name linuxnva-2-nic0-ipConfig --nic-name linuxnva-2-nic1 --address-pool linuxnva-slbBackend-ext --lb-name linuxnva-slb-ext
 # az network lb outbound-rule create --lb-name linuxnva-slb-ext -n myoutboundnat --frontend-ip-configs myFrontendConfig --protocol All --idle-timeout 15 --outbound-ports 10000 --address-pool inuxnva-slbBackend-ext
 
-# VMSS
+########
+# VMSS #
+########
 vmss_url='https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/nvaLinux_1nic_noVnet_ScaleSet.json'
 az group deployment create -n vmssDeployment --template-uri $vmss_url --parameters '{"vmPwd":{"value":"Microsoft123!"}}'
 az network lb outbound-rule create --lb-name linuxnva-vmss-slb-ext -n myoutboundnat --frontend-ip-configs myFrontendConfig --protocol All --idle-timeout 15 --outbound-ports 10000 --address-pool linuxnva-vmss-slbBackend-ext
@@ -43,3 +45,11 @@ az network lb address-pool list --lb-name linuxnva-vmss-slb-int -o table --query
 az network lb address-pool list --lb-name linuxnva-vmss-slb-ext -o table --query [].backendIpConfigurations[].id
 az network lb rule list --lb-name linuxnva-vmss-slb-int -o table
 az network lb outbound-rule list --lb-name linuxnva-vmss-slb-ext -o table
+
+#########
+# OTHER #
+#########
+
+# Deploy standard ELB
+lburl='https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/externalLB_standard.json'
+az group deployment create -n elbDeploy -g vnetTest --template-uri $lburl

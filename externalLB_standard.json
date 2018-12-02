@@ -57,12 +57,6 @@
     },
     "variables": {
 		"frontendConfigName": "myFrontendConfig",
-		"probeName": "myProbe",
-        "dsrBoolHash": {
-            "true": true,
-            "false": false
-        },
-        "dsrBool": "[variables('dsrBoolHash')[parameters('dsr')]]"
     },
     "resources": [
         {
@@ -113,7 +107,7 @@
                 "probes": [
                 ],
                 "inboundNatRules": [],
-                "outboundNatRules": [
+                "outboundRules": [
                     {
                         "name": "myrule",
                         "properties": {
