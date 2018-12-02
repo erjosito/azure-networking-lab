@@ -56,7 +56,7 @@
         }
     },
     "variables": {
-		"frontendConfigName": "myFrontendConfig",
+		"frontendConfigName": "myFrontendConfig"
     },
     "resources": [
         {
