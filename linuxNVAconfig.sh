@@ -38,7 +38,7 @@ sudo ifmetric eth1 10
 # configure static routes for the vnet space to eth0
 sudo route add -net 10.0.0.0/13 gw 10.4.2.1 dev eth0
 # and the Internet default to eth1 (just to be sure)
-sudo route add -net 0.0.0.0/0 gw 10.4.3.1 dev eth1
+sudo route add -net 0.0.0.0/0 gw 10.4.3.1 dev eth0
 # route for internal LB to work properly (will break ext LB unless PBR is configured, see next lines)
 # sudo route add -host 168.63.129.16 gw 10.4.2.1 dev eth0
 
@@ -66,11 +66,12 @@ sudo iptables -A FORWARD -p icmp -j DROP
 #sudo iptables -A FORWARD -d 188.113.88.193 -j DROP
 
 # Allow forwarded outgoing traffic (port 80)
-sudo iptables -A FORWARD -i eth0 -o eth1 -p tcp --dport 80 -j ACCEPT 
-sudo iptables -A FORWARD -i eth1 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT 
+# sudo iptables -A FORWARD -i eth0 -o eth0 -p tcp --dport 80 -j ACCEPT 
+# sudo iptables -A FORWARD -i eth0 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT 
 
 # Allow SSH traffic on eth0
 sudo iptables -A FORWARD -i eth0 -p tcp --dport ssh -j ACCEPT 
+sudo iptables -A FORWARD -i eth0 -p tcp --dport 80 -j ACCEPT 
 sudo iptables -A FORWARD -i eth0 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT 
 
 # Allow forwarded traffic on eth1
@@ -79,6 +80,7 @@ sudo iptables -A FORWARD -i eth0 -m conntrack --ctstate ESTABLISHED,RELATED -j A
 
 # Default deny
 sudo iptables -A FORWARD -j DROP
+
 
 # SNAT for traffic going to the vnets
 sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE

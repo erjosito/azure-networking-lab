@@ -150,7 +150,7 @@ Or alternatively use the following command if you are using a **Linux** operativ
 az group deployment create --name netLabDeployment --template-uri https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/NetworkingLab_master.json --resource-group vnetTest --parameters '{"adminPassword":{"value":"Microsoft123!"}, "location2ary":{"value": "westus2"}, "location2aryVnets":{"value": [3]}}'
 </pre>
 
-**Note**: the previous command will deploy 5 vnets, one of them in an alternate location. The goal of deploying this single vnet in a different location is to include **global vnet peering** in this lab. Should you not have access to locations where global vnet peering is available (such as West Europe and West US 2 used in the examples), you can just deploy the previous templates without the parameters `location2ary` and `location2aryVnets`, which will deploy or vnets into the same location as the resource group.
+**Note**: the previous command will deploy 5 vnets, one of them (vnet 3) in an alternate location. The goal of deploying this single vnet in a different location is to include **global vnet peering** in this lab. Should you not have access to locations where global vnet peering is available (such as West Europe and West US 2 used in the examples), you can just deploy the previous templates without the parameters `location2ary` and `location2aryVnets`, which will deploy or vnets into the same location as the resource group.
 
 
 **Step 6.** Since the previous command will take a while (around 15 minutes), open another command window (see Step 3 for detailed instructions) to monitor the deployment progress. Note you might have to login in this second window too:
@@ -281,7 +281,7 @@ True                  westeurope  00-0D-3A-28-2A-28  linuxnva-2-nic1
 <b>az network public-ip list --query '[].[name,ipAddress]' -o table</b>
 Column1              Column2
 -------------------  ---------------
-linuxnva-slbPip-ext
+linuxnva-slbPip-ext  5.6.7.8
 myVnet1-vm2-pip      1.2.3.4
 vnet4gwPip
 vnet5gwPip
@@ -305,7 +305,7 @@ Welcome to Ubuntu 16.04.4 LTS (GNU/Linux 4.13.0-1018-azure x86_64)
 lab-user@myVnet1-vm2:~$
 </pre>
 
-**Note:** do not forget to use the public IP address of your environment instead of 1.2.3.4
+**Note:** do not forget to use the actual public IP address of your environment instead of the sample value of 1.2.3.4. Make sure to use the IP address corresponding to `myVnet1-vm2-pip`, not the one assigned to linuxnva-slbPip-ext.
 
 **Step 3.** Connect to the Azure portal (http://portal.azure.com) and locate the resource group that we have just created (called &#39;vnetTest&#39;, if you did not change it). Verify the objects that have been created and explore their properties and states.
 
@@ -723,49 +723,13 @@ Result
 </pre>
 
 
-**Step 4.** Let us verify the LB's rules. In this case, we need to remove the existing one (that was created by default by the ARM template in the very first lab) and replace it with another one, where we will enable the HA Ports feature. This feature essentially configures a load balancing rule for ALL TCP/UDP ports, so it will not be specific for SSH (as in this example) or any other application:
+**Step 4.** Let us verify the LB's rules. As you can see, there is a load balancing rule for ALL TCP/UDP (Protocol is `All`) ports, so it will forward all TCP/UDP traffic to the backends:
 
 <pre lang="...">
 <b>az network lb rule list --lb-name linuxnva-slb-int -o table</b>
   BackendPort    FrontendPort    LoadDistribution    Name         Protocol
 -------------  --------------    ------------------  -----------  --------
-           22            1022    Default             ssh          Tcp       
-</pre>
-
-<pre lang="...">
-<b>az network lb rule delete --lb-name linuxnva-slb-int -n ssh</b>
-</pre>
-
-**Note:** the previous command will require some minutes to run
-
-<pre lang="...">
-<b>az network lb rule create --backend-pool-name linuxnva-slbBackend-int --protocol all --backend-port 0 --frontend-port 0 --frontend-ip-name myFrontendConfig --lb-name linuxnva-slb-int --name HARule --floating-ip true --probe-name myProbe</b>
-{
-  "backendAddressPool": {
-    "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/loadBalancers/linuxnva-slb-int/backendAddressPools/linuxnva-slbBackend-int",
-    "resourceGroup": "vnetTest"
-  },
-  "backendPort": 0,
-  "disableOutboundSnat": null,
-  "enableFloatingIp": true,
-  "etag": "W/\"f6c6c1c6-8067-40fb-941d-2ef965556afd\"",
-  "frontendIpConfiguration": {
-    "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/loadBalancers/linuxnva-slb-int/frontendIPConfigurations/myFrontendConfig",
-    "resourceGroup": "vnetTest"
-  },
-  "frontendPort": 0,
-  "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/loadBalancers/linuxnva-slb-int/loadBalancingRules/HARule",
-  "idleTimeoutInMinutes": 4,
-  "loadDistribution": "Default",
-  "name": "HARule",
-  "probe": {
-    "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/loadBalancers/linuxnva-slb-int/probes/myProbe",
-    "resourceGroup": "vnetTest"
-  },
-  "protocol": "All",
-  "provisioningState": "Succeeded",
-  "resourceGroup": "vnetTest"
-}
+            0               0    Default             HARule            All       
 </pre>
 
 **Note:** HA ports work only on standard Load Balancers. In order to verify which SKU the load balancers have, you can use issue this command:
@@ -774,7 +738,7 @@ Result
 <b>az network lb list --query [].[name,sku.name] -o table</b>
 Column1           Column2
 ----------------  ---------
-linuxnva-slb-ext  Basic
+linuxnva-slb-ext  Standard
 linuxnva-slb-int  Standard
 </pre>
 
@@ -824,7 +788,7 @@ lab-user pts/0        2017-03-23 23:41 (<b>10.4.2.101</b>)
 
 **Note:** if you see multiple SSH sessions, you might want to kill them, so that you only have one. You can get the process IDs of the SSH sessions with the command ps -ef | grep sshd, and you can kill a specific process ID with the command kill -9 process_id_to_be_killed. Obviously, if you happen to kill the session over which you are currently connected, you will have to reconnect again.
 
-**Step 8.** This is expected, since firewalls are configured to source NAT the connections outgoing on that interface. Now open another SSH window/panel, and connect over the jump host to the NVA. If in the `who` command you saw the IP address 10.4.2.101. Remember that the username is still &#39;lab-user&#39;, the password &#39;Microsoft123!&#39; (without the quotes). After connecting to the firewall, you can display the NAT configuration with the following command:
+**Step 8.** This is expected, since firewalls are configured to source NAT the connections outgoing on that interface. Now open another SSH window/panel, and connect from the jump host to the NVA. If in the `who` command you saw the IP address 10.4.2.101. Remember that the username is still &#39;lab-user&#39;, the password &#39;Microsoft123!&#39; (without the quotes). After connecting to the firewall, you can display the NAT configuration with the following command:
 
 <pre lang="...">
 lab-user@myVnet1-vm2:~$ <b>ssh 10.4.2.101</b>
@@ -849,7 +813,7 @@ target     prot opt source               destination
 
 **Note:** the Linux machines that we use as firewalls in this lab have the Linux package "iptables" installed to work as firewall. A tutorial of iptables is out of the scope of this lab guide. Suffice to say here that the word "MASQUERADE" means to translate the source IP address of packets and replace it with its own interface address. In other words, source-NAT. There are two MASQUERADE entries, one per each interface of the NVA. You can see to which interface the entries refer to with the command `sudo iptables -vL -t nat`
 
-**Step 9.** We will simulate a failure of the NVA where the connection is going through (in this case 10.4.2.101, linuxnva-1). First of all, verify that both ports 1138 (used by the internal load balancer of this lab scenario) and 1139 (used by the external load balancer of a lab scenario later in this guide) are open:
+**Step 9.** We will simulate a failure of the NVA where the connection is going through (in this case 10.4.2.101, linuxnva-1). First of all, verify that both ports 1138 (used by the internal load balancer of this lab scenario) and 1139 (that could be used by the external load balancer) are open:
 
 <pre lang="...">
 lab-user@linuxnva-1:~$ <b>nc -zv -w 1 127.0.0.1 1138-1139</b>
@@ -1004,6 +968,7 @@ Chain POSTROUTING (policy ACCEPT 0 packets, 0 bytes)
  5419  325K MASQUERADE  all  --  any    eth1    anywhere             anywhere
 lab-user@linuxnva-1:~$ 
 lab-user@linuxnva-1:~$ <b>sudo iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE</b>
+lab-user@linuxnva-1:~$ <b>sudo iptables -t nat -A POSTROUTING -o eth0 ! -d 10.0.0.0/255.0.0.0 -j MASQUERADE</b>
 lab-user@linuxnva-1:~$ 
 lab-user@linuxnva-1:~$ <b>sudo iptables -vL -t nat</b>
 Chain PREROUTING (policy ACCEPT 0 packets, 0 bytes)
@@ -1018,6 +983,7 @@ Chain OUTPUT (policy ACCEPT 3 packets, 180 bytes)
 Chain POSTROUTING (policy ACCEPT 3 packets, 180 bytes)
  pkts bytes target     prot opt in     out     source               destination
  5419  325K MASQUERADE  all  --  any    eth1    anywhere             anywhere
+  405  325K MASQUERADE  all  --  any    eth0    anywhere             <b>!10.0.0.0/8</b>
 </pre>
 
 **Step 2:** Now you can go back to the jump host, connect to vm1, and verify that the source IP address has not been source-natted:
@@ -1067,87 +1033,23 @@ Note that this schema is the standard mechanism to deploy active/active clusters
 
 What if we want to send all traffic leaving the vnet towards the public Internet through the NVAs? We need to make sure that Internet traffic to/from all VMs flows through the NVAs via User-Defined Routes, and that NVAs source-NAT the outgoing traffic with their public IP address, so that they get the return traffic too.
 
-For this test we will use the VM in vnet3, and the first steps of the following guide will establish connectivity between Vnets 1 and 3, by creating the corresponding routing through the NVAs.
-
-**Step 1.** Go back to your Windows command prompt, and create a routing table for myVnet3Subnet1:
+**Step 2.** For this test we will use VM2 in vnet2. We will insert a default route to send Internet traffic through the NVAs. First, connect from the jump host to VM2, and verify that you have Internet connectivity. You could just send a curl request to the web service `ifconfig.co`, that returns your public IP address as seen by the Web server:
 
 <pre lang="">
-<b>az network route-table create --name vnet3-subnet1</b>
-{        
-  "etag": "W/\"...\"",
-  "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/routeTables/vnet3-su
-bnet1",  
-  "location": "westeurope",
-  "name": "vnet3-subnet1",
-  "provisioningState": "Succeeded",
-  "resourceGroup": "vnetTest",
-  "routes": [],
-  "subnets": null,
-  "tags": null,
-  "type": "Microsoft.Network/routeTables"
-}
-</pre>
-
-**Step 2.** Associate the route table to the subnet myVnet3Subnet1:
-
-<pre lang="">
-<b>az network vnet subnet update -n myVnet3Subnet1 --vnet-name myVnet3 --route-table vnet3-subnet1</b>
-<i>Output omitted</i>
-</pre>
-
-**Step 3.** We want to configure connectivity from Vnet3 to our other spoke Vnets (Vnet1 and Vnet2). Add another default route for Vnet1Subnet1 pointing to the internal load balancer's VIP in Vnet3Subnet1, and the reciprocal route in the custom routing table for Vnet1Subnet1, and verify that you have SSH connectivity between the VM in Vnet1 and the VM in Vnet3.
- 
-<pre lang="">
-<b>az network route-table route create --address-prefix 10.1.1.0/24 --next-hop-ip-address 10.4.2.100 --next-hop-type VirtualAppliance --route-table-name vnet3-subnet1 -n vnet1subnet1</b>
-{
-  "addressPrefix": "10.1.1.0/24",
-  "etag": "W/\"...\"",
-  "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/routeTables/vnet3-subnet1/routes/vnet1subnet1",
-  "name": "vnet1subnet1",
-  "nextHopIpAddress": "10.4.2.100",
-  "nextHopType": "VirtualAppliance",
-  "provisioningState": "Succeeded",
-  "resourceGroup": "vnetTest"
-}
-</pre>
-
-<pre lang="">
-<b>az network route-table route create --address-prefix 10.3.1.0/24 --next-hop-ip-address 10.4.2.100 --next-hop-type VirtualAppliance --route-table-name vnet1-subnet1 -n vnet3subnet1</b>
-{
-  "addressPrefix": "10.3.1.0/24",
-  "etag": "W/\"6174bb9f-38cc-46c9-94c7-c9edf4752dbc\"",
-  "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/routeTables/vnet1-subnet1/routes/vnet3subnet1",
-  "name": "vnet3subnet1",
-  "nextHopIpAddress": "10.4.2.100",
-  "nextHopType": "VirtualAppliance",
-  "provisioningState": "Succeeded",
-  "resourceGroup": "vnetTest"
-}
-</pre>
-
-At this point you should be able to connect to the VM in Vnet 3 from our jump host, going through the NVAs (as in this example, the first attempts might fail, due to the time it takes Azure to program the routes from the previous step), and verify that you have connectivity to internet. I like using the Internet URL ifconfig.co, that returns your public IP address as seen by the Web server:
-
-<pre lang="">
-lab-user@myVnet1-vm2:~$ <b>ssh 10.3.1.4</b>
-ssh: connect to host 10.3.1.4 port 22: Connection timed out
-lab-user@myVnet1vm2:~$ <b>ssh 10.3.1.4</b>
-The authenticity of host '10.3.1.4 (10.3.1.4)' can't be established.
-ECDSA key fingerprint is SHA256:ofxGjkNl2WYq+GvlEUYNTd5WiAlV4Za2/X3BwcpX8hQ.
-Are you sure you want to continue connecting (yes/no)? yes
-Warning: Permanently added '10.3.1.4' (ECDSA) to the list of known hosts.
-lab-user@10.3.1.4's password:
+lab-user@myVnet1vm2:~$ <b>ssh 10.2.1.4</b>
+lab-user@10.2.1.4's password:
 Welcome to Ubuntu 16.04.1 LTS (GNU/Linux 4.4.0-47-generic x86_64)
 ...
 lab-user@myVnet3-vm1:~$ <b>curl ifconfig.co</b>
-1.2.3.4
+1.1.1.1
 </pre>
 
-**Note:** in your own environment you will see a public IP address other than 1.2.3.4. This IP address is not any one of the existing public IP address in our vnet (as you can see with the command `az network public-ip list --query [].[name,ipAddress]`). This IP address is the one that the virtual network uses to source-NAT VMs without their own public IP address or external load balancer, and is unique for each vnet.
+**Note:** in your own environment you will see a public IP address other than 1.1.1.1. This IP address is not any one of the existing public IP address in our vnet (as you can see with the command `az network public-ip list --query [].[name,ipAddress] -o tsv`). This IP address is the one that the virtual network uses to source-NAT VMs without their own public IP address or external load balancer, and is unique for each vnet.
 
-**Step 4.** Now we can redirect traffic to our NVAs, by adding an additional entry to the routing table for Vnet3-Subnet3:
+**Step 2.** Now we can redirect traffic to our NVAs, by adding an additional entry to the routing table for Vnet2-Subnet1:
 
 <pre lang="">
-<b>az network route-table route create --address-prefix 0.0.0.0/0 --next-hop-ip-address 10.4.2.100 --next-hop-type VirtualAppliance --route-table-name vnet3-subnet1 -n default</b>
+<b>az network route-table route create --address-prefix 0.0.0.0/0 --next-hop-ip-address 10.4.2.100 --next-hop-type VirtualAppliance --route-table-name vnet2-subnet1 -n default</b>
 {
   "addressPrefix": "0.0.0.0/0",
   "etag": "W/\"13f07168-d40f-473d-9cd1-1d67464fcaf2\"",
@@ -1160,20 +1062,20 @@ lab-user@myVnet3-vm1:~$ <b>curl ifconfig.co</b>
 }
 </pre>
 
-At this point, your the routing table for Vnet3-Subnet1 should look like this:
+At this point, your the routing table for Vnet2-Subnet1 should look like this:
 
 <pre lang="">
-<b>az network route-table route list --route-table-name vnet3-subnet1 -o table</b>
+<b>az network route-table route list --route-table-name vnet2-subnet1 -o table</b>
 AddressPrefix    Name     NextHopIpAddress    NextHopType       ProvisioningState    ResourceGroup
 ---------------  -------  ------------------  ----------------  -------------------  ---------------
 10.1.0.0/16      vnet1    10.4.2.100          VirtualAppliance  Succeeded            vnetTest
 0.0.0.0/0        default  10.4.2.100          VirtualAppliance  Succeeded            vnetTest
 </pre>
 
-And if we check the effective routes in the NIC for our VM in Vnet3, you should see that our custom route to the NVA has overridden the system route to the Internet:
+And if we check the effective routes in the NIC for our VM in Vnet2, you should see that our custom route to the NVA has overridden the system route to the Internet:
 
 <pre lang="">
-<b>az network nic show-effective-route-table -n myVnet3-vm1-nic</b>
+<b>az network nic show-effective-route-table -n myVnet2-vm1-nic</b>
 <i>...Output omitted...</i>
   {
       "addressPrefix": [
@@ -1202,89 +1104,92 @@ And if we check the effective routes in the NIC for our VM in Vnet3, you should 
     }
 </pre>
 
-**Step 5.** In the terminal with the connection to the SSH jump host, verify that the NVAs are source-NATting (known as &#39;masquerading&#39; in iptables speech) all traffic outgoing its external interface (eth1):
+**Step 3.** However, Internet access will not work yet. The NVAs need connectivity to the Internet, but attaching them to a standard ILB (Internal Load Balancer) removes that connectivity. In order to grant them Internet connectivity again, we have two options: assign public IP addresses to the NVAs, or configure a standard External Load Balancer with an outbound NAT rule. Let us check that we already have an outbound NAT rule in our external Load Balancer, as well as a Frontend IP address and a backend configuration:
 
 <pre lang="">
-lab-user@linuxnva-1:~$ <b>sudo iptables -vL -t nat</b>
-Chain PREROUTING (policy ACCEPT 87329 packets, 3531K bytes)
- pkts bytes target     prot opt in     out     source         destination
-
-Chain INPUT (policy ACCEPT 48225 packets, 1943K bytes)
- pkts bytes target     prot opt in     out     source         destination
-
-Chain OUTPUT (policy ACCEPT 2157 packets, 137K bytes)
- pkts bytes target     prot opt in     out     source         destination
-
-Chain POSTROUTING (policy ACCEPT 29 packets, 1740 bytes)
- pkts bytes target     prot opt in     out     source         destination
-  910 61924 <b>MASQUERADE</b>  all  --  any    <b>eth1</b>    anywhere       anywhere
+<b>az network lb outbound-rule list --lb-name linuxnva-slb-ext -o table</b>
+AllocatedOutboundPorts    EnableTcpReset    IdleTimeoutInMinutes    Name    Protocol    ProvisioningState    ResourceGroup
+------------------------  ----------------  ----------------------  ------  ----------  -------------------  ---------------
+10000                     False             15                      myrule  All         Succeeded            vnetTest
 </pre>
-
-
-
-**Step 6.** We need to do something else. You might remember that the NVAs have associated NSGs with default rules. Default rules would not allow traffic to the Internet to reach the NVA NICs, so let us fix that:
-
-<pre lang="...">
-<b>az network nsg rule create --nsg-name linuxnva-1-nic0-nsg -n allow_fwd_internet --priority 110 --access Allow --direction Inbound --protocol "*" --source-address-prefixes VirtualNetwork --source-port-ranges "*" --destination-address-prefixes Internet --destination-port-ranges "*"</b>
-<i>Output omitted</i>
-<b>az network nsg rule create --nsg-name linuxnva-2-nic0-nsg -n allow_fwd_internet --priority 110 --access Allow --direction Inbound --protocol "*" --source-address-prefixes VirtualNetwork --source-port-ranges "*" --destination-address-prefixes Internet --destination-port-ranges "*"</b>
-<i>Output omitted</i>
-</pre>
-
-**Step 7.** If you test our curl command from VM3, you will see that it does not work yet. Actually if you log to any of the NVAs, you will see that they do not have any Internet connectivity whatsoever! How is this possible? We broke Internet connectivity when we associated the NVAs to the internal load balancer. In order to restore Internet connectivity, we need to assign public IP addresses to the external interfaces of the NVAs. The following example creates a standard public IP address and assigns it to the external NIC of nva1. **Please do the same for nva2**.
-
-<pre lang="...">
-<b>az network public-ip create -n nva1-pip --sku Standard</b>
-{
-  "publicIp": {
-    "dnsSettings": null,
-    "etag": "W/\"55e74572-5660-496d-85bd-6d43824b8468\"",
-    "id": "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/publicIPAddresses/nva1-pip",
-    "idleTimeoutInMinutes": 4,
-    "ipAddress": "5.6.7.8",
-    "ipConfiguration": null,
-    "ipTags": [],
-    "location": "westeurope",
-    "name": "nva1-pip",
-    "provisioningState": "Succeeded",
-    "publicIpAddressVersion": "IPv4",
-    "publicIpAllocationMethod": "Static",
-    "resourceGroup": "vnetTest",
-    "resourceGuid": "7347852d-f566-4300-bb3b-e007b7ca44d5",
-    "sku": {
-      "name": <b>"Standard"</b>,
-      "tier": "Regional"
-    },
-    "tags": null,
-    "type": "Microsoft.Network/publicIPAddresses",
-    "zones": null
-  }
-}
-<b>az network nic ip-config update --nic-name linuxnva-1-nic1 -n linuxnva-1-nic1-ipConfig --public-ip-address nva1-pip</b>
-<i>Output omitted</i>
-</pre>
-
-**Note:** if you have put attention you are probably wondering why do we need a standard public IP address? The reason is that standard load balancers and basic IP address cannot coexist in the same availability set. If you tried to associate a basic public IP address to the NVA, you would get this error: <i>bla bla - Different basic sku and standard sku load balancer or public Ip resources in availability set is not allowed - bla bla</i>
-
-
-**Step 8.** Now you can try to reach the public Internet from our VM3:
 
 <pre lang="">
-lab-user@myVnet3-vm1:~$ <b>curl ifconfig.co</b>
+<b>az network lb address-pool list --lb-name linuxnva-slb-ext -o table</b>
+Name                     ProvisioningState    ResourceGroup
+-----------------------  -------------------  ---------------
+<b>linuxnva-slbBackend-ext</b>  Succeeded            vnetTest
+<b>az network lb frontend-ip list --lb-name linuxnva-slb-ext -o table</b>
+Name              PrivateIpAllocationMethod    ProvisioningState    ResourceGroup
+----------------  ---------------------------  -------------------  ---------------
+myFrontendConfig  Dynamic                      Succeeded            vnetTest
+</pre>
+
+**Step 4.** Alright, we already have an ELB with an outbound rule, we just need to add the NICs of our NVAs to it.
+
+First, let us try to add the second interface of the first NVA. As you see, this is not supported in Azure:
+
+<pre lang="">
+<b>az network nic ip-config address-pool add --ip-config-name linuxnva-1-nic1-ipConfig --nic-name linuxnva-1-nic1 --address-pool linuxnva-slbBackend-ext --lb-name linuxnva-slb-ext</b>
+LB /subscriptions/e7da9914-9b05-4891-893c-546cb7b0422e/resourceGroups/vnetTest/providers/Microsoft.Network/loadBalancers/linuxnva-slb-ext referred to by nic /subscriptions/e7da9914-9b05-4891-893c-546cb7b0422e/resourceGroups/vnetTest/providers/Microsoft.Network/networkInterfaces/linuxnva-1-nic1 has outbound rules. Nic /subscriptions/e7da9914-9b05-4891-893c-546cb7b0422e/resourceGroups/vnetTest/providers/Microsoft.Network/networkInterfaces/linuxnva-1-nic1 is being used in a configuration that requires load balancing or public ip on secondary ipconfigs or secondary nics, or that makes use of an Any Port Protocol rule. Such a configuration is not permitted.
+</pre>
+
+Let us therefore use the same internal interface (nic0, mapped to eth0) that we have been using so far, and add the NIC from both NVAs:
+
+<pre lang="">
+az network nic ip-config address-pool add --ip-config-name linuxnva-1-nic0-ipConfig --nic-name linuxnva-1-nic0 --address-pool linuxnva-slbBackend-ext --lb-name linuxnva-slb-ext
+az network nic ip-config address-pool add --ip-config-name linuxnva-2-nic0-ipConfig --nic-name linuxnva-2-nic0 --address-pool linuxnva-slbBackend-ext --lb-name linuxnva-slb-ext
+</pre>
+
+**Step 5.** There is one last step to be done. If you inspect the default rules of the NSG attached to the nic0 interface of the NVAs, you will find out that no traffic addressed to the Internet will be allowed:
+
+<pre lang="">
+<b>az network nsg rule list --nsg-name linuxnva-1-nic0-nsg -o table --include-default</b>
+Name                           Priority  SrcPortRanges  SrcAddressPrefixes   Access    Protocol    Direction    DstPortRanges   DestinationAddressPrefixes
+-----------------------------  --------  -------------  ------------------   ------    --------    ---------    -------------   --------------------------
+<b>AllowVnetInBound               65000     *              VirtualNetwork       Allow     *           Inbound      *               VirtualNetwork</b>
+AllowAzureLoadBalancerInBound  65001     *              AzureLoadBalancer    Allow     *           Inbound      *               *
+DenyAllInBound                 65500     *              *                    Deny      *           Inbound      *               *
+AllowVnetOutBound              65000     *              VirtualNetwork       Allow     *           Outbound     *               VirtualNetwork
+AllowInternetOutBound          65001     *              *                    Allow     *           Outbound     *               Internet
+DenyAllOutBound                65500     *              *                    Deny      *           Outbound     *               *
+</pre>
+
+**Note**: the previous output has been formated for readability
+
+We therefore need to add a new rule to permit incoming traffic which is sourced by the Vnet address space (including the peered Vnets), but addressed to the Internet:
+
+<pre lang="">
+az network nsg rule create --nsg-name linuxnva-1-nic0-nsg -n allow_vnet_internet --priority 110 --access Allow --direction Inbound --protocol "Tcp" --source-address-prefix "VirtualNetwork" --source-port-ranges "*" --destination-address-prefixes "*" --destination-port-ranges "80-80"
+</pre>
+
+<pre lang="">
+<b>az network nsg rule list --nsg-name linuxnva-1-nic0-nsg -o table --include-default</b>
+Name                           Priority  SrcPortRanges  SrcAddressPrefixes   Access    Protocol    Direction    DstPortRanges   DestinationAddressPrefixes
+-----------------------------  --------  -------------  ------------------   ------    --------    ---------    -------------   --------------------------
+<b>allow_vnet_internet            110       *              VirtualNetwork       Allow     Tcp         Inbound      80-80           *</b>
+AllowVnetInBound               65000     *              VirtualNetwork       Allow     *           Inbound      *               VirtualNetwork
+AllowAzureLoadBalancerInBound  65001     *              AzureLoadBalancer    Allow     *           Inbound      *               *
+DenyAllInBound                 65500     *              *                    Deny      *           Inbound      *               *
+AllowVnetOutBound              65000     *              VirtualNetwork       Allow     *           Outbound     *               VirtualNetwork
+AllowInternetOutBound          65001     *              *                    Allow     *           Outbound     *               Internet
+DenyAllOutBound                65500     *              *                    Deny      *           Outbound     *               *
+</pre>
+
+
+**Step 6.** We are finally done! If you test our curl command from VM2:
+
+<pre lang="">
+lab-user@myVnet2-vm1:~$ <b>curl ifconfig.co</b>
 5.6.7.8
 </pre>
 
-**Note:** Observe that the public IP address that VM3 gets back from the ifconfig.co service is one of the public IP addresses assigned to the NVAs. You can get the public IP addresses in your resource group with this command:
+**Note:** Observe that the public IP address that VM3 gets back from the ifconfig.co service is the public IP addresses assigned to the external Load Balancer. You can get the public IP addresses in your resource group with this command:
 
 <pre lang="">
-<b>az network public-ip list --query [].[name,ipAddress,sku.name] -o table</b>
-Column1              Column2         Column3
--------------------  --------------  ---------
-linuxnva-slbPip-ext                  Basic
-myVnet1-vm2-pip      1.2.3.4         Basic
-nva1-pip             5.6.7.8         Standard
-nva2-pip             9.10.11.12      Standard
-vnet4gwPip                           Basic
+<b>az network public-ip list --query [].[name,ipAddress] -o tsv</b>
+linuxnva-slbPip-ext  5.6.7.8
+myVnet1-vm2-pip      1.2.3.4
+vnet4gwPip
 vnet5gwPip 
 </pre>
 
@@ -1298,7 +1203,7 @@ Source NAT at the firewall will guarantee that the return traffic (destination-t
 
 Your NSGs should allow traffic to get into the firewall and to get out from the firewall to the Internet.
 
-Lastly, standard public IP addresses will be required in the NVAs, since otherwise Internet access is not possible while associated to the internal load balancer. The public IP address must be standard (not basic) to coexist with the internal load balancer (standard too, to support the HA port feature). 
+Lastly, either an outbound NAT rule or public IP addresses will be required in the NVAs, since otherwise Internet access is not possible while associated to the internal load balancer. The public IP address would have had to be standard (not basic) to coexist with the internal load balancer (standard too, to support the HA port feature). However, in this lab we opted for the outbound NAT rule in an external Load Balancer, since this is a more scalable and secure way (it is not exposing your NVAs to the Internet).
 
 
  
