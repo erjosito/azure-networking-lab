@@ -93,6 +93,7 @@
     "variables": {
         "deploymentApiVersion": "2017-05-10",
         "vmssApiVersion": "2018-06-01",
+        "autoscaleApiVersion": "2015-04-01",
         "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
         "subnet0Id": "[concat(variables('vnetID'), '/subnets/', parameters('subnet0Name'))]",
         "subnet1Id": "[concat(variables('vnetID'), '/subnets/', parameters('subnet1Name'))]",
@@ -330,7 +331,7 @@
         {
             "comments": "Create the autoscale settings for the VM scale set",
             "type": "Microsoft.Insights/autoscaleSettings",
-            "apiVersion": "2017-12-01",
+            "apiVersion": "[variables('autoscaleApiVersion')]",
             "name": "[parameters('scaleSettingsName')]",
             "location": "[resourceGroup().location]",
             "dependsOn": [
