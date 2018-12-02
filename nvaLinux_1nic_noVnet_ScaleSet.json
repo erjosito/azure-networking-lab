@@ -32,7 +32,7 @@
             "type": "string"
         },
         "vmSize": {
-            "defaultValue": "Standard_B2ms",
+            "defaultValue": "Standard_B1s",
             "type": "string"
         },
         "scaleSettingsName": {

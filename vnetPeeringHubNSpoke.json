@@ -22,37 +22,39 @@
          }
      },
      "variables": {
+         "networkApiVersion": "2018-08-01"
      },
      "resources": [
-         {
-            "apiVersion": "2018-08-01",
+        {
+            "comments": "allowGatewayTransit set to true only if parameter useRemoteGateways set to true",
+            "apiVersion": "[variables('networkApiVersion')]",
             "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
             "name": "[concat(parameters('hubVnetName'), '/LinkTo', parameters('spokeVnetName'))]",
             "location": "[resourceGroup().location]",
             "properties": {
                 "allowVirtualNetworkAccess": true,
                 "allowForwardedTraffic": false,
-                "allowGatewayTransit": true,
+                "allowGatewayTransit": "[parameters('useRemoteGateways')]",
                 "useRemoteGateways": "[parameters('useRemoteGateways')]",
                     "remoteVirtualNetwork": {
                     "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('spokeVnetName'))]"       
                 }
             }
-         },
-          {
-         "apiVersion": "2018-08-01",
-         "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
-         "name": "[concat(parameters('spokeVnetName'), '/LinkTo', parameters('hubVnetName'))]",
-         "location": "[resourceGroup().location]",
-         "properties": {
-            "allowVirtualNetworkAccess": true,
-            "allowForwardedTraffic": true,
-            "allowGatewayTransit": false,
-            "useRemoteGateways": "[parameters('useRemoteGateways')]",
-                "remoteVirtualNetwork": {
-                "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('hubVnetName'))]"       
+        },
+        {
+            "apiVersion": "[variables('networkApiVersion')]",
+            "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+            "name": "[concat(parameters('spokeVnetName'), '/LinkTo', parameters('hubVnetName'))]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "allowVirtualNetworkAccess": true,
+                "allowForwardedTraffic": true,
+                "allowGatewayTransit": false,
+                "useRemoteGateways": "[parameters('useRemoteGateways')]",
+                    "remoteVirtualNetwork": {
+                    "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('hubVnetName'))]"       
                 }
             }
-         }
+        }
      ]
 }

@@ -59,6 +59,8 @@
         }
     },
     "variables": {
+        "deploymentApiVersion": "2018-05-01",
+        "networkApiVersion": "2018-08-01",
         "linuxVmTemplateURI": "[uri(deployment().properties.templateLink.uri, 'linuxVM.json')]",
         "storageAccountName": "[concat('storage', uniqueString(resourceGroup().id))]",
         "multiVnetParams": {
@@ -156,7 +158,7 @@
 			"comments": "Create vnets, each with a gateway subnet, 3 standard subnets, and a Linux VM in subnet 1",
             "name": "vnets",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2016-06-01",
+			"apiVersion": "[variables('deploymentApiVersion')]",
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
@@ -170,7 +172,7 @@
 			"comments": "Create additional VM in Vnet1-Subnet1",
             "name": "vnet1subnet1vm2",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2016-06-01",
+			"apiVersion": "[variables('deploymentApiVersion')]",
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
@@ -196,7 +198,7 @@
 			"comments": "Create NVAs in vnet4, if createNVA=yes",
             "name": "nva",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2017-05-10",
+			"apiVersion": "[variables('deploymentApiVersion')]",
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
@@ -213,7 +215,7 @@
 			"comments": "create vnet peering between hub (vnet4) and vnet1",
             "name": "hub2spoke1",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2016-06-01",
+			"apiVersion": "[variables('deploymentApiVersion')]",
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
@@ -234,7 +236,7 @@
 			"comments": "create vnet peering between hub (vnet4) and vnet2",
             "name": "hub2spoke2",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2016-06-01",
+			"apiVersion": "[variables('deploymentApiVersion')]",
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
@@ -252,10 +254,10 @@
             ]
 		},
 		{
-			"comments": "create vnet peering between hub (vnet4) and vnet3",
+			"comments": "create vnet peering between hub (vnet4) and spolke(vnet3)",
             "name": "hub2spoke3",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2016-06-01",
+			"apiVersion": "[variables('deploymentApiVersion')]",
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
@@ -274,7 +276,7 @@
 		},
         {
             "comments": "Create public IP address for Vnet Gateway in Vnet4",
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "[variables('networkApiVersion')]",
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "vnet4gwPip",
             "location": "[resourceGroup().location]",
@@ -284,7 +286,7 @@
         },
         {
             "comments": "Create public IP address for Vnet Gateway in Vnet5",
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "[variables('networkApiVersion')]",
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "vnet5gwPip",
             "location": "[resourceGroup().location]",
@@ -296,7 +298,7 @@
 			"comments": "Create VPN gateway in vnet4. I havent found how to create a standard SKU, it needs to be manually resized afterwards. The BGP ASN number must be changed so that it is different than the ASN of the GW in vnet5",
 			"name": "vnet4Gw",
             "type": "Microsoft.Resources/deployments",
-			"apiVersion": "2016-09-01",
+            "apiVersion": "[variables('deploymentApiVersion')]",
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
@@ -314,7 +316,7 @@
 			"comments": "Create VPN gateway in vnet5. I havent found how to create a standard SKU, it needs to be manually resized afterwards. The BGP ASN number must be changed so that it is different than the ASN of the GW in vnet4",
 			"name": "vnet5Gw",
             "type": "Microsoft.Resources/deployments",
-			"apiVersion": "2016-09-01",
+            "apiVersion": "[variables('deploymentApiVersion')]",
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
@@ -332,7 +334,7 @@
 			"comments": "Deploy optionally UDRs",
 			"name": "UDRs",
             "type": "Microsoft.Resources/deployments",
-			"apiVersion": "2016-09-01",
+            "apiVersion": "[variables('deploymentApiVersion')]",
 			"properties": {
 				"mode": "Incremental",
 				"templateLink": {
