@@ -1473,8 +1473,6 @@ Advanced HTTP probes can be used to verify additional information, so that firew
 
 ## Lab 8: NVAs in a VMSS cluster (work in progress!) <a name="lab8"></a>
 
-**Important note**: Lab 8 is not fully working yet, so you might want to skip to [Lab9](#lab9).
-
 You might be wondering how to scale the NVA cluster beyond 2 appliances. Using the LB schema from previous labs, you can do it easily. But how to scale out (and back in) the NVA cluster automatically, whenever the load requires it? In this lab we are going to explore placing the NVAs in Azure Virtual Machine Scale Sets (VMSS), so that autoscaling can be accomplished.
 
 In this lab we will deploy a VMSS containing Linux appliances as the ones we saw in the previous labs.
@@ -1518,16 +1516,19 @@ nva-vmss   vnetTest         westeurope                    2  True             Ma
 <b>az network lb list -o table</b>
 Location    Name                   ProvisioningState    ResourceGroup    ResourceGuid
 ----------  ---------------------  -------------------  ---------------  ------------------------------------
-westeurope  linuxnva-slb-ext       Succeeded            vnetTest         0f7bf1f9-8656-4ec9-8e1e-a4595b918e30
-westeurope  linuxnva-slb-int       Succeeded            vnetTest         b8be7efc-2eaa-4eb8-b314-49c2ce1f1f42
-<b>westeurope  linuxnva-vmss-slb-int  Succeeded            vnetTest         8056b7bc-ea82-4911-94a7-2c37634ad757</b>
-</pre>
+westeurope  linuxnva-slb-ext       Succeeded            vnetTest         3aebcb33-7c72-428c-af7f-ef88ed1c9512
+westeurope  linuxnva-slb-int       Succeeded            vnetTest         adc84d37-caa1-48ec-beef-e951b565e38a
+westeurope  <b>linuxnva-vmss-slb-ext</b>  Succeeded            vnetTest         d81bd9d7-8d4a-455b-9f1e-fcb081de07aa
+westeurope  <b>linuxnva-vmss-slb-int</b>  Succeeded            vnetTest         c5984c45-970b-4bec-ab94-7193f884e89b</pre>
 
 <pre lang="...">
 <b>az network lb address-pool list --lb-name linuxnva-vmss-slb-int -o table</b>
 Name                          ProvisioningState    ResourceGroup
 ----------------------------  -------------------  ---------------
 linuxnva-vmss-slbBackend-int  Succeeded            vnetTest
+</pre>
+
+<pre lang="...">
 <b>az network lb address-pool show --lb-name linuxnva-vmss-slb-int --name linuxnva-vmss-slbBackend-int --query backendIpConfigurations[].id</b>
 [
   "/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Compute/virtualMachineScaleSets/nva-vmss/virtualMachines/0/networkInterfaces/nic0/ipConfigurations/ipconfig0",
@@ -1535,7 +1536,7 @@ linuxnva-vmss-slbBackend-int  Succeeded            vnetTest
 ]
 </pre>
 
-**Step 4.** A very important piece of information that we still need about the load balancer is its virtual IP address, since this is going to be the next-hop for our routes:
+**Step 4.** A very important piece of information that we need about the load balancer is its virtual IP address, since this is going to be the next-hop for our routes:
 
 <pre lang="...">
 <b>az network lb frontend-ip list --lb-name linuxnva-vmss-slb-int -o table</b>
@@ -1545,13 +1546,13 @@ myFrontendConfig  <b>10.4.2.200</b>          Static                       Succee
 </pre>
 
 
-**Step 5.** Lastly, let us have a look at the rules configured. As you can see, the ARM template preconfigured a DSR SSH rule. DSR does not make a difference here. The reason is because traffic will not be addressed at the rule, but the rule will only be used as a next-hop in UDRs. Therefore, there is no IP address in the packet to NAT or not NAT.
+**Step 5.** Let us have a look at the rules configured. As you can see, the ARM template preconfigured a load balancing rule including all the ports (that is what the value of 0 means for the BackendPort and Frontendport).
 
 <pre lang="...">
 <b>az network lb rule list --lb-name linuxnva-vmss-slb-int -o table</b>
-  BackendPort  EnableFloatingIp      FrontendPort    IdleTimeoutInMinutes  LoadDistribution    Name    Protocol    ProvisioningState    ResourceGroup
--------------  ------------------  --------------  ----------------------  ------------------  ------  ----------  -------------------  ---------------
-           22  True                            <b>22</b>                       4  Default             <b>ssh</b>     Tcp         Succeeded            vnetTest
+BackendPort    DisableOutboundSnat    EnableFloatingIp    EnableTcpReset    FrontendPort    IdleTimeoutInMinutes    LoadDistribution    Name    Protocol
+-------------  ---------------------  ------------------  ----------------  --------------  ----------------------  ------------------  ------  ----------
+<b>0</b>              False                  True                False             <b>0</b>               4                       Default             HARule  All
 </pre>
 
 **Step 6.** Now let us update the routes in Vnet1 and Vnet2 so that they point to the VMSS VIP. The next hop for both will be the virtual IP address of the load balancer, that we verified in Step 7.
@@ -1584,21 +1585,83 @@ myFrontendConfig  <b>10.4.2.200</b>          Static                       Succee
 }
 </pre>
 
-**Step 14.** At this point connectivity between the VMs in vnet1 and vnet2 should flow through the VMSS. Try to connect from our jump host (in vnet1) to the VM in vnet2, 10.2.1.4. The SSH traffic should be intercepted by the UDRs and sent over to the LB. The LB would then load balance it over the NVAs in the VMSS, that would source NAT it (to make sure to attract the return traffic) and send it forward to the VM in myVnet2.
+<pre lang="...">
+<b>az network route-table route update --route-table-name vnet2-subnet1 -n default --next-hop-ip-address 10.4.2.200</b>
+{
+  "addressPrefix": "0.0.0.0/0",
+  "etag": "W/\"92fa8f12-326e-439b-b591-0bbb723b7617\"",
+  "id": "/subscriptions/e7da9914-9b05-4891-893c-546cb7b0422e/resourceGroups/vnetTest/providers/Microsoft.Network/routeTables/vnet2-subnet1/routes/default",
+  "name": "default",
+  "nextHopIpAddress": "10.4.2.200",
+  "nextHopType": "VirtualAppliance",
+  "provisioningState": "Succeeded",
+  "resourceGroup": "vnetTest",
+  "type": "Microsoft.Network/routeTables/routes"
+}
+</pre>
+
+**Step 7.** At this point connectivity between the VMs in vnet1 and vnet2 should flow through the VMSS. Try to connect from our jump host (in vnet1) to the VM in vnet2, 10.2.1.4. The SSH traffic should be intercepted by the UDRs and sent over to the LB. The LB would then load balance it over the NVAs in the VMSS, that would source NAT it (to make sure to attract the return traffic) and send it forward to the VM in myVnet2.
 
 <pre lang="...">
 lab-user@myVnet1-vm2:~$ <b>ssh 10.2.1.4</b>
 ssh: connect to host 10.2.1.4 port 22: Connection timed out
-lab-user@myVnet1-vm1:~$
+lab-user@myVnet1-vm1:~$ who
+lab-user pts/0        2018-12-03 13:11 (<b>10.4.2.5</b>)
 </pre> 
 
+You can see that the access is coming from the IP address 10.4.2.5. This IP address belongs to one of the instances of the VMSS. The following commands show how you can verify the private IP address of each instance in your VMSS:
+
+<pre lang="...">
+<b>az vmss list-instances -n nva-vmss -o table</b>
+InstanceId    LatestModelApplied    Location    Name        ProvisioningState    ResourceGroup    VmId
+------------  --------------------  ----------  ----------  -------------------  ---------------  ------------------------------------
+1             True                  westeurope  nva-vmss_1  Succeeded            VNETTEST         4a4c53b0-1095-4d60-9d29-16cf7e71d655
+3             True                  westeurope  nva-vmss_3  Succeeded            VNETTEST         ffff976e-025e-43b4-a686-d32398f4cbea
+<b>az vmss nic list-vm-nics --vmss-name nva-vmss --instance-id 1 --query [].ipConfigurations[].privateIpAddress -o tsv</b>
+<b>10.4.2.5</b>
+<b>az vmss nic list-vm-nics --vmss-name nva-vmss --instance-id 3 --query [].ipConfigurations[].privateIpAddress -o tsv</b>
+10.4.2.7
+</pre> 
+
+**Step 8.** Let us now investigate Internet access through the NVAs in the VMSS. You may have noticed that we updated the default route in Vnet2-subnet1 to point to the VMSS Internal Load Balancer. For that to work, as previous labs showed, we need an external load balancer associated to the VMSS instances and with an outbound NAT rule. Let us look at it:
+
+<pre lang="...">
+<b>az network lb frontend-ip list --lb-name linuxnva-vmss-slb-ext --query [].[name,publicIpAddress.id] -o tsv</b>
+myFrontendConfig        /subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Network/publicIPAddresses/<b>linuxnva-vmss-slbPip-ext</b>
+</pre> 
+
+<pre lang="...">
+az network public-ip show -n linuxnva-vmss-slbPip-ext --query ipAddress -o tsv
+52.236.159.117
+</pre>
+
+Let us do one more check, and verify that there are 2 instances associated to the backend address pool of the ELB:
+
+<pre lang="...">
+<b>az network lb address-pool list --lb-name linuxnva-vmss-slb-ext -o tsv --query [].backendIpConfigurations[].id</b>
+/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Compute/virtualMachineScaleSets/nva-vmss/virtualMachines/1/networkInterfaces/nic
+0/ipConfigurations/ipconfig0
+/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Compute/virtualMachineScaleSets/nva-vmss/virtualMachines/3/networkInterfaces/nic
+0/ipConfigurations/ipconfig0
+</pre>
+
+Now we are sure that outbound Internet access should work from our VM in Vnet2. If you try you should see that it is coming to the Internet to the IP address assigned to the frontend configuration of the load balancer
+
+<pre lang="...">
+lab-user@myVnet2-vm1:~$ curl ifconfig.co
+<b>52.236.159.117</b>
+</pre> 
 
 ### What we have learnt
 
 In previous labs we saw that NVAs can be clustered in a farm behind a load balancer. This lab has taken this concept a step further, converting that farm into a Virtual Machine Scale Set, that has the properties of autoscaling up and down.
 
-The reason why this lab in particular is not working yet is because when the VMs are deployed, they are automatically associated to the standard LB, and therefore have no Internet connectivity any more. As a consequence they cannot download the script that configures the VM to perform as NVA.
+The VMSS configuration is using the same design as we already saw in a previous lab with NVA VMs: an ILB providing the endpoint for UDRs, and an external load balancer that provides Internet connectivity to the NVAs.
 
+
+## Lab future: Azure Firewall <a name="xxxx"></a>
+
+When I find some time I will put here content to deploy Azure Firewall to Vnet4. Essentially an Azure Firewall is not too different from the previous design shown in the VMSS lab, only that Microsoft is managing the different moving parts, especially the load balancers, which makes it a lot easier to deploy and maintain.
 
 
 # Part 3: VPN to external site <a name="part3"></a>
