@@ -14,7 +14,7 @@
 
 **[Part 1: Spoke-to-Spoke communication over NVA](#part1)**
 
-- [Lab 2: Spoke-to-Spoke communication over vnet gateway](#lab2)
+- [Lab 2: Spoke-to-Spoke communication over NVA](#lab2)
 
 - [Lab 3: Microsegmentation with NVA](#lab3)
 
@@ -491,7 +491,7 @@ However, if we verify the routing table that has been programmed in the interfac
 
 <pre lang="...">
 <b>az network nic show-effective-route-table -n myVnet1-vm1-nic</b>
-...
+<i>...Output omitted...</i>
     {
       "addressPrefix": [
         "10.2.0.0/16"
@@ -549,7 +549,7 @@ AddressPrefix    Name     NextHopIpAddress    NextHopType       ProvisioningStat
 
 <pre lang="...">
 <b>az network nic show-effective-route-table -n myVnet1-vm1-nic</b>
-...
+<i>...Output omitted...</i>
     {
       "addressPrefix": [
         "10.2.0.0/16"
@@ -562,6 +562,7 @@ AddressPrefix    Name     NextHopIpAddress    NextHopType       ProvisioningStat
       "source": "User",
       "state": "Active"
     }
+<i>...Output omitted...</i>
 </pre>
 
 **Note:** the previous command takes some seconds to run, since it accesses the routing programmed into the NIC. If you cannot find the route with the addressPrefix 10.2.0.0/16 (at the bottom of the output), please wait a few seconds and issue the command again, sometimes it takes some time to program the NICs in Azure
@@ -574,6 +575,87 @@ lab-user@myVnet1vm:~$ <b>ssh 10.2.1.4</b>
 lab-user@myVnet2-vm1:~$
 </pre>
 
+**Step 14.** Does this work over global vnet peering? This is what we are going to test in this step. As you may have noticed already, Vnet3 is in a different location than the rest of the vnets, US West 2 (if you didn't change the commands to deploy the lab).
+
+<pre lang="...">
+<b>az network vnet list --query [].[name,location] -o tsv</b>
+myVnet1 westeurope
+myVnet2 westeurope
+myVnet4 westeurope
+myVnet5 westeurope
+myVnet3 <b>westus2</b>
+</pre>
+
+Vnet peering is still configured and it should be in a Connected state:
+
+<pre lang="...">
+<b>az network vnet peering list -o table --vnet-name myVnet4</b>
+AllowForwardedTraffic    AllowGatewayTransit    AllowVirtualNetworkAccess    Name           PeeringState    ProvisioningState    ResourceGroup    UseRemoteGateways
+-----------------------  ---------------------  ---------------------------  -------------  --------------  -------------------  ---------------  -------------------
+False                    False                  True                         LinkTomyVnet3  <b>Connected</b>       Succeeded            vnetTest         False
+False                    False                  True                         LinkTomyVnet2  Connected       Succeeded            vnetTest         False
+False                    False                  True                         LinkTomyVnet1  Connected       Succeeded            vnetTest         False
+<b>az network vnet peering list -o table --vnet-name myVnet3</b>
+AllowForwardedTraffic    AllowGatewayTransit    AllowVirtualNetworkAccess    Name           PeeringState    ProvisioningState    ResourceGroup    UseRemoteGateways
+-----------------------  ---------------------  ---------------------------  -------------  --------------  -------------------  ---------------  -------------------
+True                     False                  True                         LinkTomyVnet4  <b>Connected</b>       Succeeded            vnetTest         False
+</pre>
+
+So we can just configure the routes between Vnet3 and the rest of the spokes, exactly as explained above for Vnets in the same region. The following commands will create a new route-table for subnet1 in Vnet3 (note that it needs to be in the same region as the vnet), and route traffic to the rest of the spokes (Vnets 2 and 3) over the NVA:
+
+<pre lang="...">
+az network route-table create --name vnet3-subnet1 -l westus2
+az network vnet subnet update -n myVnet3Subnet1 --vnet-name myVnet3 --route-table vnet3-subnet1
+az network route-table route create --address-prefix 10.1.0.0/16 --next-hop-ip-address 10.4.2.101 --next-hop-type VirtualAppliance --route-table-name vnet3-subnet1 -n vnet1
+az network route-table route create --address-prefix 10.2.0.0/16 --next-hop-ip-address 10.4.2.101 --next-hop-type VirtualAppliance --route-table-name vnet3-subnet1 -n vnet2
+az network route-table route create --address-prefix 10.3.0.0/16 --next-hop-ip-address 10.4.2.101 --next-hop-type VirtualAppliance --route-table-name vnet1-subnet1 -n vnet3
+az network route-table route create --address-prefix 10.3.0.0/16 --next-hop-ip-address 10.4.2.101 --next-hop-type VirtualAppliance --route-table-name vnet2-subnet1 -n vnet3
+</pre>
+
+If the previous commands worked, you should be able to see now the new routes in the interface associated to the VM in Vnet3
+
+<pre lang="...">
+<b>az network nic show-effective-route-table -n myVnet3-vm1-nic</b>
+<i>...Output omitted...</i>
+    {
+      "addressPrefix": [
+        "10.1.0.0/16"
+      ],
+      "disableBgpRoutePropagation": false,
+      "name": "vnet1",
+      "nextHopIpAddress": [
+        <b>"10.4.2.101"</b>
+      ],
+      "nextHopType": "None",
+      "source": "User",
+      "state": "Active"
+    },    {
+      "addressPrefix": [
+        "10.2.0.0/16"
+      ],
+      "disableBgpRoutePropagation": false,
+      "name": "vnet2",
+      "nextHopIpAddress": [
+        <b>"10.4.2.101"</b>
+      ],
+      "nextHopType": "None",
+      "source": "User",
+      "state": "Active"
+    },
+<i>...Output omitted...</i>
+</pre>
+
+And now you should be able to connect from the jump host (VM2 in Vnet1) to the VM in Vnet3:
+
+<pre lang="...">
+<b>lab-user@myVnet1-vm2:~$ ssh 10.3.1.4</b>
+<i>...Output omitted...</i>
+lab-user@10.3.1.4's password:
+Welcome to Ubuntu 16.04.5 LTS (GNU/Linux 4.15.0-1021-azure x86_64)
+<i>...Output omitted...</i>
+lab-user@<b>myVnet3</b>-vm1:~$
+</pre>
+
 ### What we have learnt
 
 With peered vnets it is not enough to send traffic to the vnet in order to get spoke-to-spoke communication, but you need to steer it to an NVA (or to a VPN/ER Gateway, as we will see in a later lab) via User-Defined Routes (UDR).
@@ -581,6 +663,8 @@ With peered vnets it is not enough to send traffic to the vnet in order to get s
 UDRs can be used steer traffic between subnets through a firewall. The UDRs should point to the IP address of a firewall interface in a different subnet. This firewall could be even in a peered vnet, as we demonstrated in this lab, where the firewall was located in the hub vnet.
 
 You can verify the routes installed in the routing table, as well as the routes programmed in the NICs of your VMs. Note that discrepancies between the routing table and the programmed routes can be extremely useful when troubleshooting routing problems.
+
+You can use these concepts both in locally peered vnets (in the same region) as well as with globally peered vnets (in differnt regions). Note that this is the case because we are routing to an IP associated to a VM (our first NVA in this example). As later labs will show, when routing to an IP associated to a Load Balancer global peering will not work. That essentially dictates the HA method for NVAs to use today if using a hub & spoke global topologies. 
 
 
 ## Lab 3: Microsegmentation with an NVA
@@ -1031,9 +1115,18 @@ Note that this schema is the standard mechanism to deploy active/active clusters
 
 ## Lab 6: Outgoing Internet traffic protected by an NVA <a name="lab6"></a>
 
-What if we want to send all traffic leaving the vnet towards the public Internet through the NVAs? We need to make sure that Internet traffic to/from all VMs flows through the NVAs via User-Defined Routes, and that NVAs source-NAT the outgoing traffic with their public IP address, so that they get the return traffic too.
+What if we want to send all traffic leaving the vnet towards the public Internet through the NVAs? We need to make sure that Internet traffic to/from all VMs flows through the NVAs via User-Defined Routes, that NVAs source-NAT the outgoing traffic with their public IP address, and that NVAs have Internet connectivity.
 
-**Step 2.** For this test we will use VM2 in vnet2. We will insert a default route to send Internet traffic through the NVAs. First, connect from the jump host to VM2, and verify that you have Internet connectivity. You could just send a curl request to the web service `ifconfig.co`, that returns your public IP address as seen by the Web server:
+You might be asking yourself whether this last point is relevant, since after all, all VMs in Azure have per default connectivity to the Internet. However, when associating a standard ILB to the NVAs we actually removed this connectivity, according to the note in https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-outbound-connections#defaultsnat. As explained in that document, you have two alternatives in order to restore Internet connectivity:
+1. Configure a public IP address for every NVA: although possible, this is often undesirable, since that would expose our NVAs to the Internet. However, this design allows to use different NICs in the NVA for internal and external connectivity. See more about this scenario [here](https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-outbound-connections#ilpip).
+2. Attach an ELB to the NVAs with outbound NAT rules. This scenario is described [here](https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-outbound-connections#lb), and it is what we will use in our lab.
+
+This figure demonstrates the concept that we will implement:
+
+
+![ELB and ILB](figure_nva_elb.png "ILB and ELB together")
+
+**Step 1.** For this test we will use VM2 in vnet2. We will insert a default route to send Internet traffic through the NVAs. First, connect from the jump host to VM2, and verify that you have Internet connectivity. You could just send a curl request to the web service `ifconfig.co`, that returns your public IP address as seen by the Web server:
 
 <pre lang="">
 lab-user@myVnet1vm2:~$ <b>ssh 10.2.1.4</b>
@@ -1336,14 +1429,14 @@ In this lab we will deploy a VMSS containing Linux appliances as the ones we saw
 **Step 1.** The first thing we are going to do is to deploy a VMSS and an additional Load Balancer to our lab. You can use the ARM template in this Github repository to do so, where all values are predetermined and you only need to supply the password for the VMs:
 
 <pre lang="...">
-<b>az group deployment create --name vmssDeployment --template-uri https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/nvaLinux_1nic_noVnet_ScaleSet_ILBonly.json --parameters '{"vmPwd":{"value":"Microsoft123!"}}'</b>
+<b>az group deployment create --name vmssDeployment --template-uri https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/nvaLinux_1nic_noVnet_ScaleSet.json --parameters '{"vmPwd":{"value":"Microsoft123!"}}'</b>
 <i>Output omitted</i>
 </pre>
 
 Alternatively, if you are using the Azure CLI in a Windows OS, you can use this syntax:
 
 <pre lang="...">
-<b>az group deployment create --name vmssDeployment --template-uri https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/nvaLinux_1nic_noVnet_ScaleSet_ILBonly.json --parameters "{\"vmPwd\":{\"value\":\"Microsoft123!\"}}"</b>
+<b>az group deployment create --name vmssDeployment --template-uri https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/nvaLinux_1nic_noVnet_ScaleSet.json --parameters "{\"vmPwd\":{\"value\":\"Microsoft123!\"}}"</b>
 <i>Output omitted</i>
 </pre>
 

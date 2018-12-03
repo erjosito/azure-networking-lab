@@ -33,7 +33,7 @@
             "location": "[resourceGroup().location]",
             "properties": {
                 "allowVirtualNetworkAccess": true,
-                "allowForwardedTraffic": false,
+                "allowForwardedTraffic": true,
                 "allowGatewayTransit": "[parameters('useRemoteGateways')]",
                 "useRemoteGateways": "[parameters('useRemoteGateways')]",
                     "remoteVirtualNetwork": {

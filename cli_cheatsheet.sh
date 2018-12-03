@@ -22,6 +22,16 @@ az network route-table create --name vnet2-subnet1
 az network vnet subnet update -n myVnet2Subnet1 --vnet-name myVnet2 --route-table vnet2-subnet1
 az network route-table route create --address-prefix 10.1.0.0/16 --next-hop-ip-address 10.4.2.100 --next-hop-type VirtualAppliance --route-table-name vnet2-subnet1 -n vnet1
 
+az network route-table create --name vnet3-subnet1 -l westus2
+az network vnet subnet update -n myVnet3Subnet1 --vnet-name myVnet3 --route-table vnet3-subnet1
+az network route-table route create --address-prefix 10.1.0.0/16 --next-hop-ip-address 10.4.2.100 --next-hop-type VirtualAppliance --route-table-name vnet3-subnet1 -n vnet1
+az network route-table route create --address-prefix 10.2.0.0/16 --next-hop-ip-address 10.4.2.100 --next-hop-type VirtualAppliance --route-table-name vnet3-subnet1 -n vnet2
+az network route-table route create --address-prefix 10.3.0.0/16 --next-hop-ip-address 10.4.2.100 --next-hop-type VirtualAppliance --route-table-name vnet1-subnet1 -n vnet3
+az network route-table route create --address-prefix 10.3.0.0/16 --next-hop-ip-address 10.4.2.100 --next-hop-type VirtualAppliance --route-table-name vnet2-subnet1 -n vnet3
+
+az network nic show-effective-route-table -n myVnet3-vm1-nic
+az network nic show-effective-route-table -n myVnet3-vm1-nic | jq -r '.value[] | "\(.addressPrefix)\t\(.nextHopIpAddress)\t\(.nextHopType)"'
+
 # Configure ILB
 az network nic ip-config address-pool add --ip-config-name linuxnva-1-nic0-ipConfig --nic-name linuxnva-1-nic0 --address-pool linuxnva-slbBackend-int --lb-name linuxnva-slb-int
 az network nic ip-config address-pool add --ip-config-name linuxnva-2-nic0-ipConfig --nic-name linuxnva-2-nic0 --address-pool linuxnva-slbBackend-int --lb-name linuxnva-slb-int
@@ -66,10 +76,26 @@ az network lb rule list --lb-name linuxnva-vmss-slb-int -o table
 az network lb outbound-rule list --lb-name linuxnva-vmss-slb-ext -o table
 
 ############
+#    UDR   #
+############
+
+# Update to single NVA
+next_hop=10.4.2.101
+az network route-table route update --route-table-name vnet1-subnet1 -n vnet1-subnet1 --next-hop-ip-address $next_hop --next-hop-type VirtualAppliance
+az network route-table route update --route-table-name vnet1-subnet1 -n vnet2 --next-hop-ip-address $next_hop --next-hop-type VirtualAppliance
+az network route-table route update --route-table-name vnet1-subnet1 -n vnet3 --next-hop-ip-address $next_hop --next-hop-type VirtualAppliance
+az network route-table route update --route-table-name vnet2-subnet1 -n default --next-hop-ip-address $next_hop --next-hop-type VirtualAppliance
+az network route-table route update --route-table-name vnet2-subnet1 -n vnet1 --next-hop-ip-address $next_hop --next-hop-type VirtualAppliance
+az network route-table route update --route-table-name vnet2-subnet1 -n vnet3 --next-hop-ip-address $next_hop --next-hop-type VirtualAppliance
+az network route-table route update --route-table-name vnet3-subnet1 -n vnet1 --next-hop-ip-address $next_hop --next-hop-type VirtualAppliance
+az network route-table route update --route-table-name vnet3-subnet1 -n vnet2 --next-hop-ip-address $next_hop --next-hop-type VirtualAppliance
+
+
+############
 # iptables #
 ############
 sudo iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE
-sudo iptables -t nat -A POSTROUTING -o eth0 -s !10.0.0.0/255.0.0.0 -j MASQUERADE
+sudo iptables -t nat -A POSTROUTING -o eth0 ! -s 10.0.0.0/255.0.0.0 -j MASQUERADE
 
 #########
 # OTHER #
