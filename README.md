@@ -1016,6 +1016,58 @@ az network nsg rule delete -n deny_all_in --nsg-name linuxnva-2-nic0-nsg
 
 After some seconds SSH should be working just fine once more. You can verify that the probe health is back to 100% in the Azure Portal.
 
+**Step 13.** Let us try something more. If you remember, our Vnet3 is in a different Azure region, and hence using global peering to communicate with the spoke. In a previous exercise in this lab we had configured routing to/from Vnet3 to go through one of the NVAs. Let us change the routes between the spokes and try to send that traffic over the ILB:
+
+<pre lang="...">
+az network route-table route update --route-table-name vnet1-subnet1 -n vnet3 --next-hop-ip-address 10.4.2.100 --next-hop-type VirtualAppliance
+az network route-table route update --route-table-name vnet2-subnet1 -n vnet3 --next-hop-ip-address 10.4.2.100 --next-hop-type VirtualAppliance
+az network route-table route update --route-table-name vnet3-subnet1 -n vnet1 --next-hop-ip-address 10.4.2.100 --next-hop-type VirtualAppliance
+az network route-table route update --route-table-name vnet3-subnet1 -n vnet2 --next-hop-ip-address 10.4.2.100 --next-hop-type VirtualAppliance
+</pre>
+
+After a couple of seconds, check the effective route table on the NIC belonging to the VM in Vnet3:
+
+<pre lang="...">
+ <b>az network nic show-effective-route-table -n myVnet3-vm1-nic</b>
+ <i>...output omitted...</i>
+    {
+      "addressPrefix": [
+        "10.1.0.0/16"
+      ],
+      "disableBgpRoutePropagation": false,
+      "name": "vnet1",
+      "nextHopIpAddress": [
+        <b>"10.4.2.100"</b>
+      ],
+      "nextHopType": "<b>None</b>",
+      "source": "User",
+      "state": "Active"
+    },    {
+      "addressPrefix": [
+        "10.2.0.0/16"
+      ],
+      "disableBgpRoutePropagation": false,
+      "name": "vnet2",
+      "nextHopIpAddress": [
+        <b>"10.4.2.100"</b>
+      ],
+      "nextHopType": "<b>None</b>",
+      "source": "User",
+      "state": "Active"
+    },
+<i>...output omitted...</i>
+</pre>
+
+However, connectivity will not work:
+
+<pre lang="...">
+lab-user@myVnet1-vm2:~$ ssh 10.3.1.4
+ssh: connect to host 10.3.1.4 port 22: <b>Connection timed out</b>
+lab-user@myVnet1-vm2:~$
+</pre>
+
+This is due to the fact that at the time of this writing, you cannot have a load balancer frontend IP address as destination of an UDR over a global vnet peering, as documented [here](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-peering-overview#requirements-and-constraints). Note that in the constraints listed in that doc, it is also mentioned that Allow Gateway Transit or Use Remote Gateways are not possible either.
+
 
 ### What we have learnt
 
@@ -1024,6 +1076,8 @@ NVAs can be load balanced with the help of an Azure Load Balancer. UDRs configur
 The HA Ports feature of the Azure **standard** load balancer allows configuring Layer3 load balancing rules, that is, rules that will forward all UDP/TCP ports to the NVA. This is today the way most modern HA designs work, superseeding designs based on automatic UDR modification.
 
 Another problem that needs to be solved is return traffic. With stateful network devices such as firewalls you need to prevent asymmetric routing. In other words, source-to-destination traffic needs to go through the same firewall as destination-to-source traffic (for any given TCP or UDP flow). This can be achieved by source-NATting the traffic at the NVAs, so that the destination will always send the return traffic the right way.
+
+Lastly, we have verified that this construct works for local peerings, but globally peered vnets will not be able to access the ILB IP address because of current limitations in Azure at the time of this writing.
 
 ## Lab 5: Using the Azure LB for return traffic <a name="lab5"></a>
 
@@ -1122,7 +1176,6 @@ You might be asking yourself whether this last point is relevant, since after al
 2. Attach an ELB to the NVAs with outbound NAT rules. This scenario is described [here](https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-outbound-connections#lb), and it is what we will use in our lab.
 
 This figure demonstrates the concept that we will implement:
-
 
 ![ELB and ILB](figure_nva_elb.png "ILB and ELB together")
 
