@@ -13,22 +13,24 @@ az group deployment create -n netLabDeployment --template-uri $url -g vnetTest -
 az network lb list --query [].[name,sku.name] -o table
 
 # Configure routing pointing to the ILB
+next_hop='10.4.2.100'
 az network route-table create --name vnet1-subnet1
 az network vnet subnet update -n myVnet1Subnet1 --vnet-name myVnet1 --route-table vnet1-subnet1
-az network route-table route create --address-prefix 10.2.0.0/16 --next-hop-ip-address 10.4.2.100 --next-hop-type VirtualAppliance --route-table-name vnet1-subnet1 -n vnet2
-az network route-table route create --address-prefix 10.1.1.0/24 --next-hop-ip-address 10.4.2.100 --next-hop-type VirtualAppliance --route-table-name vnet1-subnet1 -n vnet1-subnet1
+az network route-table route create --address-prefix 10.2.0.0/16 --next-hop-ip-address $next_hop --next-hop-type VirtualAppliance --route-table-name vnet1-subnet1 -n vnet2
+az network route-table route create --address-prefix 10.1.1.0/24 --next-hop-ip-address $next_hop --next-hop-type VirtualAppliance --route-table-name vnet1-subnet1 -n vnet1-subnet1
 
 az network route-table create --name vnet2-subnet1
 az network vnet subnet update -n myVnet2Subnet1 --vnet-name myVnet2 --route-table vnet2-subnet1
-az network route-table route create --address-prefix 10.1.0.0/16 --next-hop-ip-address 10.4.2.100 --next-hop-type VirtualAppliance --route-table-name vnet2-subnet1 -n vnet1
+az network route-table route create --address-prefix 10.1.0.0/16 --next-hop-ip-address $next_hop --next-hop-type VirtualAppliance --route-table-name vnet2-subnet1 -n vnet1
 
 az network route-table create --name vnet3-subnet1 -l westus2
 az network vnet subnet update -n myVnet3Subnet1 --vnet-name myVnet3 --route-table vnet3-subnet1
-az network route-table route create --address-prefix 10.1.0.0/16 --next-hop-ip-address 10.4.2.100 --next-hop-type VirtualAppliance --route-table-name vnet3-subnet1 -n vnet1
-az network route-table route create --address-prefix 10.2.0.0/16 --next-hop-ip-address 10.4.2.100 --next-hop-type VirtualAppliance --route-table-name vnet3-subnet1 -n vnet2
-az network route-table route create --address-prefix 10.3.0.0/16 --next-hop-ip-address 10.4.2.100 --next-hop-type VirtualAppliance --route-table-name vnet1-subnet1 -n vnet3
-az network route-table route create --address-prefix 10.3.0.0/16 --next-hop-ip-address 10.4.2.100 --next-hop-type VirtualAppliance --route-table-name vnet2-subnet1 -n vnet3
+az network route-table route create --address-prefix 10.1.0.0/16 --next-hop-ip-address $next_hop --next-hop-type VirtualAppliance --route-table-name vnet3-subnet1 -n vnet1
+az network route-table route create --address-prefix 10.2.0.0/16 --next-hop-ip-address $next_hop --next-hop-type VirtualAppliance --route-table-name vnet3-subnet1 -n vnet2
+az network route-table route create --address-prefix 10.3.0.0/16 --next-hop-ip-address $next_hop --next-hop-type VirtualAppliance --route-table-name vnet1-subnet1 -n vnet3
+az network route-table route create --address-prefix 10.3.0.0/16 --next-hop-ip-address $next_hop --next-hop-type VirtualAppliance --route-table-name vnet2-subnet1 -n vnet3
 
+# Verify effective routing
 az network nic show-effective-route-table -n myVnet3-vm1-nic
 az network nic show-effective-route-table -n myVnet3-vm1-nic | jq -r '.value[] | "\(.addressPrefix)\t\(.nextHopIpAddress)\t\(.nextHopType)"'
 
@@ -36,14 +38,11 @@ az network nic show-effective-route-table -n myVnet3-vm1-nic | jq -r '.value[] |
 az network nic ip-config address-pool add --ip-config-name linuxnva-1-nic0-ipConfig --nic-name linuxnva-1-nic0 --address-pool linuxnva-slbBackend-int --lb-name linuxnva-slb-int
 az network nic ip-config address-pool add --ip-config-name linuxnva-2-nic0-ipConfig --nic-name linuxnva-2-nic0 --address-pool linuxnva-slbBackend-int --lb-name linuxnva-slb-int
 az network lb address-pool list --lb-name linuxnva-slb-int -o table --query [].backendIpConfigurations[].id
-az network lb rule delete --lb-name linuxnva-slb-int -n ssh
-az network lb rule create --backend-pool-name linuxnva-slbBackend-int --protocol all --backend-port 0 --frontend-port 0 --frontend-ip-name myFrontendConfig --lb-name linuxnva-slb-int --name HARule --floating-ip true --probe-name myProbe
 
 # NSG (to bring one of the firewalls out of the ILB rotation)
 az network nsg rule create --nsg-name linuxnva-1-nic0-nsg -n deny_all_in --priority 100 --access Deny --direction Inbound --protocol "*" --source-address-prefixes "*" --source-port-ranges "*" --destination-address-prefixes "*" --destination-port-ranges "*"
 az network nsg rule list --nsg-name linuxnva-1-nic0-nsg -o table
 az network nsg rule delete -n deny_all_in --nsg-name linuxnva-1-nic0-nsg
-
 
 # Configure ELB (outbound NAT)
 az network nic ip-config address-pool add --ip-config-name linuxnva-1-nic0-ipConfig --nic-name linuxnva-1-nic0 --address-pool linuxnva-slbBackend-ext --lb-name linuxnva-slb-ext
@@ -57,7 +56,6 @@ az network nic update -n linuxnva-1-nic0 --network-security-group 'linuxnva-1-ni
 az network nic update -n linuxnva-2-nic0 --network-security-group 'linuxnva-2-nic0-nsg'
 az network nsg rule list --nsg-name linuxnva-1-nic0-nsg -o table --include-default
 az network nsg rule create --nsg-name linuxnva-1-nic0-nsg -n allow_vnet_internet --priority 110 --access Allow --direction Inbound --protocol "Tcp" --source-address-prefix "VirtualNetwork" --source-port-ranges "*" --destination-address-prefixes "*" --destination-port-ranges "80-80"
-
 
 ########
 # VMSS #
@@ -90,6 +88,24 @@ az network route-table route update --route-table-name vnet2-subnet1 -n vnet3 --
 az network route-table route update --route-table-name vnet3-subnet1 -n vnet1 --next-hop-ip-address $next_hop --next-hop-type VirtualAppliance
 az network route-table route update --route-table-name vnet3-subnet1 -n vnet2 --next-hop-ip-address $next_hop --next-hop-type VirtualAppliance
 
+############
+#   VPN    #
+############
+az network vnet-gateway create --name vnet4Gw --vnet myVnet4 --public-ip-addresses vnet4gwPip --sku VpnGw1 --asn 65504
+az network vnet-gateway create --name vnet5Gw --vnet myVnet5 --public-ip-addresses vnet5gwPip --sku VpnGw1 --asn 65505
+
+az network route-table route update --next-hop-ip-address 10.4.0.4 --route-table-name vnet1-subnet1 -n vnet2
+az network route-table route update --next-hop-ip-address 10.4.0.4 --route-table-name vnet2-subnet1 -n vnet1
+
+az network vpn-connection create -n 4to5 --vnet-gateway1 vnet4gw --enable-bgp --shared-key Microsoft123 --vnet-gateway2 vnet5gw
+az network vpn-connection create -n 5to4 --vnet-gateway1 vnet5gw --enable-bgp --shared-key Microsoft123 --vnet-gateway2 vnet4gw
+
+az network vnet peering update --vnet-name myVnet4 -g vnetTest --name LinkTomyVnet1 --set allowGatewayTransit=true
+az network vnet peering update --vnet-name myVnet4 -g vnetTest --name LinkTomyVnet2 --set allowGatewayTransit=true
+az network vnet peering update --vnet-name myVnet4 -g vnetTest --name LinkTomyVnet3 --set allowGatewayTransit=true
+az network vnet peering update --vnet-name myVnet1 -g vnetTest --name LinkTomyVnet4 --set useRemoteGateways=true
+az network vnet peering update --vnet-name myVnet2 -g vnetTest --name LinkTomyVnet4 --set useRemoteGateways=true
+az network vnet peering update --vnet-name myVnet3 -g vnetTest --name LinkTomyVnet4 --set useRemoteGateways=true
 
 ############
 # iptables #
