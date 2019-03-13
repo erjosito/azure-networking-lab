@@ -57,6 +57,24 @@ az network nic update -n linuxnva-2-nic0 --network-security-group 'linuxnva-2-ni
 az network nsg rule list --nsg-name linuxnva-1-nic0-nsg -o table --include-default
 az network nsg rule create --nsg-name linuxnva-1-nic0-nsg -n allow_vnet_internet --priority 110 --access Allow --direction Inbound --protocol "Tcp" --source-address-prefix "VirtualNetwork" --source-port-ranges "*" --destination-address-prefixes "*" --destination-port-ranges "80-80"
 
+# Additional tests (not in the lab guide)
+# Delete/Recreate outbound NAT rule in the ELB
+# You can use this to attach an ELB to a second NIC of an NVA
+az network lb outbound-rule delete -g vnetTest --lb-name linuxnva-slb-ext -n myrule
+az network lb rule create -g vnetTest --lb-name linxnva-slb-ext -n mylbrule --frontend-ip-name myFrontendConfig --backend-pool-name linuxnva-slbBackend-ext --protocol All --frontend-port 0 --backend-port 0
+# Create PIP/frontend/LB-rule in the external LB, and allow Internet SSH
+az network public-ip create -g vnetTest -n linuxnva-slbPip-ext2 --sku Standard --allocation-method Static
+az network lb frontend-ip create -g vnetTest -n myFrontendConfig2 --lb-name linuxnva-slb-ext --public-ip-addres linuxnva-slbPip-ext2
+az network lb rule create -g vnetTest --lb-name linuxnva-slb-ext -n mylbrule --frontend-ip-name myFrontendConfig2 --backend-pool-name linuxnva-slbBackend-ext --protocol Tcp --frontend-port 1022 --backend-port 22
+az network nsg rule create --nsg-name linuxnva-1-nic0-nsg -n allow_ssh_in --priority 120 --access Allow --direction Inbound --protocol "Tcp" --source-address-prefix Internet --source-port-ranges "*" --destination-address-prefixes "*" --destination-port-ranges "22-22"
+az network nsg rule create --nsg-name linuxnva-2-nic0-nsg -n allow_ssh_in --priority 120 --access Allow --direction Inbound --protocol "Tcp" --source-address-prefix Internet --source-port-ranges "*" --destination-address-prefixes "*" --destination-port-ranges "22-22"
+
+# Remove LB from IP Config
+lbname=linuxnva-slb-int
+nic=linuxnva-1-nic0
+az network nic ip-config address-pool remove -g vnetTest --ip-config-name "$nic-ipConfig" --nic-name $nic --address-pool linuxnva-slbBackend-int --lb-name $lbname
+az network lb address-pool list --lb-name $lbname -o table --query [].backendIpConfigurations[].id
+
 ########
 # VMSS #
 ########
@@ -120,3 +138,8 @@ sudo iptables -t nat -A POSTROUTING -o eth0 ! -s 10.0.0.0/255.0.0.0 -j MASQUERAD
 # Deploy standard ELB
 lburl='https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/externalLB_standard.json'
 az group deployment create -n elbDeploy -g vnetTest --template-uri $lburl
+
+############
+# Clean up #
+############
+az group delete -n vnetTest -y --no-wait

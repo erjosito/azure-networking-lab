@@ -150,7 +150,7 @@ Or alternatively use the following command if you are using a **Linux** operativ
 az group deployment create --name netLabDeployment --template-uri https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/NetworkingLab_master.json --resource-group vnetTest --parameters '{"adminPassword":{"value":"Microsoft123!"}, "location2ary":{"value": "westus2"}, "location2aryVnets":{"value": [3]}}'
 </pre>
 
-**Note**: the previous command will deploy 5 vnets, one of them (vnet 3) in an alternate location. The goal of deploying this single vnet in a different location is to include **global vnet peering** in this lab. Should you not have access to locations where global vnet peering is available (such as West Europe and West US 2 used in the examples), you can just deploy the previous templates without the parameters `location2ary` and `location2aryVnets`, which will deploy or vnets into the same location as the resource group.
+**Note**: the previous command will deploy 5 vnets, one of them (vnet 3) in an alternate location. The goal of deploying this single vnet in a different location is to include **global vnet peering** in this lab. Should you not have access to locations where global vnet peering is available (such as West Europe and West US 2 used in the examples), you can just deploy the previous templates without the parameters `location2ary` and `location2aryVnets`, which will deploy all nets into the same location as the resource group.
 
 
 **Step 6.** Since the previous command will take a while (around 15 minutes), open another command window (see Step 3 for detailed instructions) to monitor the deployment progress. Note you might have to login in this second window too:
@@ -664,10 +664,9 @@ UDRs can be used steer traffic between subnets through a firewall. The UDRs shou
 
 You can verify the routes installed in the routing table, as well as the routes programmed in the NICs of your VMs. Note that discrepancies between the routing table and the programmed routes can be extremely useful when troubleshooting routing problems.
 
-You can use these concepts both in locally peered vnets (in the same region) as well as with globally peered vnets (in differnt regions). Note that this is the case because we are routing to an IP associated to a VM (our first NVA in this example). As later labs will show, when routing to an IP associated to a Load Balancer global peering will not work. That essentially dictates the HA method for NVAs to use today if using a hub & spoke global topologies. 
+You can use these concepts both in locally peered vnets (in the same region) as well as with globally peered vnets (in differnt regions). Note that this is the case because we are routing to an IP associated to a VM (our first NVA in this example). As later labs will show, when routing to an IP associated to a standard Load Balancer global peering will still work.  
 
-
-## Lab 3: Microsegmentation with an NVA
+## Lab 3: Microsegmentation with an NVA <a name="lab3"></a>
 
 Some organizations wish to filter not only traffic between specific network segments, but traffic inside of a subnet as well, in order to reduce the probability of successful attacks spreading inside of an organization. This is what some in the industry know as &#39;microsegmentation&#39;.
 
@@ -1058,15 +1057,18 @@ After a couple of seconds, check the effective route table on the NIC belonging 
 <i>...output omitted...</i>
 </pre>
 
-However, connectivity will not work:
+And connectivity will still work:
 
 <pre lang="...">
-lab-user@myVnet1-vm2:~$ ssh 10.3.1.4
-ssh: connect to host 10.3.1.4 port 22: <b>Connection timed out</b>
-lab-user@myVnet1-vm2:~$
+<b>lab-user@myVnet1-vm2:~$ ssh 10.3.1.4</b>
+<i>...Output omitted...</i>
+lab-user@10.3.1.4's password:
+Welcome to Ubuntu 16.04.5 LTS (GNU/Linux 4.15.0-1021-azure x86_64)
+<i>...Output omitted...</i>
+lab-user@<b>myVnet3</b>-vm1:~$
 </pre>
 
-This is due to the fact that at the time of this writing, you cannot have a load balancer frontend IP address as destination of an UDR over a global vnet peering, as documented [here](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-peering-overview#requirements-and-constraints). Note that in the constraints listed in that doc, it is also mentioned that Allow Gateway Transit or Use Remote Gateways are not possible either.
+Note that this is a fairly new (at the time of this writing) feature in Azure, since previously you could not have a load balancer frontend IP address as destination of an UDR over a global vnet peering. However, standard Load Balancers can now be addressed over global peering, as documented [here](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-peering-overview#requirements-and-constraints). Note that in the constraints listed in that doc, it is also mentioned that Allow Gateway Transit or Use Remote Gateways are not possible either.
 
 
 ### What we have learnt
@@ -1077,7 +1079,7 @@ The HA Ports feature of the Azure **standard** load balancer allows configuring 
 
 Another problem that needs to be solved is return traffic. With stateful network devices such as firewalls you need to prevent asymmetric routing. In other words, source-to-destination traffic needs to go through the same firewall as destination-to-source traffic (for any given TCP or UDP flow). This can be achieved by source-NATting the traffic at the NVAs, so that the destination will always send the return traffic the right way.
 
-Lastly, we have verified that this construct works for local peerings, but globally peered vnets will not be able to access the ILB IP address because of current limitations in Azure at the time of this writing.
+Lastly, we have verified that this construct works for local and global peerings, when using the standard Azure Load Balancer (as opposed to the basic SKU).
 
 ## Lab 5: Using the Azure LB for return traffic <a name="lab5"></a>
 
