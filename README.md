@@ -28,7 +28,7 @@
 
 - [Lab 7: Advanced HTTP-based probes](#lab7)
 
-- [Lab 8: NVAs in a VMSS (work in progress)](#lab8)
+- [Lab 8: NVAs in a VMSS](#lab8)
 
 **[Part 3: VPN gateway](#part3)**
 
@@ -1473,7 +1473,7 @@ Now the probe for the internal load balancer will fail even if the internal inte
 Advanced HTTP probes can be used to verify additional information, so that firewalls are taken out of rotation whenever complex failure scenarios occur, such as the failure of an upstream interface, or a certain process not being running in the system (for example if the firewall daemon is not running).
 
 
-## Lab 8: NVAs in a VMSS cluster (work in progress!) <a name="lab8"></a>
+## Lab 8: NVAs in a VMSS cluster <a name="lab8"></a>
 
 You might be wondering how to scale the NVA cluster beyond 2 appliances. Using the LB schema from previous labs, you can do it easily. But how to scale out (and back in) the NVA cluster automatically, whenever the load requires it? In this lab we are going to explore placing the NVAs in Azure Virtual Machine Scale Sets (VMSS), so that autoscaling can be accomplished.
 
