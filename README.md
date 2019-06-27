@@ -1677,20 +1677,35 @@ az network lb rule create --lb-name linuxnva-vmss-slb-ext -n sshLbRule \
 
 There are some important parameters here: first, we are disabling outbound SNAT for this LB rule, since the external LB has already configured outbound NAT rules. Secondly, we use floating IP (also known as Direct Server Return) so that the traffic will arrive to the firewall with the original destination IP, that is, the public IP address of the LB (52.236.159.117). We do this to make sure that the NVA does not think that this is traffic addressed to itself.
 
-**Step 2.** Now you can configure DNAT in the NVAs. It is very bad practice to SSH into VMSS instances and change the configuration (since resizing the VMSS would take away those changes), but this is what we will do in this lab for the sake of simplicity. In a production environment you would want to modify the custom script extension that configures the firewall with the additional rule
+Finally, note that we are not using HA-Ports rules here (that is, rules matching on any destination port). The main reason is that external LBs do not support HA-Ports rules, due to security: you typically do not want to expose all of your TCP ports to the public Internet.
 
-```
+**Step 2.** Now you can configure DNAT in the NVAs. It is very bad practice to SSH into VMSS instances and change the configuration (since resizing the VMSS would take away those changes), but this is what we will do in this lab for the sake of simplicity. In a production environment you would want to modify the custom script extension that configures the firewall with the additional rule. We can connect to the NVAs from any of the VMs in the lab. Previously in this lab we got the IP addresses of the VMSS instances, here again for simplicity:
+
+<pre lang="...">
+<b>az vmss list-instances -n nva-vmss -o table</b>
+InstanceId    LatestModelApplied    Location    ModelDefinitionApplied    Name        ProvisioningState    ResourceGroup    VmId                                ------------  --------------------  ----------  ------------------------  ----------  -------------------  --------------- -------
+1             True                  westeurope  VirtualMachineScaleSet    nva-vmss_1  Succeeded            vnetTest         88ae2c79-269a-4b01-a5fa-3d0cf4cc3649
+3             True                  westeurope  VirtualMachineScaleSet    nva-vmss_3  Succeeded            vnetTest         7a1f6c19-ff9e-41ae-8b5f-ab28239fc506
+<b>az vmss nic list-vm-nics --vmss-name nva-vmss --instance-id 1 --query [].ipConfigurations[].privateIpAddress -o tsv</b>
+10.4.2.5
+<b>az vmss nic list-vm-nics --vmss-name nva-vmss --instance-id 3 --query [].ipConfigurations[].privateIpAddress -o tsv</b>
+10.4.2.7
+</pre>
+
+In the following commands, make sure to use the actual IP addresses of your environment, retrieved in the previous commands:
+
+<pre lang="...">
 lab-user@myVnet1-vm2:~$ ssh 10.4.2.5
 [...]
-lab-user@linuxnva-vmss000001:~$ sudo iptables -t nat -A PREROUTING -p tcp --dport 1022 -j DNAT --to-destination 10.1.1.5:22
+lab-user@linuxnva-vmss000001:~$ <b>sudo iptables -t nat -A PREROUTING -p tcp --dport 1022 -j DNAT --to-destination 10.1.1.5:22</b>
 lab-user@linuxnva-vmss000001:~$ exit
 lab-user@myVnet1-vm2:~$ ssh 10.4.2.7
 [...]
-lab-user@linuxnva-vmss000003:~$ sudo iptables -t nat -A PREROUTING -p tcp --dport 1022 -j DNAT --to-destination 10.1.1.5:22
+lab-user@linuxnva-vmss000003:~$ <b>sudo iptables -t nat -A PREROUTING -p tcp --dport 1022 -j DNAT --to-destination 10.1.1.5:22</b>
 lab-user@linuxnva-vmss000003:~$ exit
-```
+</pre>
 
-Note that we are using the IP address of vnet1-vm2 as example, but in a production setup this would be the virtual IP address of a server farm.
+Note that we are using the IP address of vnet1-vm2 (10.1.1.5) as example, but in a production setup this would be the virtual IP address of a server farm.
 
 Something else worth remarking is that the destination IP is not specified, so this rule will match on **any** incoming packet with destination port 1022. Should you want to make this rule more specific, you could use the syntax `sudo iptables -t nat -A PREROUTING -d 52.236.159.117 -p tcp --dport 1022 -j DNAT --to-destination 10.1.1.5:22`. However, that would imply that you need to know that IP address at VMSS creation time, if you are configuring these rules in a custom script extension or over cloudinit.
 
@@ -1719,6 +1734,7 @@ lab-user pts/2        2019-06-27 21:51 (10.4.2.7)                               
 
 Note that you might have other sessions connected to this VM displayed by the `who` command, the one we are interested in is source-NATted to one of the VMSS instances, which is a consequence of the masquerading configuration discussed in previous labs.
 
+With this, we have exposed a TCP port to the public Internet, that traverses our NVAs and lands on a virtual machine in our hub and spoke deployment.
 
 ## Optional activity: Azure Firewall
 
