@@ -1683,7 +1683,8 @@ Finally, note that we are not using HA-Ports rules here (that is, rules matching
 
 <pre lang="...">
 <b>az vmss list-instances -n nva-vmss -o table</b>
-InstanceId    LatestModelApplied    Location    ModelDefinitionApplied    Name        ProvisioningState    ResourceGroup    VmId                                ------------  --------------------  ----------  ------------------------  ----------  -------------------  --------------- -------
+InstanceId    LatestModelApplied    Location    ModelDefinitionApplied    Name        ProvisioningState    ResourceGroup    VmId
+------------  --------------------  ----------  ------------------------  ----------  -------------------  --------------- -------
 1             True                  westeurope  VirtualMachineScaleSet    nva-vmss_1  Succeeded            vnetTest         88ae2c79-269a-4b01-a5fa-3d0cf4cc3649
 3             True                  westeurope  VirtualMachineScaleSet    nva-vmss_3  Succeeded            vnetTest         7a1f6c19-ff9e-41ae-8b5f-ab28239fc506
 <b>az vmss nic list-vm-nics --vmss-name nva-vmss --instance-id 1 --query [].ipConfigurations[].privateIpAddress -o tsv</b>
