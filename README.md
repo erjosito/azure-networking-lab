@@ -1606,7 +1606,7 @@ BackendPort    DisableOutboundSnat    EnableFloatingIp    EnableTcpReset    Fron
 
 <pre lang="...">
 lab-user@myVnet1-vm2:~$ <b>ssh 10.2.1.4</b>
-ssh: connect to host 10.2.1.4 port 22: Connection timed out
+[...]
 lab-user@myVnet1-vm1:~$ who
 lab-user pts/0        2018-12-03 13:11 (<b>10.4.2.5</b>)
 </pre> 
@@ -1620,7 +1620,7 @@ InstanceId    LatestModelApplied    Location    Name        ProvisioningState   
 1             True                  westeurope  nva-vmss_1  Succeeded            VNETTEST         4a4c53b0-1095-4d60-9d29-16cf7e71d655
 3             True                  westeurope  nva-vmss_3  Succeeded            VNETTEST         ffff976e-025e-43b4-a686-d32398f4cbea
 <b>az vmss nic list-vm-nics --vmss-name nva-vmss --instance-id 1 --query [].ipConfigurations[].privateIpAddress -o tsv</b>
-<b>10.4.2.5</b>
+10.4.2.5
 <b>az vmss nic list-vm-nics --vmss-name nva-vmss --instance-id 3 --query [].ipConfigurations[].privateIpAddress -o tsv</b>
 10.4.2.7
 </pre> 
@@ -1633,7 +1633,7 @@ myFrontendConfig        /subscriptions/.../resourceGroups/vnetTest/providers/Mic
 </pre> 
 
 <pre lang="...">
-az network public-ip show -n linuxnva-vmss-slbPip-ext --query ipAddress -o tsv
+<b>az network public-ip show -n linuxnva-vmss-slbPip-ext --query ipAddress -o tsv</b>
 52.236.159.117
 </pre>
 
@@ -1641,10 +1641,8 @@ Let us do one more check, and verify that there are 2 instances associated to th
 
 <pre lang="...">
 <b>az network lb address-pool list --lb-name linuxnva-vmss-slb-ext -o tsv --query [].backendIpConfigurations[].id</b>
-/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Compute/virtualMachineScaleSets/nva-vmss/virtualMachines/1/networkInterfaces/nic
-0/ipConfigurations/ipconfig0
-/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Compute/virtualMachineScaleSets/nva-vmss/virtualMachines/3/networkInterfaces/nic
-0/ipConfigurations/ipconfig0
+/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Compute/virtualMachineScaleSets/nva-vmss/virtualMachines/1/networkInterfaces/nic0/ipConfigurations/ipconfig0
+/subscriptions/.../resourceGroups/vnetTest/providers/Microsoft.Compute/virtualMachineScaleSets/nva-vmss/virtualMachines/3/networkInterfaces/nic0/ipConfigurations/ipconfig0
 </pre>
 
 Now we are sure that outbound Internet access should work from our VM in Vnet2. If you try you should see that it is coming to the Internet to the IP address assigned to the frontend configuration of the load balancer
@@ -1659,6 +1657,67 @@ lab-user@myVnet2-vm1:~$ curl ifconfig.co
 In previous labs we saw that NVAs can be clustered in a farm behind a load balancer. This lab has taken this concept a step further, converting that farm into a Virtual Machine Scale Set, that has the properties of autoscaling up and down.
 
 The VMSS configuration is using the same design as we already saw in a previous lab with NVA VMs: an ILB providing the endpoint for UDRs, and an external load balancer that provides Internet connectivity to the NVAs.
+
+## Optional activity: ingress traffic with VMSS-based NVA cluster
+
+What if you would like to configure certain traffic coming from the Internet going through the NVAs and being forwarded to a certain server or server farm? This is what we will do in this lab: we will configure the following traffic flows:
+
+* Port 22 in the external LB associated to the NVAs will be forwarded to the NVAs in the VMSS on a specific port. We will use 1022
+* A Destination NAT (DNAT) rule in the NVAs will forward traffic arriving on port 1022 to a certain VM. We will pick the IP of one of our VMs, in a real scenario this would be the virtual IP of a server farm where an application is running.
+
+**Step 1.**	First things first: the load balancing rule in the external LB, for which we need a probe. We will use port 1138 for the probe, which the NVA is configured to listen to:
+
+```
+az network lb probe create --lb-name linuxnva-vmss-slb-ext -n myProbe --protocol tcp --port 1138 
+az network lb rule create --lb-name linuxnva-vmss-slb-ext -n sshLbRule \
+                          --disable-outbound-snat true --floating-ip true \
+                          --frontend-ip-name myFrontendConfig --probe myProbe --backend-pool-name linuxnva-vmss-slbBackend-ext \
+                          --protocol tcp --frontend-port 22 --backend-port 1022
+```
+
+There are some important parameters here: first, we are disabling outbound SNAT for this LB rule, since the external LB has already configured outbound NAT rules. Secondly, we use floating IP (also known as Direct Server Return) so that the traffic will arrive to the firewall with the original destination IP, that is, the public IP address of the LB (52.236.159.117). We do this to make sure that the NVA does not think that this is traffic addressed to itself.
+
+**Step 2.** Now you can configure DNAT in the NVAs. It is very bad practice to SSH into VMSS instances and change the configuration (since resizing the VMSS would take away those changes), but this is what we will do in this lab for the sake of simplicity. In a production environment you would want to modify the custom script extension that configures the firewall with the additional rule
+
+```
+lab-user@myVnet1-vm2:~$ ssh 10.4.2.5
+[...]
+lab-user@linuxnva-vmss000001:~$ sudo iptables -t nat -A PREROUTING -p tcp --dport 1022 -j DNAT --to-destination 10.1.1.5:22
+lab-user@linuxnva-vmss000001:~$ exit
+lab-user@myVnet1-vm2:~$ ssh 10.4.2.7
+[...]
+lab-user@linuxnva-vmss000003:~$ sudo iptables -t nat -A PREROUTING -p tcp --dport 1022 -j DNAT --to-destination 10.1.1.5:22
+lab-user@linuxnva-vmss000003:~$ exit
+```
+
+Note that we are using the IP address of vnet1-vm2 as example, but in a production setup this would be the virtual IP address of a server farm.
+
+Something else worth remarking is that the destination IP is not specified, so this rule will match on **any** incoming packet with destination port 1022. Should you want to make this rule more specific, you could use the syntax `sudo iptables -t nat -A PREROUTING -d 52.236.159.117 -p tcp --dport 1022 -j DNAT --to-destination 10.1.1.5:22`. However, that would imply that you need to know that IP address at VMSS creation time, if you are configuring these rules in a custom script extension or over cloudinit.
+
+**Step 3.** There is still something that we need to do: with the standard LB Internet traffic needs to be explicitly allowed in an NSG after associating an LB rule. Hence we need to create an NSG with some rules, associate it to the VMSS, and update the instances to make sure that the changes are propagated:
+
+```
+az network nsg create -n nva-vmss-nsg 
+az network nsg rule create --nsg-name nva-vmss-nsg -n HTTP --priority 500 --source-address-prefixes '*' --destination-port-ranges 80 --destination-address-prefixes '*' --access Allow --protocol Tcp --description "Allow Port 80"
+az network nsg rule create --nsg-name nva-vmss-nsg -n SSH --priority 520 --source-address-prefixes '*' --destination-port-ranges 22 --destination-address-prefixes '*' --access Allow --protocol Tcp --description "Allow Port 22"
+az network nsg rule create --nsg-name nva-vmss-nsg -n SSH1022 --priority 540 --source-address-prefixes '*' --destination-port-ranges 1022 --destination-address-prefixes '*' --access Allow --protocol Tcp --description "Allow Port 22"
+nsgid=$(az network nsg show -n nva-vmss-nsg -o tsv --query id)
+az vmss update -n nva-vmss --set virtualMachineProfile.networkProfile.networkInterfaceConfigurations[0].networkSecurityGroup="{ \"id\": \"$nsgid\" }"
+az vmss update-instances --name nva-vmss --instance-ids "*"
+```
+
+As you can see, we have added a rule for port 1022, plus additional rules for ports 22 and 80 so that the tests from previous labs keep on working
+
+**Step 4.** Now we should have everything working. If you SSH to the public IP of the frontend of the external LB, we should end up in vnet1-vm2:
+
+```
+$ ssh lab-user@52.236.159.117
+[...]
+lab-user@myVnet1-vm2:~$ who
+lab-user pts/2        2019-06-27 21:51 (10.4.2.7)                                                                                                               lab-user@myVnet1-vm2:~$
+```
+
+Note that you might have other sessions connected to this VM displayed by the `who` command, the one we are interested in is source-NATted to one of the VMSS instances, which is a consequence of the masquerading configuration discussed in previous labs.
 
 
 ## Optional activity: Azure Firewall

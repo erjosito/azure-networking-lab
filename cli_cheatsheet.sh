@@ -22,6 +22,7 @@ az network route-table route create --address-prefix 10.1.1.0/24 --next-hop-ip-a
 az network route-table create --name vnet2-subnet1
 az network vnet subnet update -n myVnet2Subnet1 --vnet-name myVnet2 --route-table vnet2-subnet1
 az network route-table route create --address-prefix 10.1.0.0/16 --next-hop-ip-address $next_hop --next-hop-type VirtualAppliance --route-table-name vnet2-subnet1 -n vnet1
+az network route-table route create --address-prefix 0.0.0.0/0 --next-hop-ip-address $next_hop --next-hop-type VirtualAppliance --route-table-name vnet2-subnet1 -n default
 
 az network route-table create --name vnet3-subnet1 -l westus2
 az network vnet subnet update -n myVnet3Subnet1 --vnet-name myVnet3 --route-table vnet3-subnet1
@@ -82,14 +83,40 @@ vmss_url='https://raw.githubusercontent.com/erjosito/azure-networking-lab/master
 az group deployment create -n vmssDeployment -g vnetTest --template-uri $vmss_url --parameters '{"vmPwd":{"value":"Microsoft123!"}}'
 az network lb outbound-rule create --lb-name linuxnva-vmss-slb-ext -n myoutboundnat --frontend-ip-configs myFrontendConfig --protocol All --idle-timeout 15 --outbound-ports 10000 --address-pool linuxnva-vmss-slbBackend-ext
 az network route-table route update --route-table-name vnet1-subnet1 -n vnet1 --next-hop-ip-address 10.4.2.200 --next-hop-type VirtualAppliance
-az network route-table route update --route-table-name vnet1 -n vnet2 --next-hop-ip-address 10.4.2.200 --next-hop-type VirtualAppliance
-az network route-table route update --route-table-name vnet2 -n vnet1 --next-hop-ip-address 10.4.2.200 --next-hop-type VirtualAppliance
+az network route-table route update --route-table-name vnet1-subnet1 -n vnet2 --next-hop-ip-address 10.4.2.200 --next-hop-type VirtualAppliance
+az network route-table route update --route-table-name vnet2-subnet1 -n vnet1 --next-hop-ip-address 10.4.2.200 --next-hop-type VirtualAppliance
+az network route-table route update --route-table-name vnet2-subnet1 -n default --next-hop-ip-address 10.4.2.200
 
-# Verify LB
-az network lb address-pool list --lb-name linuxnva-vmss-slb-int -o table --query [].backendIpConfigurations[].id
-az network lb address-pool list --lb-name linuxnva-vmss-slb-ext -o table --query [].backendIpConfigurations[].id
-az network lb rule list --lb-name linuxnva-vmss-slb-int -o table
-az network lb outbound-rule list --lb-name linuxnva-vmss-slb-ext -o table
+# VMSS instances
+az vmss list-instances -n nva-vmss -o table
+az vmss nic list-vm-nics --vmss-name nva-vmss --instance-id 0 --query [].ipConfigurations[].privateIpAddress -o tsv
+az vmss nic list-vm-nics --vmss-name nva-vmss --instance-id 3 --query [].ipConfigurations[].privateIpAddress -o tsv
+
+# Verify ILB
+az network lb frontend-ip list --lb-name linuxnva-vmss-slb-int -o table # Next-hop of UDRs
+az network lb rule list --lb-name linuxnva-vmss-slb-int -o table  # HA-Ports rule
+az network lb address-pool list --lb-name linuxnva-vmss-slb-int -o table --query [].backendIpConfigurations[].id # At least 2 NVAs
+
+# Verify ELB
+az network lb frontend-ip list --lb-name linuxnva-vmss-slb-ext -o table # For egress SNAT, for LB rule
+az network lb address-pool list --lb-name linuxnva-vmss-slb-ext -o table --query [].backendIpConfigurations[].id # At least 2 NVAs
+az network lb outbound-rule list --lb-name linuxnva-vmss-slb-ext -o table # Not in the README.md
+az network lb rule list --lb-name linuxnva-vmss-slb-ext -o table # For inbound traffic
+az network lb probe create --lb-name linuxnva-vmss-slb-ext -n myProbe --protocol tcp --port 1138 
+az network lb rule create --lb-name linuxnva-vmss-slb-ext -n sshLbRule --disable-outbound-snat true --floating-ip false --frontend-ip-name myFrontendConfig --probe myProbe --backend-pool-name linuxnva-vmss-slbBackend-ext --protocol tcp --frontend-port 22 --backend-port 1022
+# Modify LB rule
+az network lb rule update --lb-name linuxnva-vmss-slb-ext -n sshLbRule --floating-ip true
+
+# NSG on VMSS (none assigned)
+az vmss show -n nva-vmss --query virtualMachineProfile.networkProfile.networkInterfaceConfigurations[0].networkSecurityGroup
+# Create one NSG and assign it to the VMSS
+az network nsg create -n nva-vmss-nsg 
+az network nsg rule create --nsg-name nva-vmss-nsg -n HTTP --priority 500 --source-address-prefixes '*' --destination-port-ranges 80 --destination-address-prefixes '*' --access Allow --protocol Tcp --description "Allow Port 80"
+az network nsg rule create --nsg-name nva-vmss-nsg -n SSH --priority 520 --source-address-prefixes '*' --destination-port-ranges 22 --destination-address-prefixes '*' --access Allow --protocol Tcp --description "Allow Port 22"
+az network nsg rule create --nsg-name nva-vmss-nsg -n SSH1022 --priority 540 --source-address-prefixes '*' --destination-port-ranges 1022 --destination-address-prefixes '*' --access Allow --protocol Tcp --description "Allow Port 22"
+nsgid=$(az network nsg show -n nva-vmss-nsg -o tsv --query id)
+az vmss update -n nva-vmss --set virtualMachineProfile.networkProfile.networkInterfaceConfigurations[0].networkSecurityGroup="{ \"id\": \"$nsgid\" }"
+az vmss update-instances --name nva-vmss --instance-ids "*"
 
 ############
 #    UDR   #
@@ -130,6 +157,9 @@ az network vnet peering update --vnet-name myVnet3 -g vnetTest --name LinkTomyVn
 ############
 sudo iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE
 sudo iptables -t nat -A POSTROUTING -o eth0 ! -s 10.0.0.0/255.0.0.0 -j MASQUERADE
+# DNAT:
+sudo iptables -t nat -A PREROUTING -p tcp --dport 1022 -j DNAT --to-destination 10.1.1.5:22
+sudo iptables -t nat -A PREROUTING -d 51.105.174.182 -p tcp --dport 1022 -j DNAT --to-destination 10.1.1.5:22 # Specifying the dst IP not strictly required
 
 #########
 # OTHER #
