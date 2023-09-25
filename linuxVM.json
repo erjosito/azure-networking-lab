@@ -58,7 +58,7 @@
             "ubuntu": {
                 "sku": "22_04-lts-gen2",
                 "publisher": "canonical",
-                "offer": "Ubuntu",
+                "offer": "0001-com-ubuntu-server-jammy",
                 "size": "[parameters('vmSize')]"
             }
         },
