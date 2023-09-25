@@ -64,7 +64,6 @@
         "linuxVmTemplateURI": "[uri(deployment().properties.templateLink.uri, 'linuxVM.json')]",
         "storageAccountName": "[concat('storage', uniqueString(resourceGroup().id))]",
         "multiVnetParams": {
-            "storageAccountName": { "value": "[variables('storageAccountName')]" },            
             "vnetCount": { "value": 5 },
             "createGw": { "value": "no" },
             "enableBgp": { "value": "true" },
@@ -154,32 +153,32 @@
         "UDRTemplateUri": "[variables('UDRTemplateUriYesNo')[parameters('createUDR')]]"
     },
     "resources": [
-		{
-			"comments": "Create vnets, each with a gateway subnet, 3 standard subnets, and a Linux VM in subnet 1",
+	{
+	    "comments": "Create vnets, each with a gateway subnet, 3 standard subnets, and a Linux VM in subnet 1",
             "name": "vnets",
-			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "[variables('deploymentApiVersion')]",
-			"properties": {
-				"mode": "Incremental",
-				"templateLink": {
-					"uri": "[variables('multiVnetTemplateUri')]",
-					"contentVersion": "1.0.0.0"
-				},
-				"parameters":  "[variables('multiVnetParams')]"
-			}
-		},
-		{
-			"comments": "Create additional VM in Vnet1-Subnet1",
+	    "type": "Microsoft.Resources/deployments",
+	    "apiVersion": "[variables('deploymentApiVersion')]",
+	    "properties": {
+	        "mode": "Incremental",
+	        "templateLink": {
+		    "uri": "[variables('multiVnetTemplateUri')]",
+		    "contentVersion": "1.0.0.0"
+	        },
+	        "parameters":  "[variables('multiVnetParams')]"
+	    }
+	},
+	{
+	    "comments": "Create additional VM in Vnet1-Subnet1",
             "name": "vnet1subnet1vm2",
-			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "[variables('deploymentApiVersion')]",
-			"properties": {
-				"mode": "Incremental",
-				"templateLink": {
-					"uri": "[variables('linuxVmTemplateURI')]",
-					"contentVersion": "1.0.0.0"
-				},
-				"parameters":  {
+	    "type": "Microsoft.Resources/deployments",
+	    "apiVersion": "[variables('deploymentApiVersion')]",
+	    "properties": {
+		"mode": "Incremental",
+		"templateLink": {
+		    "uri": "[variables('linuxVmTemplateURI')]",
+		    "contentVersion": "1.0.0.0"
+		},
+		"parameters":  {
                     "adminUsername": {"value": "[parameters('adminUsername')]"},
                     "adminPassword": {"value": "[parameters('adminPassword')]"},
                     "vmName": { "value": "myVnet1-vm2" },
@@ -187,15 +186,14 @@
                     "vmSize": { "value": "[parameters('vmSize')]" },            
                     "vnetName": { "value": "myVnet1" },
                     "subnetName": { "value": "myVnet1Subnet1" },
-                    "storageAccountName": { "value": "[variables('storageAccountName')]"}
                 }
-			},
+	    },
             "dependsOn": [
                 "vnets"
             ]
-		},
-		{
-			"comments": "Create NVAs in vnet4, if createNVA=yes",
+	},
+	{
+	    "comments": "Create NVAs in vnet4, if createNVA=yes",
             "name": "nva",
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "[variables('deploymentApiVersion')]",
