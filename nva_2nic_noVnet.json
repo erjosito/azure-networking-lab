@@ -86,7 +86,7 @@
             },
             "ubuntu": {
                 "planName": "Ubuntu Server 16.04 LTS",
-                "product": "ubuntu",
+                "product": "0001-com-ubuntu-server-jammy",
                 "publisher": "Canonical",
                 "sku": "22_04-lts-gen2",
                 "vmSize": "Standard_D2_v2"

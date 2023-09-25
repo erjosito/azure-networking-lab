@@ -95,7 +95,7 @@
         },
         "settingsTable": {
             "ubuntu": {
-                "product": "ubuntu",
+                "product": "0001-com-ubuntu-server-jammy",
                 "publisher": "Canonical",
                 "sku": "22_04-lts-gen2",
                 "vmSize": "[parameters('vmSize')]"
