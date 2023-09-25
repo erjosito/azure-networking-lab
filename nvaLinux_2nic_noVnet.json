@@ -10,10 +10,6 @@
             "defaultValue": "myVnet4",
             "type": "string"
         },
-        "storageAccountName": {
-            "defaultValue": "put here an unique name for your storage account",
-            "type": "string"
-        },
         "vmType": {
             "defaultValue": "ubuntu",
             "type": "string",
@@ -248,9 +244,9 @@
             "apiVersion": "2015-06-15",
             "location": "[resourceGroup().location]",
             "properties": {
-				"availabilitySet": {
-					"id": "[resourceId('Microsoft.Compute/availabilitySets', variables('avSetName'))]"
-				},
+		"availabilitySet": {
+	  	  "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('avSetName'))]"
+		},
                 "hardwareProfile": {
                     "vmSize": "[variables('settings')['vmSize']]"
                 },
@@ -262,12 +258,9 @@
                         "version": "latest"
                     },
                     "osDisk": {
-                        "name": "[concat(parameters('vmName'), '-', copyIndex(1),'-disk')]",
+                        "osType": "Linux",
                         "createOption": "FromImage",
-                        "vhd": {
-                            "uri": "[concat('http', '://', parameters('storageAccountName'), '.blob.core.windows.net', concat('/vhds/', parameters('vmName'), '-', copyIndex(1),'-disk.vhd'))]"
-                        },
-                        "caching": "ReadWrite"
+                        "diskSizeGB": 31
                     },
                     "dataDisks": []
                 },
