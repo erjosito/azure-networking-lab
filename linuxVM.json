@@ -56,7 +56,7 @@
         "nicTemplateURI": "[variables('nicTemplateUriHash')[parameters('createPip')]]",
         "skuDataTable": {
             "ubuntu": {
-                "sku": "22.04-lts-gen2",
+                "sku": "22_04-lts-gen2",
                 "publisher": "canonical",
                 "offer": "Ubuntu",
                 "size": "[parameters('vmSize')]"
