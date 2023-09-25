@@ -160,7 +160,7 @@ az configure --defaults group=$rg
 **Step 5.** Deploy the master template that will create our initial network configuration:
 
 ```bash
-az group deployment create --name netLabDeployment --template-uri $template_uri --resource-group $rg --parameters "{\"adminPassword\":{\"value\":\"$adminPassword\"}, \"location2ary\":{\"value\": \"$location2ary\"}, \"location2aryVnets\":{\"value\": [3]}}" 
+az deployment group create --name netLabDeployment --template-uri $template_uri --resource-group $rg --parameters "{\"adminPassword\":{\"value\":\"$adminPassword\"}, \"location2ary\":{\"value\": \"$location2ary\"}, \"location2aryVnets\":{\"value\": [3]}}" 
 ```
 
 **Note**: the previous command will deploy 5 vnets, one of them (vnet 3) in an alternate location. The goal of deploying this single vnet in a different location is to include **global vnet peering** in this lab. Should you not have access to locations where global vnet peering is available (such as West Europe and West US 2 used in the examples), you can just deploy the previous templates without the parameters `location2ary` and `location2aryVnets`, which will deploy all nets into the same location as the resource group.
@@ -168,10 +168,13 @@ az group deployment create --name netLabDeployment --template-uri $template_uri 
 
 **Step 6.** Since the previous command will take a while (around 15 minutes), open another command window (see Step 3 for detailed instructions) to monitor the deployment progress. Note you might have to login in this second window too:
 
-<pre lang="...">
-<b>az group deployment list -o table</b>
-Name               Timestamp                         State
------------------  --------------------------------  ---------
+```bash
+az deployment group list -o table
+```
+
+The output of that command should be something like this:
+
+```
 Name               Timestamp                         State
 -----------------  --------------------------------  ---------
 myVnet5gwPip       2017-06-29T19:15:28.227920+00:00  Succeeded
@@ -214,9 +217,14 @@ nva-slb-ext        2017-06-29T19:22:18.507575+00:00  Succeeded
 vnet1subnet1vm2    2017-06-29T19:26:53.109076+00:00  Succeeded
 nva                2017-06-29T19:29:24.679832+00:00  Succeeded
 netLabDeployment   2017-06-29T19:29:26.491546+00:00  Succeeded
-</pre>
+```
 
 **Note:** You might see other resource names when using your template, since newer lab versions might have different object names
+
+Alternatively, if you prefer using Command Line Interface to deploy the resources, you can try these commands:
+
+```bash
+```
 
 ## Lab 1: Explore the Azure environment <a name="lab1"></a> 
 
