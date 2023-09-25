@@ -6,12 +6,12 @@
             "defaultValue": "lab-user",
             "type": "string",
             "metadata": { "description": "Default username for VMs and NVAs" }
-		},
+        },
         "adminPassword": {
             "defaultValue": null,
             "type": "securestring",
             "metadata": { "description": "Default password for VMs and NVAs" }
-		},
+        },
         "createNVA": {
             "defaultValue": "yes",
             "type": "string",
@@ -151,125 +151,125 @@
         "UDRTemplateUri": "[variables('UDRTemplateUriYesNo')[parameters('createUDR')]]"
     },
     "resources": [
-	{
-	    "comments": "Create vnets, each with a gateway subnet, 3 standard subnets, and a Linux VM in subnet 1",
+    {
+        "comments": "Create vnets, each with a gateway subnet, 3 standard subnets, and a Linux VM in subnet 1",
             "name": "vnets",
-	    "type": "Microsoft.Resources/deployments",
-	    "apiVersion": "[variables('deploymentApiVersion')]",
-	    "properties": {
-	        "mode": "Incremental",
-	        "templateLink": {
-		    "uri": "[variables('multiVnetTemplateUri')]",
-		    "contentVersion": "1.0.0.0"
-	        },
-	        "parameters":  "[variables('multiVnetParams')]"
-	    }
-	},
-	{
-	    "comments": "Create additional VM in Vnet1-Subnet1",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "[variables('deploymentApiVersion')]",
+        "properties": {
+            "mode": "Incremental",
+            "templateLink": {
+            "uri": "[variables('multiVnetTemplateUri')]",
+            "contentVersion": "1.0.0.0"
+            },
+            "parameters":  "[variables('multiVnetParams')]"
+        }
+    },
+    {
+        "comments": "Create additional VM in Vnet1-Subnet1",
             "name": "vnet1subnet1vm2",
-	    "type": "Microsoft.Resources/deployments",
-	    "apiVersion": "[variables('deploymentApiVersion')]",
-	    "properties": {
-		"mode": "Incremental",
-		"templateLink": {
-		    "uri": "[variables('linuxVmTemplateURI')]",
-		    "contentVersion": "1.0.0.0"
-		},
-		"parameters":  {
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "[variables('deploymentApiVersion')]",
+        "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+            "uri": "[variables('linuxVmTemplateURI')]",
+            "contentVersion": "1.0.0.0"
+        },
+        "parameters":  {
                     "adminUsername": {"value": "[parameters('adminUsername')]"},
                     "adminPassword": {"value": "[parameters('adminPassword')]"},
                     "vmName": { "value": "myVnet1-vm2" },
                     "vmType": {"value": "ubuntu"},
-                    "vmSize": { "value": "[parameters('vmSize')]" },            
+                    "vmSize": { "value": "[parameters('vmSize')]" },
                     "vnetName": { "value": "myVnet1" },
-                    "subnetName": { "value": "myVnet1Subnet1" },
+                    "subnetName": { "value": "myVnet1Subnet1" }
                 }
-	    },
-            "dependsOn": [
-                "vnets"
-            ]
-	},
-	{
-	    "comments": "Create NVAs in vnet4, if createNVA=yes",
+        },
+        "dependsOn": [
+            "vnets"
+        ]
+    },
+    {
+        "comments": "Create NVAs in vnet4, if createNVA=yes",
             "name": "nva",
-			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "[variables('deploymentApiVersion')]",
-			"properties": {
-				"mode": "Incremental",
-				"templateLink": {
-					"uri": "[variables('NVATemplateUriYesNo')[parameters('createNVA')]]",
-					"contentVersion": "1.0.0.0"
-				},
-				"parameters":  "[variables('nvaParamsYesNo')[parameters('createNVA')]]"
-			},
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('NVATemplateUriYesNo')[parameters('createNVA')]]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters":  "[variables('nvaParamsYesNo')[parameters('createNVA')]]"
+            },
             "dependsOn": [
                 "vnets"
             ]
-		},
-		{
-			"comments": "create vnet peering between hub (vnet4) and vnet1",
+        },
+        {
+            "comments": "create vnet peering between hub (vnet4) and vnet1",
             "name": "hub2spoke1",
-			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "[variables('deploymentApiVersion')]",
-			"properties": {
-				"mode": "Incremental",
-				"templateLink": {
-					"uri": "[uri(deployment().properties.templateLink.uri, 'vnetPeeringHubNSpoke.json')]",
-					"contentVersion": "1.0.0.0"
-				},
-				"parameters": {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(deployment().properties.templateLink.uri, 'vnetPeeringHubNSpoke.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
                     "hubVnetName": { "value": "myVnet4" },    
                     "spokeVnetName": { "value": "myVnet1" },
                     "useRemoteGateways": { "value": "[variables('PeeringUseRemoteGateways')]" } 
                 }
-			},
+            },
             "dependsOn": [
                 "vnets", "vnet4Gw"
             ]
-		},
-		{
-			"comments": "create vnet peering between hub (vnet4) and vnet2",
+        },
+        {
+            "comments": "create vnet peering between hub (vnet4) and vnet2",
             "name": "hub2spoke2",
-			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "[variables('deploymentApiVersion')]",
-			"properties": {
-				"mode": "Incremental",
-				"templateLink": {
-					"uri": "[uri(deployment().properties.templateLink.uri, 'vnetPeeringHubNSpoke.json')]",
-					"contentVersion": "1.0.0.0"
-				},
-				"parameters": {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(deployment().properties.templateLink.uri, 'vnetPeeringHubNSpoke.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
                     "hubVnetName": { "value": "myVnet4" },    
                     "spokeVnetName": { "value": "myVnet2" },
                     "useRemoteGateways": { "value": "[variables('PeeringUseRemoteGateways')]" } 
                 }
-			},
+            },
             "dependsOn": [
                 "vnets", "vnet4Gw"
             ]
-		},
-		{
-			"comments": "create vnet peering between hub (vnet4) and spolke(vnet3)",
+        },
+        {
+            "comments": "create vnet peering between hub (vnet4) and spolke(vnet3)",
             "name": "hub2spoke3",
-			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "[variables('deploymentApiVersion')]",
-			"properties": {
-				"mode": "Incremental",
-				"templateLink": {
-					"uri": "[uri(deployment().properties.templateLink.uri, 'vnetPeeringHubNSpoke.json')]",
-					"contentVersion": "1.0.0.0"
-				},
-				"parameters": {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(deployment().properties.templateLink.uri, 'vnetPeeringHubNSpoke.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
                     "hubVnetName": { "value": "myVnet4" },    
                     "spokeVnetName": { "value": "myVnet3" },
                     "useRemoteGateways": { "value": "[variables('PeeringUseRemoteGateways')]" }    
                 }
-			},
+            },
             "dependsOn": [
                 "vnets", "vnet4Gw"
             ]
-		},
+        },
         {
             "comments": "Create public IP address for Vnet Gateway in Vnet4",
             "apiVersion": "[variables('networkApiVersion')]",
@@ -290,54 +290,54 @@
                 "publicIPAllocationMethod": "Dynamic"
             }
         },
-		{
-			"comments": "Create VPN gateway in vnet4. I havent found how to create a standard SKU, it needs to be manually resized afterwards. The BGP ASN number must be changed so that it is different than the ASN of the GW in vnet5",
-			"name": "vnet4Gw",
+        {
+            "comments": "Create VPN gateway in vnet4. I havent found how to create a standard SKU, it needs to be manually resized afterwards. The BGP ASN number must be changed so that it is different than the ASN of the GW in vnet5",
+            "name": "vnet4Gw",
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "[variables('deploymentApiVersion')]",
-			"properties": {
-				"mode": "Incremental",
-				"templateLink": {
-					"uri": "[variables('vpnGwTemplateUri')]",
-					"contentVersion": "1.0.0.0"
-				},
-				"parameters": "[variables('vpnGwTemplateParams1')]" 
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('vpnGwTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": "[variables('vpnGwTemplateParams1')]" 
             },
             "dependsOn": [
                 "vnet4gwPip",
                 "vnets"                
             ]
         },
-		{
-			"comments": "Create VPN gateway in vnet5. I havent found how to create a standard SKU, it needs to be manually resized afterwards. The BGP ASN number must be changed so that it is different than the ASN of the GW in vnet4",
-			"name": "vnet5Gw",
+        {
+            "comments": "Create VPN gateway in vnet5. I havent found how to create a standard SKU, it needs to be manually resized afterwards. The BGP ASN number must be changed so that it is different than the ASN of the GW in vnet4",
+            "name": "vnet5Gw",
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "[variables('deploymentApiVersion')]",
-			"properties": {
-				"mode": "Incremental",
-				"templateLink": {
-					"uri": "[variables('vpnGwTemplateUri')]",
-					"contentVersion": "1.0.0.0"
-				},
-				"parameters": "[variables('vpnGwTemplateParams2')]" 
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('vpnGwTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": "[variables('vpnGwTemplateParams2')]" 
             },
             "dependsOn": [
                 "vnet5gwPip",
                 "vnets"
             ]
         },
-		{
-			"comments": "Deploy optionally UDRs",
-			"name": "UDRs",
+        {
+            "comments": "Deploy optionally UDRs",
+            "name": "UDRs",
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "[variables('deploymentApiVersion')]",
-			"properties": {
-				"mode": "Incremental",
-				"templateLink": {
-					"uri": "[variables('UDRTemplateUri')]",
-					"contentVersion": "1.0.0.0"
-				},
-				"parameters": {
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('UDRTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
                 }
             },
             "dependsOn": [
