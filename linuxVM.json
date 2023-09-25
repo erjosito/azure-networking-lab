@@ -62,7 +62,7 @@
                 "size": "[parameters('vmSize')]"
             }
         },
-        "skuData": "[variables('skuDataTable')[parameters('vmType')]]",
+        "skuData": "[variables('skuDataTable')[parameters('vmType')]]"
     },
     "resources": [
         {	
