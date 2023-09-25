@@ -10,10 +10,6 @@
             "defaultValue": "myVnet",
             "type": "string"
         },
-        "storageAccountName": {
-            "defaultValue": "asatestjoselito",
-            "type": "string"
-        },
         "vmType": {
             "defaultValue": "csr",
             "type": "string",
@@ -133,12 +129,9 @@
                         "version": "latest"
                     },
                     "osDisk": {
-                        "name": "[concat(parameters('vmName'),'-disk')]",
+                        "osType": "Linux",
                         "createOption": "FromImage",
-                        "vhd": {
-                            "uri": "[concat('http', '://', parameters('storageAccountName'), '.blob.core.windows.net', concat('/vhds/', parameters('vmName'),'-disk.vhd'))]"
-                        },
-                        "caching": "ReadWrite"
+                        "diskSizeGB": 31
                     },
                     "dataDisks": []
                 },
