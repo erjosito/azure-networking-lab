@@ -221,11 +221,6 @@ netLabDeployment   2017-06-29T19:29:26.491546+00:00  Succeeded
 
 **Note:** You might see other resource names when using your template, since newer lab versions might have different object names
 
-Alternatively, if you prefer using Command Line Interface to deploy the resources, you can try these commands:
-
-```bash
-```
-
 ## Lab 1: Explore the Azure environment <a name="lab1"></a> 
 
 **Step 1.** You don’t need to wait until all objects in the template have been successfully deployed (although it would be good, to make sure that everything is there). In your second terminal window, start exploring the objects created by the ARM template: vnets, subnets, VMs, interfaces, public IP addresses, etc. Save the output of these commands (copying and pasting to a text file for example).
