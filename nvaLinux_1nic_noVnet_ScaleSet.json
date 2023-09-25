@@ -75,10 +75,10 @@
             "type": "string",
             "metadata": { "description": "Command to run the script" }            
         },
-		"deployLBYesNo": {
-			"defaultValue": "yes",
-			"type": "string"
-		},
+        "deployLBYesNo": {
+            "defaultValue": "yes",
+            "type": "string"
+        },
         "lbSku": {
             "defaultValue": "standard",
             "type": "string",
@@ -95,9 +95,9 @@
         "subnet1Id": "[concat(variables('vnetID'), '/subnets/', parameters('subnet1Name'))]",
         "settingsTable": {
             "ubuntu": {
-                "product": "UbuntuServer",
+                "product": "ubuntu",
                 "publisher": "Canonical",
-                "sku": "16.04.0-LTS",
+                "sku": "22_04-lts-gen2",
                 "vmSize": "[parameters('vmSize')]"
             }
         },
@@ -108,11 +108,11 @@
         "ipPrefix": "10.4.2",
         "vipSuffix": "200",
         "slbSubnet": "[parameters('subnet0Name')]",
-		"deployLBTemplate": {
-			"yes": "[uri(deployment().properties.templateLink.uri, 'slb.json')]",
-			"no": "[uri(deployment().properties.templateLink.uri, 'nothing.json')]"
-		},
-		"LBTemplateURI": "[variables('deployLBTemplate')[parameters('deployLBYesNo')]]",
+        "deployLBTemplate": {
+            "yes": "[uri(deployment().properties.templateLink.uri, 'slb.json')]",
+            "no": "[uri(deployment().properties.templateLink.uri, 'nothing.json')]"
+        },
+        "LBTemplateURI": "[variables('deployLBTemplate')[parameters('deployLBYesNo')]]",
         "deployLBintParametersHash": {
             "yes": {
                 "externalInternal": {
@@ -204,37 +204,37 @@
         "deployLBextParameters": "[variables('deployLBextParametersHash')[parameters('deployLBYesNo')]]"
     },
     "resources": [
-		{
-			"comments": "Optionally, create an internal load balancer",
+        {
+            "comments": "Optionally, create an internal load balancer",
             "name": "slb-int",
-			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "[variables('deploymentApiVersion')]",
-			"properties": {
-				"mode": "Incremental",
-				"templateLink": {
-					"uri": "[variables('LBTemplateUri')]",
-					"contentVersion": "1.0.0.0"
-				},
-				"parameters":  "[variables('deployLBintParameters')]"
-			}
-		},
-		{
-			"comments": "Optionally, create an external load balancer",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('LBTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters":  "[variables('deployLBintParameters')]"
+            }
+        },
+        {
+            "comments": "Optionally, create an external load balancer",
             "name": "slb-ext",
-			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "[variables('deploymentApiVersion')]",
-			"properties": {
-				"mode": "Incremental",
-				"templateLink": {
-					"uri": "[variables('LBTemplateUri')]",
-					"contentVersion": "1.0.0.0"
-				},
-				"parameters":  "[variables('deployLBextParameters')]"
-			},
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "[variables('deploymentApiVersion')]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('LBTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters":  "[variables('deployLBextParameters')]"
+            },
             "dependsOn": [
                 "slb-int"
             ]
-		},
+        },
         {
             "comments": "Create Scale Set for NVAs",
             "type": "Microsoft.Compute/virtualMachineScaleSets",

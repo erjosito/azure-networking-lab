@@ -86,9 +86,9 @@
             },
             "ubuntu": {
                 "planName": "Ubuntu Server 16.04 LTS",
-                "product": "UbuntuServer",
+                "product": "ubuntu",
                 "publisher": "Canonical",
-                "sku": "16.04.0-LTS",
+                "sku": "22_04-lts-gen2",
                 "vmSize": "Standard_D2_v2"
             }
         },
@@ -96,13 +96,13 @@
         "avSetName": "[concat(parameters('vmName'),'AvSet')]"
     },
     "resources": [
-		{
-			"comments": "Availability set for eventual NVA HA",
-			"type": "Microsoft.Compute/availabilitySets",
-			"name": "[variables('avSetName')]",
-			"apiVersion": "2016-03-30",
-			"location": "[resourceGroup().location]"
-		},
+        {
+            "comments": "Availability set for eventual NVA HA",
+            "type": "Microsoft.Compute/availabilitySets",
+            "name": "[variables('avSetName')]",
+            "apiVersion": "2016-03-30",
+            "location": "[resourceGroup().location]"
+        },
         {
             "comments": "Deploy Virtual Network Appliance",
             "type": "Microsoft.Compute/virtualMachines",
@@ -115,9 +115,9 @@
                 "publisher": "[variables('settings')['publisher']]"
             },
             "properties": {
-				"availabilitySet": {
-					"id": "[resourceId('Microsoft.Compute/availabilitySets', variables('avSetName'))]"
-				},
+                "availabilitySet": {
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('avSetName'))]"
+                },
                 "hardwareProfile": {
                     "vmSize": "[variables('settings')['vmSize']]"
                 },
@@ -171,18 +171,18 @@
                 "[concat(parameters('vmName'), '-nic1')]"
             ]
         },
-		{
-			"comments": "Deploy the virtual interfaces",
+        {
+            "comments": "Deploy the virtual interfaces",
             "name": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic0')]",
-			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2016-06-01",
-			"properties": {
-				"mode": "Incremental",
-				"templateLink": {
-					"uri": "[uri(deployment().properties.templateLink.uri, 'nic_noNSG_noSLB_PIP_static.json')]",
-					"contentVersion": "1.0.0.0"
-				},
-				"parameters":  {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2016-06-01",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(deployment().properties.templateLink.uri, 'nic_noNSG_noSLB_PIP_static.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters":  {
                     "nicName": {"value": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic0')]"},
                     "ipAddress": { "value": "[concat(parameters('ip0'), copyIndex(1))]" },                    
                     "vnetName": { "value": "[parameters('vnetName')]" },
@@ -197,17 +197,17 @@
                 "count": "[parameters('vmCount')]"
             }
         },
-		{
-			"name": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic1')]",
-			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2016-06-01",
-			"properties": {
-				"mode": "Incremental",
-				"templateLink": {
-					"uri": "[uri(deployment().properties.templateLink.uri, 'nic_noNSG_noSLB_noPIP_static.json')]",
-					"contentVersion": "1.0.0.0"
-				},
-				"parameters":  {
+        {
+            "name": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic1')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2016-06-01",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(deployment().properties.templateLink.uri, 'nic_noNSG_noSLB_noPIP_static.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters":  {
                     "nicName": {"value": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic1')]"},
                     "ipAddress": { "value": "[concat(parameters('ip1'), copyIndex(1))]" },                    
                     "vnetName": { "value": "[parameters('vnetName')]" },
