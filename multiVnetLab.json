@@ -78,22 +78,6 @@
 
     "resources": [
         {
-        "comments": "Storage account for VM disks",
-        "type": "Microsoft.Storage/storageAccounts",
-            "sku": {
-                "name": "Standard_LRS",
-                "tier": "Standard"
-            },
-            "kind": "Storage",
-            "name": "[parameters('storageAccountName')]",
-            "apiVersion": "2016-01-01",
-            "location": "[resourceGroup().location]",
-            "tags": {},
-            "properties": {},
-            "resources": [],
-            "dependsOn": []
-        },
-        {
             "comments": "vnet with 3 subnets",
             "name": "[concat(parameters('vnetNamePrefix'), '-template-', copyIndex(1))]",
             "type": "Microsoft.Resources/deployments",
