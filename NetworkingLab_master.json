@@ -62,7 +62,6 @@
         "deploymentApiVersion": "2018-05-01",
         "networkApiVersion": "2018-08-01",
         "linuxVmTemplateURI": "[uri(deployment().properties.templateLink.uri, 'linuxVM.json')]",
-        "storageAccountName": "[concat('storage', uniqueString(resourceGroup().id))]",
         "multiVnetParams": {
             "vnetCount": { "value": 5 },
             "createGw": { "value": "no" },
@@ -89,7 +88,6 @@
             "vmCount": { "value": 2 },
             "vmName": { "value": "linuxnva" },
             "vnetName": { "value": "myVnet4" },
-            "storageAccountName": { "value": "[variables('storageAccountName')]" },
             "subnet0Name": { "value": "myVnet4subnet2" },
             "subnet1Name": { "value": "myVnet4subnet3" },
             "pipName": { "value": "nvaPip" },
