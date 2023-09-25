@@ -13,7 +13,7 @@
         "subnetName": {
             "defaultValue": "serverSubnet",
             "type": "string"
-		},
+        },
         "adminUsername": {
             "defaultValue": null,
             "type": "string"
@@ -47,8 +47,8 @@
     "variables": {
         "nicName": "[concat(parameters('vmName'),'-nic')]",
         "pipName": "[concat(parameters('vmName'),'-pip')]",
-	"diskName": "[concat(parameters('vmName'),'-disk')]",
-	"apiVersion": "2023-07-01",
+    "diskName": "[concat(parameters('vmName'),'-disk')]",
+    "apiVersion": "2023-07-01",
         "nicTemplateUriHash": {
             "yes": "[uri(deployment().properties.templateLink.uri, 'nic_noNSG_noSLB_PIP_dynamic.json')]",
             "no": "[uri(deployment().properties.templateLink.uri, 'nic_noNSG_noSLB_noPIP_dynamic.json')]"
@@ -65,14 +65,14 @@
         "skuData": "[variables('skuDataTable')[parameters('vmType')]]",
     },
     "resources": [
-		{	
-	    "comments": "VMs created and linked to NICs",
+        {	
+        "comments": "VMs created and linked to NICs",
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[parameters('vmName')]",
             "apiVersion": "[variables('apiVersion')]",
             "location": "[parameters('location')]",
             "properties": {
-		    "hardwareProfile": {
+            "hardwareProfile": {
                     "vmSize": "[variables('skuData')['size']]"
                 },
                 "storageProfile": {
@@ -109,25 +109,25 @@
                 "[variables('nicName')]"
             ]
         },
-		{
+        {
             "comments": "Create NIC for the VM with or without public IP",
-			"name": "[variables('nicName')]",
-			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2016-06-01",
-			"properties": {
-			"mode": "Incremental",
-			"templateLink": {
-		    	    "uri": "[variables('nicTemplateUri')]",
-			    "contentVersion": "1.0.0.0"
-			},
-		"parameters":  {
-                    "pipName": { "value": "[variables('pipName')]" },
-                    "location": { "value": "[parameters('location')]" },
-                    "nicName": { "value": "[variables('nicName')]" },
-                    "vnetName": { "value": "[parameters('vnetName')]" },
-                    "subnetName": { "value": "[parameters('subnetName')]"}
-                }
-			},
+            "name": "[variables('nicName')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2016-06-01",
+            "properties": {
+            "mode": "Incremental",
+            "templateLink": {
+                    "uri": "[variables('nicTemplateUri')]",
+                "contentVersion": "1.0.0.0"
+            },
+            "parameters":  {
+                        "pipName": { "value": "[variables('pipName')]" },
+                        "location": { "value": "[parameters('location')]" },
+                        "nicName": { "value": "[variables('nicName')]" },
+                        "vnetName": { "value": "[parameters('vnetName')]" },
+                        "subnetName": { "value": "[parameters('subnetName')]"}
+                    }
+                },
             "dependsOn": []
         }
     ]

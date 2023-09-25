@@ -66,10 +66,10 @@
             "vnetCount": { "value": 5 },
             "createGw": { "value": "no" },
             "enableBgp": { "value": "true" },
-            "createVm": { "value": "yes" },            
-            "vmType": { "value": "ubuntu" },            
-            "vmSize": { "value": "[parameters('vmSize')]" },            
-            "createPip": { "value": "no" },            
+            "createVm": { "value": "yes" },
+            "vmType": { "value": "ubuntu" },
+            "vmSize": { "value": "[parameters('vmSize')]" },
+            "createPip": { "value": "no" },
             "adminUsername": { "value": "[parameters('adminUsername')]" },
             "adminPassword": { "value": "[parameters('adminPassword')]" },
             "location2ary": { "value": "[parameters('location2ary')]" },
@@ -305,7 +305,7 @@
             },
             "dependsOn": [
                 "vnet4gwPip",
-                "vnets"                
+                "vnets"
             ]
         },
         {
