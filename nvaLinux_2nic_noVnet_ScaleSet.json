@@ -6,10 +6,6 @@
             "defaultValue": "myVnet4",
             "type": "string"
         },
-        "storageAccountName": {
-            "defaultValue": "not used, kept for compatibility",
-            "type": "string"
-        },
         "vmType": {
             "defaultValue": "ubuntu",
             "type": "string",
