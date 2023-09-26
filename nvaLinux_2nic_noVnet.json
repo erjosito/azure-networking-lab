@@ -65,12 +65,12 @@
         "scriptUri": {
             "defaultValue": "[uri(deployment().properties.templateLink.uri, 'linuxNVAconfig.sh')]",
             "type": "string",
-            "metadata": { "description": "Script that will be executed" }            
+            "metadata": { "description": "Script that will be executed" }
         },
         "scriptCmd": {
             "defaultValue": "sh linuxNVAconfig.sh",
             "type": "string",
-            "metadata": { "description": "Command to run the script" }            
+            "metadata": { "description": "Command to run the script" }
         },
         "deployLBYesNo": {
             "defaultValue": "no",
@@ -250,9 +250,9 @@
             "apiVersion": "[variables('computeApiVersion')]",
             "location": "[resourceGroup().location]",
             "properties": {
-        "availabilitySet": {
-            "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('avSetName'))]"
-        },
+                "availabilitySet": {
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('avSetName'))]"
+                },
                 "hardwareProfile": {
                     "vmSize": "[variables('settings')['vmSize']]"
                 },
