@@ -56,12 +56,12 @@
         "scriptUri": {
             "defaultValue": "",
             "type": "string",
-            "metadata": { "description": "Not used, included for parameter-compatibility with nvaLinux_2nic_noVnet.json" }            
+            "metadata": { "description": "Not used, included for parameter-compatibility with nvaLinux_2nic_noVnet.json" }
         },
         "scriptCmd": {
             "defaultValue": "",
             "type": "string",
-            "metadata": { "description": "Not used, included for parameter-compatibility with nvaLinux_2nic_noVnet.json" }            
+            "metadata": { "description": "Not used, included for parameter-compatibility with nvaLinux_2nic_noVnet.json" }
         }
     },
     "variables": {
@@ -189,7 +189,7 @@
                 },
                 "parameters":  {
                     "nicName": {"value": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic0')]"},
-                    "ipAddress": { "value": "[concat(parameters('ip0'), copyIndex(1))]" },                    
+                    "ipAddress": { "value": "[concat(parameters('ip0'), copyIndex(1))]" },
                     "vnetName": { "value": "[parameters('vnetName')]" },
                     "subnetName": { "value": "[parameters('subnet0Name')]"},
                     "pipName": { "value": "[parameters('pipName')]" }
@@ -214,7 +214,7 @@
                 },
                 "parameters":  {
                     "nicName": {"value": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic1')]"},
-                    "ipAddress": { "value": "[concat(parameters('ip1'), copyIndex(1))]" },                    
+                    "ipAddress": { "value": "[concat(parameters('ip1'), copyIndex(1))]" },
                     "vnetName": { "value": "[parameters('vnetName')]" },
                     "subnetName": { "value": "[parameters('subnet1Name')]"}
                 }
