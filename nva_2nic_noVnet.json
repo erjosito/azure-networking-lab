@@ -95,26 +95,17 @@
             }
         },
         "settings": "[variables('settingsTable')[parameters('vmType')]]",
-        "avSetName": "[concat(parameters('vmName'),'AvSet')]"
     },
     "resources": [
-        {
-            "comments": "Availability set for eventual NVA HA",
-            "type": "Microsoft.Compute/availabilitySets",
-            "name": "[variables('avSetName')]",
-            "apiVersion": "[variables('computeApiVersion')]",
-            "sku": {
-                "name": "Aligned"
-            },
-            "location": "[resourceGroup().location]"
-        },
         {
             "comments": "Deploy Virtual Network Appliance",
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[concat(parameters('vmName'), '-', copyIndex(1))]",
             "apiVersion": "[variables('computeApiVersion')]",
             "location": "[resourceGroup().location]",
-            "zones": ["1", "2", "3"],
+            "zones": [
+                "[add(mod(copyIndex(1), 3),1)]"
+            ],
             "plan": {
                 "name": "[variables('settings')['planName']]",
                 "product": "[variables('settings')['product']]",
