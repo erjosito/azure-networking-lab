@@ -207,8 +207,7 @@
             "type": "Microsoft.Compute/availabilitySets",
             "name": "[variables('avSetName')]",
             "sku": {
-                "name": "Aligned",
-                "tier": "Standard"
+                "name": "Aligned"
             },
             "apiVersion": "[variables('computeApiVersion')]",
             "location": "[resourceGroup().location]"
