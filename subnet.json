@@ -6,10 +6,10 @@
             "defaultValue": 2,
             "type": "int"
         },
-		"deployLBYesNo": {
-			"defaultValue": "yes",
-			"type": "string"
-		},
+        "deployLBYesNo": {
+            "defaultValue": "yes",
+            "type": "string"
+        },
         "LBexternalInternal": {
             "defaultValue": "external",
             "type": "string"
@@ -25,7 +25,7 @@
         "subnetName": {
             "defaultValue": "serverSubnet",
             "type": "string"
-		},
+        },
         "adminUsername": {
             "defaultValue": "jose",
             "type": "string"
@@ -38,27 +38,27 @@
             "defaultValue": "slb-test-",
             "type": "string"
         },
-		"availabilitySetName": {
-			"defaultValue": "myAvSet",
-			"type": "string"
-		},
-		"slbName": {
-			"defaultValue": "myLB",
-			"type": "string"
-		},
-		"backendConfigName": {
-			"defaultValue": "myBackendConfig",
-			"type": "string"
-		},
-		"pipName": {
-			"defaultValue": "myPublicIp",
-			"type": "string"
-		},
-		"slbIpPrefix": {
+        "availabilitySetName": {
+            "defaultValue": "myAvSet",
+            "type": "string"
+        },
+        "slbName": {
+            "defaultValue": "myLB",
+            "type": "string"
+        },
+        "backendConfigName": {
+            "defaultValue": "myBackendConfig",
+            "type": "string"
+        },
+        "pipName": {
+            "defaultValue": "myPublicIp",
+            "type": "string"
+        },
+        "slbIpPrefix": {
             "defaultValue": "10.0.1",
             "type": "string"
         },
-		"slbVipSuffix": {
+        "slbVipSuffix": {
             "defaultValue": "100",
             "type": "string"
         }
@@ -67,13 +67,13 @@
     "variables": {
         "nicName": "[concat(parameters('vmPrefix'),'nic')]",
         "nsgName": "[concat(parameters('vmPrefix'),'nsg')]",
-		"diskName": "[concat(parameters('vmPrefix'),'disk')]",
-		"apiVersion": "2016-03-30",
-		"deployLBTemplate": {
-			"yes": "[uri(deployment().properties.templateLink.uri, 'slb.json')]",
-			"no": "[uri(deployment().properties.templateLink.uri, 'nothing.json')]"
-		},
-		"LBTemplateURI": "[variables('deployLBTemplate')[parameters('deployLBYesNo')]]",
+        "diskName": "[concat(parameters('vmPrefix'),'disk')]",
+        "apiVersion": "2016-03-30",
+        "deployLBTemplate": {
+            "yes": "[uri(deployment().properties.templateLink.uri, 'slb.json')]",
+            "no": "[uri(deployment().properties.templateLink.uri, 'nothing.json')]"
+        },
+        "LBTemplateURI": "[variables('deployLBTemplate')[parameters('deployLBYesNo')]]",
         "deployLBParametersHash": {
             "yes": {
                 "externalInternal": {
@@ -105,32 +105,35 @@
             }
         },
         "deployLBParameters": "[variables('deployLBParametersHash')[parameters('deployLBYesNo')]]",
-		"deployNicTemplate": {
-			"yes": "[uri(deployment().properties.templateLink.uri, 'nic_nsg_slb.json')]",
-			"no": "[uri(deployment().properties.templateLink.uri, 'nic_nsg.json')]"
-		},
-		"nicTemplateURI": "[variables('deployNicTemplate')[parameters('deployLBYesNo')]]"
-	},
+        "deployNicTemplate": {
+            "yes": "[uri(deployment().properties.templateLink.uri, 'nic_nsg_slb.json')]",
+            "no": "[uri(deployment().properties.templateLink.uri, 'nic_nsg.json')]"
+        },
+        "nicTemplateURI": "[variables('deployNicTemplate')[parameters('deployLBYesNo')]]"
+    },
 
     "resources": [
-		{
-			"comments": "SLB requires availability set",
-			"type": "Microsoft.Compute/availabilitySets",
-			"name": "[parameters('availabilitySetName')]",
-			"apiVersion": "[variables('apiVersion')]",
-			"location": "[resourceGroup().location]"
-		},
-		{	
-			"comments": "VMs created and linked to NICs and storage account",
+        {
+            "comments": "SLB requires availability set",
+            "type": "Microsoft.Compute/availabilitySets",
+            "name": "[parameters('availabilitySetName')]",
+            "sku": {
+                "name": "Aligned"
+            },
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[resourceGroup().location]"
+        },
+        {	
+            "comments": "VMs created and linked to NICs and storage account",
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[concat(parameters('vmPrefix'), copyIndex(1))]",
             "apiVersion": "[variables('apiVersion')]",
             "location": "[resourceGroup().location]",
             "properties": {
-				"availabilitySet": {
-					"id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]"
-				},
-				"hardwareProfile": {
+                "availabilitySet": {
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]"
+                },
+                "hardwareProfile": {
                     "vmSize": "Standard_A0"
                 },
                 "storageProfile": {
@@ -170,39 +173,39 @@
             "resources": [],
             "dependsOn": [
                 "[concat(variables('nicName'), 'Copy')]",
-				"[parameters('availabilitySetName')]"
+                "[parameters('availabilitySetName')]"
             ],
-			"copy": {
-				"name": "[concat(parameters('vmPrefix'), 'Copy')]",
-				"count": "[parameters('vmCount')]"
-			}
+            "copy": {
+                "name": "[concat(parameters('vmPrefix'), 'Copy')]",
+                "count": "[parameters('vmCount')]"
+            }
         },
-		{
-			"comments": "Create the internal or external loadbalancer",
+        {
+            "comments": "Create the internal or external loadbalancer",
             "name": "internalLB",
-			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2016-06-01",
-			"properties": {
-				"mode": "Incremental",
-				"templateLink": {
-					"uri": "[variables('LBTemplateUri')]",
-					"contentVersion": "1.0.0.0"
-				},
-				"parameters":  "[variables('deployLBParameters')]"
-			}
-		},
-		{
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2016-06-01",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('LBTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters":  "[variables('deployLBParameters')]"
+            }
+        },
+        {
             "comments": "Create all NICs for the VMs",
-			"name": "[concat(variables('nicName'), copyIndex(1))]",
-			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2016-06-01",
-			"properties": {
-				"mode": "Incremental",
-				"templateLink": {
-					"uri": "[variables('nicTemplateUri')]",
-					"contentVersion": "1.0.0.0"
-				},
-				"parameters":  {
+            "name": "[concat(variables('nicName'), copyIndex(1))]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2016-06-01",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('nicTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters":  {
                     "nsgName": { "value": "[concat(variables('nsgName'), copyIndex(1))]" },
                     "nicName": { "value": "[concat(variables('nicName'), copyIndex(1))]" },
                     "vnetName": { "value": "[parameters('vnetName')]" },
@@ -210,14 +213,14 @@
                     "slbName": { "value": "[parameters('slbName')]" },
                     "backendConfigName": { "value": "[parameters('backendConfigName')]"}
                 }
-			},
+            },
             "dependsOn": [
-				"[parameters('availabilitySetName')]"
+                "[parameters('availabilitySetName')]"
             ],
-			"copy": {
-				"name": "[concat(variables('nicName'), 'Copy')]",
-				"count": "[parameters('vmCount')]"
-			}
+            "copy": {
+                "name": "[concat(variables('nicName'), 'Copy')]",
+                "count": "[parameters('vmCount')]"
+            }
         }
     ]
 }

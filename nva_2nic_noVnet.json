@@ -65,6 +65,8 @@
         }
     },
     "variables": {
+        "deploymentApiVersion": "2022-09-01",
+        "computeApiVersion": "2023-03-01",
         "defaultGw": {
             "nic0": "[concat(parameters('ip0'), '1')]",
             "nic1": "[concat(parameters('ip1'), '1')]"
@@ -100,14 +102,17 @@
             "comments": "Availability set for eventual NVA HA",
             "type": "Microsoft.Compute/availabilitySets",
             "name": "[variables('avSetName')]",
-            "apiVersion": "2016-03-30",
+            "apiVersion": "[variables('computeApiVersion')]",
+            "sku": {
+                "name": "Aligned"
+            },
             "location": "[resourceGroup().location]"
         },
         {
             "comments": "Deploy Virtual Network Appliance",
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[concat(parameters('vmName'), '-', copyIndex(1))]",
-            "apiVersion": "2015-06-15",
+            "apiVersion": "[variables('computeApiVersion')]",
             "location": "[resourceGroup().location]",
             "plan": {
                 "name": "[variables('settings')['planName']]",
@@ -200,7 +205,7 @@
         {
             "name": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic1')]",
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2016-06-01",
+            "apiVersion": "[variables('deploymentApiVersion')]",
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
