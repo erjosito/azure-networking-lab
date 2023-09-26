@@ -64,12 +64,12 @@
         "scriptUri": {
             "defaultValue": "[uri(deployment().properties.templateLink.uri, 'linuxNVAconfig.sh')]",
             "type": "string",
-            "metadata": { "description": "Script that will be executed" }            
+            "metadata": { "description": "Script that will be executed" }
         },
         "scriptCmd": {
             "defaultValue": "sh linuxNVAconfig.sh",
             "type": "string",
-            "metadata": { "description": "Command to run the script" }            
+            "metadata": { "description": "Command to run the script" }
         },
         "deployLBYesNo": {
             "defaultValue": "yes",
@@ -77,8 +77,8 @@
         }
     },
     "variables": {
-        "deploymentApiVersion": "2017-05-10",
-        "vmssApiVersion": "2023-03-01",
+        "deploymentApiVersion": "2022-09-01",
+        "computeApiVersion": "2023-03-01",
         "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
         "subnet0Id": "[concat(variables('vnetID'), '/subnets/', parameters('subnet0Name'))]",
         "subnet1Id": "[concat(variables('vnetID'), '/subnets/', parameters('subnet1Name'))]",
@@ -168,7 +168,7 @@
             "type": "Microsoft.Compute/virtualMachineScaleSets",
             "name": "[parameters('vmSSName')]",
             "location": "[resourceGroup().location]",
-            "apiVersion": "[variables('vmssApiVersion')]",
+            "apiVersion": "[variables('computeApiVersion')]",
             "dependsOn": [
                 "slb-int"
             ],
@@ -216,7 +216,7 @@
                                                     "name": "nvavmsspip",
                                                     "properties": {
                                                         "publicIPAllocationMethod": "Static",
-                                                        "idleTimeoutInMinutes": 4                                        
+                                                        "idleTimeoutInMinutes": 4
                                                     }
                                                 },
                                                 "loadBalancerBackendAddressPools": [
@@ -258,7 +258,7 @@
         {
             "comments": "Create the autoscale settings for the VM scale set",
             "type": "Microsoft.Insights/autoscaleSettings",
-            "apiVersion": "2015-04-01",
+            "apiVersion": "2022-10-01",
             "name": "[parameters('scaleSettingsName')]",
             "location": "[resourceGroup().location]",
             "dependsOn": [

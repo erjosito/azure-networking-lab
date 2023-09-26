@@ -87,9 +87,9 @@
         }
     },
     "variables": {
-        "deploymentApiVersion": "2017-05-10",
-        "vmssApiVersion": "2018-06-01",
-        "autoscaleApiVersion": "2015-04-01",
+        "deploymentApiVersion": "2022-09-01",
+        "computeApiVersion": "2023-03-01",
+        "autoscaleApiVersion": "2022-10-01",
         "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
         "subnet0Id": "[concat(variables('vnetID'), '/subnets/', parameters('subnet0Name'))]",
         "subnet1Id": "[concat(variables('vnetID'), '/subnets/', parameters('subnet1Name'))]",
@@ -240,7 +240,7 @@
             "type": "Microsoft.Compute/virtualMachineScaleSets",
             "name": "[parameters('vmSSName')]",
             "location": "[resourceGroup().location]",
-            "apiVersion": "[variables('vmssApiVersion')]",
+            "apiVersion": "[variables('computeApiVersion')]",
             "dependsOn": [
                 "slb-int",
                 "slb-ext"
