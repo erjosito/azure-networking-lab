@@ -130,9 +130,7 @@
             "apiVersion": "[variables('apiVersion')]",
             "location": "[resourceGroup().location]",
             "properties": {
-                "availabilitySet": {
-                    "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]"
-                },
+                "zones": ["1", "2", "3"],
                 "hardwareProfile": {
                     "vmSize": "Standard_A0"
                 },
