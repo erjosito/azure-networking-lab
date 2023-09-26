@@ -84,6 +84,9 @@
         }
     },
     "variables": {
+        "deploymentApiVersion": "2022-09-01",
+        "computeApiVersion": "2023-03-01",
+        "vmExtensionApiVersion": "2023-07-01",
         "nicTemplatePipNsg": "[uri(deployment().properties.templateLink.uri, 'nic_NSG_noSLB_PIP_static.json')]",
         "nicTemplateNoPipNsg": "[uri(deployment().properties.templateLink.uri, 'nic_NSG_noSLB_noPIP_static.json')]",
         "nicTemplateNoPipNoNsg": "[uri(deployment().properties.templateLink.uri, 'nic_noNSG_noSLB_noPIP_static.json')]",
@@ -204,14 +207,14 @@
             "type": "Microsoft.Compute/availabilitySets",
             "name": "[variables('avSetName')]",
             "sku": "Aligned",
-            "apiVersion": "2023-03-01",
+            "apiVersion": "[variables('computeApiVersion')]",
             "location": "[resourceGroup().location]"
         },
         {
             "comments": "Optionally, create an internal load balancer",
             "name": "nva-slb-int",
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2017-05-10",
+            "apiVersion": "[variables('deploymentApiVersion')]",
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
@@ -225,7 +228,7 @@
             "comments": "Optionally, create an external load balancer. Wait until the internal has been created, there seems to be some conflict when creating both at the same time",
             "name": "nva-slb-ext",
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2017-05-10",
+            "apiVersion": "[variables('deploymentApiVersion')]",
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
@@ -242,7 +245,7 @@
             "comments": "Deploy Linux VM as Virtual Network Appliance",
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[concat(parameters('vmName'), '-', copyIndex(1))]",
-            "apiVersion": "2015-06-15",
+            "apiVersion": "[variables('computeApiVersion')]",
             "location": "[resourceGroup().location]",
             "properties": {
         "availabilitySet": {
@@ -305,7 +308,7 @@
             "comments": "Create eth0 with or without PIP, depending on the template",
             "name": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic0')]",
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2016-06-01",
+            "apiVersion": "[variables('deploymentApiVersion')]",
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
@@ -332,7 +335,7 @@
             "comments": "Create eth1",
             "name": "[concat(parameters('vmName'), '-', copyIndex(1), '-nic1')]",
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2016-06-01",
+            "apiVersion": "[variables('deploymentApiVersion')]",
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
@@ -357,7 +360,7 @@
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat(parameters('vmName'), '-', copyIndex(1), '/installcustomscript')]",
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "[variables('vmExtensionApiVersion')]",
             "location": "[resourceGroup().location]",
             "properties": {
                 "publisher": "Microsoft.Azure.Extensions",
