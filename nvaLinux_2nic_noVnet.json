@@ -249,8 +249,8 @@
             "name": "[concat(parameters('vmName'), '-', copyIndex(1))]",
             "apiVersion": "[variables('computeApiVersion')]",
             "location": "[resourceGroup().location]",
+            "zones": ["1", "2", "3"],
             "properties": {
-                "zones": ["1", "2", "3"],
                 "hardwareProfile": {
                     "vmSize": "[variables('settings')['vmSize']]"
                 },
