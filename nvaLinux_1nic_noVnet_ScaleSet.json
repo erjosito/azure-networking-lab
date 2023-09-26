@@ -73,7 +73,7 @@
         "scriptCmd": {
             "defaultValue": "sh linuxNVAconfig.sh",
             "type": "string",
-            "metadata": { "description": "Command to run the script" }            
+            "metadata": { "description": "Command to run the script" }
         },
         "deployLBYesNo": {
             "defaultValue": "yes",
