@@ -110,9 +110,9 @@ If you find any issue when running through this lab or any error in this guide, 
 
 * Alternatively you can use the Azure shell, no matter on which OS you are working. Open the URL [https://shell.azure.com](https://shell.azure.com) on a Web browser, and after authenticating with your Azure credentials you will get to an Azure Cloud Shell. In this lab we will use the Azure CLI (and not Powershell), so make sure you select the Bash shell. You can optionally use `tmux`, as this figure shows:  
 
-**Figure 1.** Cloud shell with two tmux panels
+![Cloud Shell Image](pictures/az_shell_tmux.PNG "Cloud Shell with 2 tmux panels")
 
-![Cloud Shell Image](az_shell_tmux.PNG "Cloud Shell with 2 tmux panels")
+**Figure 1.** Cloud shell with two tmux panels
 
 If not using cloud shell, you will have to log into Azure. You can copy the following command from this guide with Ctrl-C, and paste it into your terminal window:
 
