@@ -20,7 +20,7 @@ sudo systemctl restart apache2
 # Delete default web site and download a new one
 sudo rm /var/www/html/index.html
 sudo apt-get install wget -you
-sudo wget https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/index.php -P /var/www/html/
+sudo wget https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/arm/index.php -P /var/www/html/
 
 
 ###########################

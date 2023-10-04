@@ -3,7 +3,7 @@
 # Lab initialization
 az group create -n vnetTest -l westeurope
 az configure --defaults group=vnetTest
-url='https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/NetworkingLab_master.json'
+url='https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/arm/NetworkingLab_master.json'
 # Option 1: default (all vnets in one location)
 az group deployment create -n netLabDeployment --template-uri $url -g vnetTest --parameters '{"adminPassword":{"value":"Microsoft123!"}}'
 # Option 2: with Vnet 3 in a separate location
@@ -79,7 +79,7 @@ az network lb address-pool list --lb-name $lbname -o table --query [].backendIpC
 ########
 # VMSS #
 ########
-vmss_url='https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/nvaLinux_1nic_noVnet_ScaleSet.json'
+vmss_url='https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/arm/nvaLinux_1nic_noVnet_ScaleSet.json'
 az group deployment create -n vmssDeployment -g vnetTest --template-uri $vmss_url --parameters '{"vmPwd":{"value":"Microsoft123!"}}'
 az network lb outbound-rule create --lb-name linuxnva-vmss-slb-ext -n myoutboundnat --frontend-ip-configs myFrontendConfig --protocol All --idle-timeout 15 --outbound-ports 10000 --address-pool linuxnva-vmss-slbBackend-ext
 az network route-table route update --route-table-name vnet1-subnet1 -n vnet1 --next-hop-ip-address 10.4.2.200 --next-hop-type VirtualAppliance
@@ -166,7 +166,7 @@ sudo iptables -t nat -A PREROUTING -d 51.105.174.182 -p tcp --dport 1022 -j DNAT
 #########
 
 # Deploy standard ELB
-lburl='https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/externalLB_standard.json'
+lburl='https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/arm/externalLB_standard.json'
 az group deployment create -n elbDeploy -g vnetTest --template-uri $lburl
 
 ############

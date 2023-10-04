@@ -66,7 +66,7 @@
             "metadata": { "description": "This string will be completed with the copyIndex: .101, .102, etc" }
         },
         "scriptUri": {
-            "defaultValue": "https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/linuxNVAconfig.sh",
+            "defaultValue": "https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/arm/linuxNVAconfig.sh",
             "type": "string",
             "metadata": { "description": "Script that will be executed" }            
         },
