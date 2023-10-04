@@ -136,7 +136,7 @@ rg=vnetTest
 location=eastus2
 location2ary=westus
 adminPassword='Microsoft123!'
-template_uri=https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/NetworkingLab_master.json
+template_uri=https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/arm/NetworkingLab_master.json
 ```
 
 For Windows Powershell, this is how you would declare variables:
@@ -147,7 +147,7 @@ $rg = "vnetTest"
 $location = "eastus2"
 $location2ary = "westus"
 $adminPassword = "Microsoft123!"
-$template_uri = "https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/NetworkingLab_master.json"
+$template_uri = "https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/arm/NetworkingLab_master.json"
 ```
 
 Now you can create the resource group:
@@ -1552,14 +1552,14 @@ In this lab we will deploy a VMSS containing Linux appliances as the ones we saw
 **Step 1.** The first thing we are going to do is to deploy a VMSS and an additional Load Balancer to our lab. You can use the ARM template in this Github repository to do so, where all values are predetermined and you only need to supply the password for the VMs:
 
 <pre lang="bash">
-<b>az group deployment create --name vmssDeployment --template-uri https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/nvaLinux_1nic_noVnet_ScaleSet.json --parameters '{"vmPwd":{"value":"Microsoft123!"}}'</b>
+<b>az group deployment create --name vmssDeployment --template-uri https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/arm/nvaLinux_1nic_noVnet_ScaleSet.json --parameters '{"vmPwd":{"value":"Microsoft123!"}}'</b>
 <i>Output omitted</i>
 </pre>
 
 Alternatively, if you are using the Azure CLI in a Windows OS, you can use this syntax:
 
 <pre lang="bash">
-<b>az group deployment create --name vmssDeployment --template-uri https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/nvaLinux_1nic_noVnet_ScaleSet.json --parameters "{\"vmPwd\":{\"value\":\"Microsoft123!\"}}"</b>
+<b>az group deployment create --name vmssDeployment --template-uri https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/arm/nvaLinux_1nic_noVnet_ScaleSet.json --parameters "{\"vmPwd\":{\"value\":\"Microsoft123!\"}}"</b>
 <i>Output omitted</i>
 </pre>
 
