@@ -126,13 +126,13 @@ az configure --defaults group=vnetTest
 **Step 5.** Deploy the master template that will create our initial network configuration. The syntax here depends on the operating system you are using. For example, for Windows use this command:
 
 <pre lang="...">
-az group deployment create --name netLabDeployment --template-uri https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/NetworkingLab_master.json --resource-group vnetTest --parameters "{\"createVPNgw\":{\"value\":\"no\"}, \"adminUsername\":{\"value\":\"lab-user\"}, \"adminPassword\":{\"value\":\"Microsoft123!\"}}" 
+az group deployment create --name netLabDeployment --template-uri https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/arm/NetworkingLab_master.json --resource-group vnetTest --parameters "{\"createVPNgw\":{\"value\":\"no\"}, \"adminUsername\":{\"value\":\"lab-user\"}, \"adminPassword\":{\"value\":\"Microsoft123!\"}}" 
 </pre>
 
 Or alternatively use the following command if you are using a Linux operative system:
 
 <pre lang="...">
-az group deployment create --name netLabDeployment --template-uri https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/NetworkingLab_master.json --resource-group vnetTest --parameters '{"createVPNgw":{"value":"no"}, "adminUsername":{"value":"lab-user"}, "adminPassword":{"value":"Microsoft123!"}}'
+az group deployment create --name netLabDeployment --template-uri https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/arm/NetworkingLab_master.json --resource-group vnetTest --parameters '{"createVPNgw":{"value":"no"}, "adminUsername":{"value":"lab-user"}, "adminPassword":{"value":"Microsoft123!"}}'
 </pre>
 
 **Step 6.** Since the previous command will take a while (around 15 minutes), open another command window (see Step 3 for detailed instructions) to monitor the deployment progress. Note you might have to login in this second window too:
@@ -1976,7 +1976,7 @@ TBD...
 Or if you are using Linux, please issue this command:
 
 <pre lang="...">
-az group deployment create --name netLabDeployment --template-uri https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/NetworkingLab\_master.json --resource-group vnetTest --parameters '{"createVPNgw":{"value":"no"}, "adminUsername":{"value":"lab-user"}, "adminPassword":{"value":"Microsoft123!"}, "nvaType":{"value":"<b>ubuntuScaleSet</b>"}}'
+az group deployment create --name netLabDeployment --template-uri https://raw.githubusercontent.com/erjosito/azure-networking-lab/master/arm/NetworkingLab\_master.json --resource-group vnetTest --parameters '{"createVPNgw":{"value":"no"}, "adminUsername":{"value":"lab-user"}, "adminPassword":{"value":"Microsoft123!"}, "nvaType":{"value":"<b>ubuntuScaleSet</b>"}}'
 </pre>
 
 **Note:** the previous commands can take between 15 and 20 minutes to be executed.
