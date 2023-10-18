@@ -82,3 +82,29 @@ There are multiple options you can define, in this example we want to look into 
 You will get your packet capture stored in an Azure Storage Account, that you can easily download and analyze locally, for example with Wireshark:
 
 ![Packet capture](pictures/monitor/packet_capture02.png)
+
+## IP Flow Verify and NSG Diagnostics
+
+NSG problems are common in NVA setups, because the NVAs receive traffic which is not addressed for them, and hence it is not covered by the default rules in NSGs. Unfortunately, the **IP Flow Verify** tool in Network Watcher is not going to help troubleshooting these, since it assumes that the source or destination IP address of packets always the VM is, as the following screenshot shows:
+
+![IP Flow Verify](pictures/monitor/ip_flow_verify_nva.png)
+
+However, NSG diagnostics can be a very useful tool for NVAs, because they allow to configure any IP address to verify the flows. For example, if you suspect that the NSGs might be dropping inter-spoke traffic at the NVA, you could easily run the NSG Diagnostics tool and supply IP addresses of two different spokes as endpoints:
+
+![NSG Diagnostics](pictures/monitor/nsg_diagnostics_01.png)
+
+The first output of the tool will be whether the traffic is allowed or not:
+
+![NSG Diagnostics](pictures/monitor/nsg_diagnostics_02.png)
+
+You can click on the "View details" link to see exactly which rule of the NSG let the inter-spoke inbound traffic through. In this case, the traffic didn't match on the first one, but the second rule:
+
+![NSG Diagnostics](pictures/monitor/nsg_diagnostics_03.png)
+
+Same thing for output traffic: if you change the traffic direction from "Inbound" to "Outbound", you can verify that one of the default NSG rules is doing the trick for us.
+
+![NSG Diagnostics](pictures/monitor/nsg_diagnostics_04.png)
+
+If you want to understand why is that rule allowing traffic, you can follow the link from NSG Diagnostics to the actual NSG and inspect there the effective rules. As you can see in the screenshot below, the `Virtual network` service tag contains the prefixes of the spoke VNets, since they are peered to the hub VNet where the firewall NVA is deployed:
+
+![Effective NSG rules](pictures/monitor/effective_rules.png)
