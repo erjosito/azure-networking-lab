@@ -31,7 +31,50 @@ Let's have a deeper look at the connectivity. First, we can have a look at how i
 
 ![Connection monitor](pictures/monitor/connection_monitor_02.png "Azure Connection Monitor - Working spoke to spoke topology")
 
+Even if the linux NVA NIC is marked red, opening the context menu reveals that there are no issues with it:
+
+![Connection monitor](pictures/monitor/connection_monitor_02b.png)
+
 Now we can have a look at the topology for the failed communication:
 
 ![Connection monitor](pictures/monitor/connection_monitor_03.png "Azure Connection Monitor - Failed spoke to spoke topology")
 
+Now the context menu in the VM will indeed reveal the issue "Destination is not reachable", which seems to indicate a routing problem:
+
+![Connection monitor](pictures/monitor/connection_monitor_03b.png)
+
+## Next Hop
+
+Following up from the next section, the problem seems to be routing, so you would probably want to check the routing back from the destination to the source (the topology seems to indicate that routing forward is fine). The **Next Hop** tool of Network Watcher allows to do that:
+
+![Next hop](pictures/monitor/next_hop.png)
+
+Looking at the previous screenshot, it is apparent that the next hop for the return traffic is not `10.4.2.100`, as the Connection Monitor topology was showing, which explains the problem. You can now go and fix the routing table for VNet3 (you even find the resource ID for the route table in the output, even though a link would have been better).
+
+## Network Insights
+
+If you want to have a quick look at your assets and verify that all are running smoothly, Network Insights (reachable in one of Azure Monitor's blades) is what you are looking for. The following example shows a description of part of the lab (you can set the scope of Network Insights to a specific resource group), where one of the load balancers is not fully healthy:
+
+![Network Insights](pictures/monitor/insights_dark.png)
+
+You can drill into the load balancer section, which will take you to another page where you can see further details about each of the load balancers and NAT gateways that you have deployed. The graphs at the bottom of the screen display useful details that can help you decide where to investigate further:
+
+![Network Insights](pictures/monitor/lb01_dark.png)
+
+## Load Balancer Insights
+
+You can click of one of the load balancers of the previous section, which will take you to the main control page for that particular resource. Load Balancers have a very useful Insights blade as well, that show different things from the topology of the machines connected to that particular load balancers to multiple metrics charted together for easy correlation of events.
+
+Here some sample screenshots, that indicate that one of the backends of this particular load balancer is not answering to the health checks:
+
+![LB insights](pictures/monitor/lbinsights_topology01_dark.png)
+
+![LB insights](pictures/monitor/lbinsights_topology03_dark.png)
+
+## Packet capture
+
+It is very useful logging into a virtual machine and initiate a packet capture with Wireshark or `tcpdump`, but sometimes you don't have access to the OS of the virtual machine in question, or you don't want to bother with the installation of new packages. You can use Network Watcher's **Packet Capture** to capture traffic right from the Azure Portal, and store the results in a storage account.
+
+There are multiple options you can define, in this example we want to make sure that we are seeing the traffic from the different machines going through our NVA, so we define a packet capture with these parameters:
+
+![Packet capture](pictures/monitor/packet_capture01.png)
