@@ -75,6 +75,10 @@ Here some sample screenshots, that indicate that one of the backends of this par
 
 It is very useful logging into a virtual machine and initiate a packet capture with Wireshark or `tcpdump`, but sometimes you don't have access to the OS of the virtual machine in question, or you don't want to bother with the installation of new packages. You can use Network Watcher's **Packet Capture** to capture traffic right from the Azure Portal, and store the results in a storage account.
 
-There are multiple options you can define, in this example we want to make sure that we are seeing the traffic from the different machines going through our NVA, so we define a packet capture with these parameters:
+There are multiple options you can define, in this example we want to look into traffic that one of our virtual machines (in VNet5) is seeing. You can create a packet capture restricted to a number of seconds or packets:
 
-![Packet capture](pictures/monitor/packet_capture01.png)
+![Packet capture](pictures/monitor/packet_capture01_vm5.png)
+
+You will get your packet capture stored in an Azure Storage Account, that you can easily download and analyze locally, for example with Wireshark:
+
+![Packet capture](pictures/monitor/packet_capture02.png)
