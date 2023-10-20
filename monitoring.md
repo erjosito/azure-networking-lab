@@ -85,11 +85,13 @@ You will get your packet capture stored in an Azure Storage Account, that you ca
 
 ## IP Flow Verify and NSG Diagnostics
 
-NSG problems are common in NVA setups, because the NVAs receive traffic which is not addressed for them, and hence it is not covered by the default rules in NSGs. Unfortunately, the **IP Flow Verify** tool in Network Watcher is not going to help troubleshooting these, since it assumes that the source or destination IP address of packets always the VM is, as the following screenshot shows:
+NSG problems are common in NVA setups, because the NVAs receive traffic which is not addressed for them, and hence it is not covered by the default rules in NSGs. The **IP Flow Verify** tool in Network Watcher is great to verify access to individual virtual machines and check that the required application ports are open in the NSG:
 
 ![IP Flow Verify](pictures/monitor/ip_flow_verify_nva.png)
 
-However, NSG diagnostics can be a very useful tool for NVAs, because they allow to configure any IP address to verify the flows. For example, if you suspect that the NSGs might be dropping inter-spoke traffic at the NVA, you could easily run the NSG Diagnostics tool and supply IP addresses of two different spokes as endpoints:
+However, IP Flow Verify is not going to help troubleshooting NVAs, since it assumes that the source or destination IP address of packets always the VM is, as the previous screenshot showed.
+
+Instead, NSG diagnostics can be a very useful tool for troubleshooting NSGs in NVAs, because they allow to inspect flows with any IP address, even from/to IP addresses different than the ones from NVA. For example, if you suspect that the NSGs might be dropping inter-spoke traffic at the NVA, you could easily run the NSG Diagnostics tool and supply IP addresses of two different spokes as endpoints:
 
 ![NSG Diagnostics](pictures/monitor/nsg_diagnostics_01.png)
 
